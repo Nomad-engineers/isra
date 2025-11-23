@@ -70,7 +70,6 @@ export function WebinarCard({
   return (
     <Card className={cn(
       'w-full card-glass border-isra/30 transition-all duration-300 hover:shadow-lg hover:shadow-isra-primary/10 hover:-translate-y-1 group',
-      webinar.active && 'ring-2 ring-isra-purple-main shadow-lg shadow-isra-purple-main/20'
     )}>
       <CardHeader className="pb-3">
         <CardTitle className='flex justify-between items-start gap-2'>

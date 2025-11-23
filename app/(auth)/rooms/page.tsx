@@ -12,7 +12,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { useDebounce } from '@/hooks/use-debounce'
 import { formatDate } from '@/lib/utils'
 import { mockWebinars, getMockStats } from './mock-data'
-import { RefreshCw, Plus, Search, Calendar, Users, FileText, Video, Filter } from 'lucide-react'
+import { RefreshCw, Plus, Search, Calendar, Users, FileText, Video, Filter, Upload } from 'lucide-react'
 import { CreateWebinarModal } from '@/components/webinars/create-webinar-modal'
 import { EditWebinarModal } from '@/components/webinars/edit-webinar-modal'
 import { Webinar } from '@/types/webinar'
@@ -146,6 +146,10 @@ export default function RoomsPage() {
             />
           </div>
           <Button variant='outline' size='sm' onClick={handleRefresh}>
+            <Upload className='h-4 w-4 mr-2' />
+            Импорт
+          </Button>
+          <Button variant='outline' size='sm' onClick={handleRefresh}>
             <RefreshCw className='h-4 w-4 mr-2' />
             Обновить
           </Button>
@@ -161,17 +165,6 @@ export default function RoomsPage() {
       <div className='flex flex-col lg:flex-row gap-6'>
         {/* Main content */}
         <div className='flex-1'>
-          {/* Action buttons */}
-          <div className='flex flex-wrap gap-2 mb-6'>
-            <Button variant='outline' size='sm'>
-              <Filter className='h-4 w-4 mr-2' />
-              Фильтр
-            </Button>
-            <Button variant='outline' size='sm'>
-              Импорт
-            </Button>
-          </div>
-
           {/* Webinars grid */}
           <div className='grid gap-6 grid-cols-1 lg:grid-cols-2'>
             {filteredWebinars.map((webinar) => (

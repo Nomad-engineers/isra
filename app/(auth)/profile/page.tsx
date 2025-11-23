@@ -11,8 +11,10 @@ import { ProfileForm } from '@/components/forms/profile-form'
 import { ChangePasswordForm } from '@/components/forms/change-password-form'
 import { useAsyncOperation } from '@/hooks/use-async-operation'
 import { profileApi } from '@/api/profile'
-import { User, Lock, CreditCard, BarChart3, Video, FileText } from 'lucide-react'
+import { ProfileFormDataWithAvatar } from '@/lib/validations'
+import { User, Lock, CreditCard, BarChart3, Video, FileText, Settings } from 'lucide-react'
 import Link from 'next/link'
+import { toast } from 'sonner'
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState({
@@ -26,9 +28,66 @@ export default function ProfilePage() {
   const updateProfileOperation = useAsyncOperation(profileApi.updateProfile)
   const changePasswordOperation = useAsyncOperation(profileApi.changePassword)
 
-  const handleProfileUpdate = async (data: any) => {
-    await updateProfileOperation.execute(data)
-    setProfile(prev => ({ ...prev, ...data }))
+  const handleProfileUpdate = async (data: ProfileFormDataWithAvatar) => {
+    try {
+      // Handle avatar upload if present
+      if (data.avatar) {
+        // Create FormData for file upload
+        const formData = new FormData()
+        formData.append('avatar', data.avatar)
+        formData.append('firstName', data.firstName)
+        formData.append('lastName', data.lastName)
+        formData.append('email', data.email)
+        if (data.phone) {
+          formData.append('phone', data.phone)
+        }
+
+        // Here you would typically upload to your API
+        // For now, we'll simulate the upload and create a preview URL
+        const avatarUrl = URL.createObjectURL(data.avatar)
+
+        await updateProfileOperation.execute({
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+          phone: data.phone,
+          avatar: avatarUrl,
+        })
+
+        setProfile(prev => ({
+          ...prev,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+          phone: data.phone,
+          avatar: avatarUrl,
+        }))
+
+        toast.success('Профиль успешно обновлен!')
+      } else {
+        // Update without avatar
+        await updateProfileOperation.execute({
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+          phone: data.phone,
+          avatar: data.avatar,
+        })
+
+        setProfile(prev => ({
+          ...prev,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+          phone: data.phone,
+        }))
+
+        toast.success('Профиль успешно обновлен!')
+      }
+    } catch (error) {
+      toast.error('Ошибка при обновлении профиля')
+      console.error('Profile update error:', error)
+    }
   }
 
   const handlePasswordChange = async (data: any) => {

@@ -4,7 +4,11 @@ export const profileFormSchema = z.object({
   firstName: z.string().min(1, "Имя обязательно"),
   lastName: z.string().min(1, "Фамилия обязательна"),
   email: z.string().email("Некорректный email"),
-  phone: z.string().regex(/^[\+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,9}$/, "Некорректный номер телефона").optional().or(z.literal("")),
+  phone: z.string()
+    .regex(/^\+7\(\d{3}\)-\d{3}-\d{2}-\d{2}$/, "Телефон должен быть в формате +7(XXX)-XXX-XX-XX")
+    .optional()
+    .or(z.literal("")),
+  avatar: z.instanceof(File).optional().nullable(),
 })
 
 export const changePasswordFormSchema = z.object({
@@ -32,5 +36,9 @@ export const webinarFormSchema = z.object({
 })
 
 export type ProfileFormData = z.infer<typeof profileFormSchema>
+
+export type ProfileFormDataWithAvatar = Omit<ProfileFormData, 'avatar'> & {
+  avatar?: File | null
+}
 export type ChangePasswordFormData = z.infer<typeof changePasswordFormSchema>
 export type WebinarFormData = z.infer<typeof webinarFormSchema>

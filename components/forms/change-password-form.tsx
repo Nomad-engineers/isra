@@ -31,6 +31,7 @@ export function ChangePasswordForm({ onSubmit, loading = false }: ChangePassword
           render={({ field }) => (
             <FormItem>
               <FormLabel>Текущий пароль</FormLabel>
+                                <div className="pt-0.5"> </div>
               <FormControl>
                 <Input type='password' placeholder='Введите текущий пароль' {...field} />
               </FormControl>
@@ -45,6 +46,8 @@ export function ChangePasswordForm({ onSubmit, loading = false }: ChangePassword
           render={({ field }) => (
             <FormItem>
               <FormLabel>Новый пароль</FormLabel>
+                                <div className="pt-0.5"> </div>
+
               <FormControl>
                 <Input type='password' placeholder='Введите новый пароль' {...field} />
               </FormControl>
@@ -59,6 +62,8 @@ export function ChangePasswordForm({ onSubmit, loading = false }: ChangePassword
           render={({ field }) => (
             <FormItem>
               <FormLabel>Подтверждение пароля</FormLabel>
+                                <div className="pt-0.5"> </div>
+
               <FormControl>
                 <Input type='password' placeholder='Подтвердите новый пароль' {...field} />
               </FormControl>

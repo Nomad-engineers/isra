@@ -187,6 +187,11 @@
     background-color: #8A3FFC;
   }
 
+  /* Fix for tabs purple color */
+  .tab-active-purple[data-state="active"] {
+    color: #7B2FF7 !important;
+  }
+
   /* Glass morphism for dropdown menus */
   .dropdown-glass {
     background: rgba(18, 18, 18, 0.9);

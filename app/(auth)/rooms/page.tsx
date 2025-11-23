@@ -13,12 +13,15 @@ import { formatDate } from '@/lib/utils'
 import { mockWebinars, getMockStats } from './mock-data'
 import { RefreshCw, Plus, Search, Calendar, Users, FileText, Video, Filter } from 'lucide-react'
 import { CreateWebinarModal } from '@/components/webinars/create-webinar-modal'
+import { EditWebinarModal } from '@/components/webinars/edit-webinar-modal'
+import { Webinar } from '@/types/webinar'
 
 export default function RoomsPage() {
   const [webinars] = useState(mockWebinars)
   const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const debouncedSearch = useDebounce(searchTerm, 300)
+  const [editingWebinar, setEditingWebinar] = useState<Webinar | null>(null)
 
   const stats = getMockStats()
 
@@ -37,7 +40,10 @@ export default function RoomsPage() {
   }
 
   const handleEdit = (id: string) => {
-    console.log('Edit webinar:', id)
+    const webinar = webinars.find(w => w.id === id)
+    if (webinar) {
+      setEditingWebinar(webinar)
+    }
   }
 
   const handleDelete = (id: string) => {
@@ -239,6 +245,19 @@ export default function RoomsPage() {
           </Card>
         </div>
       </div>
+
+      {/* Edit Webinar Modal */}
+      {editingWebinar && (
+        <EditWebinarModal
+          webinar={editingWebinar}
+          open={!!editingWebinar}
+          onOpenChange={(open) => {
+            if (!open) {
+              setEditingWebinar(null)
+            }
+          }}
+        />
+      )}
     </div>
   )
 }

@@ -1,5 +1,14 @@
 import { z } from "zod"
 
+// Password validation: min 8 chars, at least one uppercase, one lowercase, one number
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/
+
+// Email validation regex
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+// Phone validation (supports international formats)
+const phoneRegex = /^\+?[\d\s-()]+$/
+
 export const profileFormSchema = z.object({
   firstName: z.string().min(1, "Имя обязательно"),
   lastName: z.string().min(1, "Фамилия обязательна"),
@@ -42,3 +51,62 @@ export type ProfileFormDataWithAvatar = Omit<ProfileFormData, 'avatar'> & {
 }
 export type ChangePasswordFormData = z.infer<typeof changePasswordFormSchema>
 export type WebinarFormData = z.infer<typeof webinarFormSchema>
+
+// Authentication validations
+export const loginSchema = z.object({
+  email: z
+    .string()
+    .min(1, 'Email is required')
+    .regex(emailRegex, 'Invalid email format'),
+  password: z
+    .string()
+    .min(1, 'Password is required'),
+})
+
+export const signUpSchema = z.object({
+  email: z
+    .string()
+    .min(1, 'Email is required')
+    .regex(emailRegex, 'Invalid email format'),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(
+      passwordRegex,
+      'Password must contain at least one uppercase letter, one lowercase letter, and one number'
+    ),
+  name: z
+    .string()
+    .min(2, 'Name must be at least 2 characters')
+    .max(50, 'Name must be less than 50 characters')
+    .regex(/^[a-zA-Zа-яА-Я\s]+$/, 'Name can only contain letters and spaces'),
+  surname: z
+    .string()
+    .min(2, 'Surname must be at least 2 characters')
+    .max(50, 'Surname must be less than 50 characters')
+    .regex(/^[a-zA-Zа-яА-Я\s]+$/, 'Surname can only contain letters and spaces'),
+  phone: z
+    .string()
+    .optional()
+    .refine(
+      (value) => {
+        if (!value || value.trim() === '') return true
+        return phoneRegex.test(value)
+      },
+      {
+        message: 'Invalid phone number format',
+      }
+    ),
+  confirmPassword: z
+    .string()
+    .min(1, 'Please confirm your password'),
+}).refine(
+  (data) => data.password === data.confirmPassword,
+  {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  }
+)
+
+export type LoginFormData = z.infer<typeof loginSchema>
+export type SignUpFormData = z.infer<typeof signUpSchema>

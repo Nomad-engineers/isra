@@ -10,6 +10,7 @@ export interface Webinar extends BaseEntity, StatusEntity {
   maxParticipants?: number
   currentParticipants?: number
   link?: string
+  streamUrl?: string // Stream URL for webinar access
   roomSettings?: {
     allowRecording: boolean
     allowChat: boolean

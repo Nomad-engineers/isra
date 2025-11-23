@@ -8,16 +8,22 @@ import { WebinarCard } from '@/components/webinars/webinar-card'
 import { StatsCard } from '@/components/common/stats-card'
 import { PageLoader } from '@/components/ui/loaders'
 import { Input } from '@/components/ui/input'
+import { useToast } from '@/components/ui/use-toast'
 import { useDebounce } from '@/hooks/use-debounce'
 import { formatDate } from '@/lib/utils'
 import { mockWebinars, getMockStats } from './mock-data'
 import { RefreshCw, Plus, Search, Calendar, Users, FileText, Video, Filter } from 'lucide-react'
+import { CreateWebinarModal } from '@/components/webinars/create-webinar-modal'
+import { EditWebinarModal } from '@/components/webinars/edit-webinar-modal'
+import { Webinar } from '@/types/webinar'
 
 export default function RoomsPage() {
+  const { toast } = useToast()
   const [webinars] = useState(mockWebinars)
   const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const debouncedSearch = useDebounce(searchTerm, 300)
+  const [editingWebinar, setEditingWebinar] = useState<Webinar | null>(null)
 
   const stats = getMockStats()
 
@@ -36,7 +42,10 @@ export default function RoomsPage() {
   }
 
   const handleEdit = (id: string) => {
-    console.log('Edit webinar:', id)
+    const webinar = webinars.find(w => w.id === id)
+    if (webinar) {
+      setEditingWebinar(webinar)
+    }
   }
 
   const handleDelete = (id: string) => {
@@ -46,9 +55,21 @@ export default function RoomsPage() {
   const handleCopyLink = async (id: string) => {
     const webinar = webinars.find(w => w.id === id)
     if (webinar) {
-      const link = `${window.location.origin}/room/${webinar.id}`
-      await navigator.clipboard.writeText(link)
-      console.log('Link copied:', link)
+      const linkToCopy = webinar.streamUrl || `${window.location.origin}/room/${webinar.id}`
+
+      try {
+        await navigator.clipboard.writeText(linkToCopy)
+        toast({
+          title: "Ссылка скопирована",
+          description: "Ссылка на вебинар успешно скопирована.",
+        })
+      } catch (error) {
+        toast({
+          title: "Ошибка копирования",
+          description: "Не удалось скопировать ссылку. Попробуйте еще раз.",
+          variant: "destructive",
+        })
+      }
     }
   }
 
@@ -128,10 +149,12 @@ export default function RoomsPage() {
             <RefreshCw className='h-4 w-4 mr-2' />
             Обновить
           </Button>
-          <Button size='sm' className='gradient-primary hover:opacity-90 transition-opacity'>
-            <Plus className='h-4 w-4 mr-2' />
-            Создать
-          </Button>
+          <CreateWebinarModal
+            buttonText="Создать"
+            buttonSize="sm"
+            buttonClassName="gradient-primary hover:opacity-90 transition-opacity"
+            showIcon={true}
+          />
         </div>
       </div>
 
@@ -173,10 +196,11 @@ export default function RoomsPage() {
                     ? 'Попробуйте изменить поисковый запрос'
                     : 'У вас пока нет вебинаров. Создайте свой первый вебинар!'}
                 </p>
-                <Button className='gradient-primary hover:opacity-90 transition-opacity'>
-                  <Plus className='h-4 w-4 mr-2' />
-                  Создать вебинар
-                </Button>
+                <CreateWebinarModal
+                  buttonText="Создать вебинар"
+                  buttonClassName="gradient-primary hover:opacity-90 transition-opacity"
+                  showIcon={true}
+                />
               </CardContent>
             </Card>
           )}
@@ -217,14 +241,13 @@ export default function RoomsPage() {
               <CardTitle>Быстрые действия</CardTitle>
             </CardHeader>
             <CardContent className='space-y-2'>
-              <Button className='w-full gradient-primary hover:opacity-90 transition-opacity' size='sm'>
-                <Plus className='h-4 w-4 mr-2' />
-                Новый вебинар
-              </Button>
-              <Button variant='outline' className='w-full' size='sm'>
-                <Calendar className='h-4 w-4 mr-2' />
-                Расписание
-              </Button>
+              <CreateWebinarModal
+                buttonText="Новый вебинар"
+                buttonSize="sm"
+                buttonClassName="w-full gradient-primary hover:opacity-90 transition-opacity"
+                showIcon={true}
+              />
+         
               <Button variant='outline' className='w-full' size='sm'>
                 <FileText className='h-4 w-4 mr-2' />
                 Отчеты
@@ -233,6 +256,19 @@ export default function RoomsPage() {
           </Card>
         </div>
       </div>
+
+      {/* Edit Webinar Modal */}
+      {editingWebinar && (
+        <EditWebinarModal
+          webinar={editingWebinar}
+          open={!!editingWebinar}
+          onOpenChange={(open) => {
+            if (!open) {
+              setEditingWebinar(null)
+            }
+          }}
+        />
+      )}
     </div>
   )
 }

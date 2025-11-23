@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Settings, Clock } from 'lucide-react'
+import { CreditCard, Clock } from 'lucide-react'
 
 export default function TariffsPage() {
   return (
@@ -7,7 +7,7 @@ export default function TariffsPage() {
       <Card className='w-full max-w-md border-isra bg-isra-medium/80 backdrop-blur-sm'>
         <CardHeader className='text-center'>
           <CardTitle className='flex items-center justify-center gap-2 text-white'>
-            <Settings className='h-6 w-6 text-isra-cyan' />
+            <CreditCard className='h-6 w-6 text-isra-cyan' />
             В разработке
           </CardTitle>
         </CardHeader>

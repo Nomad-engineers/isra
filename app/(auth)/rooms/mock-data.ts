@@ -12,6 +12,7 @@ export const mockWebinars: Webinar[] = [
     updatedAt: '2024-11-20T10:00:00Z',
     maxParticipants: 50,
     currentParticipants: 23,
+    streamUrl: 'https://stream.isra.kz/react-hooks-2024',
     roomSettings: {
       allowRecording: true,
       allowChat: true,
@@ -34,6 +35,7 @@ export const mockWebinars: Webinar[] = [
     updatedAt: '2024-11-23T16:00:00Z',
     maxParticipants: 30,
     currentParticipants: 18,
+    streamUrl: 'https://stream.isra.kz/typescript-advanced-2024',
     roomSettings: {
       allowRecording: true,
       allowChat: true,
@@ -56,6 +58,7 @@ export const mockWebinars: Webinar[] = [
     updatedAt: '2024-11-18T11:00:00Z',
     maxParticipants: 100,
     currentParticipants: 45,
+    streamUrl: 'https://stream.isra.kz/nodejs-microservices-2024',
     roomSettings: {
       allowRecording: false,
       allowChat: true,
@@ -74,6 +77,7 @@ export const mockWebinars: Webinar[] = [
     active: false,
     createdAt: '2024-11-17T14:00:00Z',
     updatedAt: '2024-11-22T10:00:00Z',
+    streamUrl: 'https://stream.isra.kz/css-grid-flexbox-2024',
     roomSettings: {
       allowRecording: true,
       allowChat: true,
@@ -98,6 +102,7 @@ export const mockWebinars: Webinar[] = [
     maxParticipants: 75,
     currentParticipants: 52,
     duration: 90,
+    streamUrl: 'https://stream.isra.kz/mongodb-beginners-2024',
     roomSettings: {
       allowRecording: true,
       allowChat: true,

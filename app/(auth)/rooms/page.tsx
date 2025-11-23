@@ -8,6 +8,7 @@ import { WebinarCard } from '@/components/webinars/webinar-card'
 import { StatsCard } from '@/components/common/stats-card'
 import { PageLoader } from '@/components/ui/loaders'
 import { Input } from '@/components/ui/input'
+import { useToast } from '@/components/ui/use-toast'
 import { useDebounce } from '@/hooks/use-debounce'
 import { formatDate } from '@/lib/utils'
 import { mockWebinars, getMockStats } from './mock-data'
@@ -17,6 +18,7 @@ import { EditWebinarModal } from '@/components/webinars/edit-webinar-modal'
 import { Webinar } from '@/types/webinar'
 
 export default function RoomsPage() {
+  const { toast } = useToast()
   const [webinars] = useState(mockWebinars)
   const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -53,9 +55,21 @@ export default function RoomsPage() {
   const handleCopyLink = async (id: string) => {
     const webinar = webinars.find(w => w.id === id)
     if (webinar) {
-      const link = `${window.location.origin}/room/${webinar.id}`
-      await navigator.clipboard.writeText(link)
-      console.log('Link copied:', link)
+      const linkToCopy = webinar.streamUrl || `${window.location.origin}/room/${webinar.id}`
+
+      try {
+        await navigator.clipboard.writeText(linkToCopy)
+        toast({
+          title: "Ссылка скопирована",
+          description: "Ссылка на вебинар успешно скопирована.",
+        })
+      } catch (error) {
+        toast({
+          title: "Ошибка копирования",
+          description: "Не удалось скопировать ссылку. Попробуйте еще раз.",
+          variant: "destructive",
+        })
+      }
     }
   }
 
@@ -233,10 +247,7 @@ export default function RoomsPage() {
                 buttonClassName="w-full gradient-primary hover:opacity-90 transition-opacity"
                 showIcon={true}
               />
-              <Button variant='outline' className='w-full' size='sm'>
-                <Calendar className='h-4 w-4 mr-2' />
-                Расписание
-              </Button>
+         
               <Button variant='outline' className='w-full' size='sm'>
                 <FileText className='h-4 w-4 mr-2' />
                 Отчеты

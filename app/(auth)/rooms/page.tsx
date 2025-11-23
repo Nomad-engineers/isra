@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { EntityCard } from '@/components/common/entity-card'
+import { WebinarCard } from '@/components/webinars/webinar-card'
 import { StatsCard } from '@/components/common/stats-card'
 import { PageLoader } from '@/components/ui/loaders'
 import { Input } from '@/components/ui/input'
@@ -150,17 +150,15 @@ export default function RoomsPage() {
           </div>
 
           {/* Webinars grid */}
-          <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
+          <div className='grid gap-6 grid-cols-1 lg:grid-cols-2'>
             {filteredWebinars.map((webinar) => (
-              <EntityCard
+              <WebinarCard
                 key={webinar.id}
-                data={webinar}
+                webinar={webinar}
                 onView={() => handleOpen(webinar.id)}
                 onEdit={() => handleEdit(webinar.id)}
                 onDelete={() => handleDelete(webinar.id)}
                 onCopyLink={() => handleCopyLink(webinar.id)}
-                statusBadge={getStatusBadge(webinar.status)}
-                extraInfo={getExtraInfo(webinar)}
               />
             ))}
           </div>

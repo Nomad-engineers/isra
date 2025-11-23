@@ -39,8 +39,8 @@ export function EntityForm<T extends BaseFormData>({
   loading = false,
   fields,
 }: EntityFormProps<T>) {
-  const form = useForm<T>({
-    resolver: zodResolver(schema),
+  const form = useForm({
+    resolver: zodResolver(schema as any),
     defaultValues: {
       name: '',
       description: '',
@@ -76,9 +76,9 @@ export function EntityForm<T extends BaseFormData>({
             name='description'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{fields.description.label}</FormLabel>
+                <FormLabel>{fields.description?.label}</FormLabel>
                 <FormControl>
-                  <Textarea placeholder={fields.description.placeholder} {...field} />
+                  <Textarea placeholder={fields.description?.placeholder} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -93,7 +93,7 @@ export function EntityForm<T extends BaseFormData>({
             render={({ field }) => (
               <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
                 <div className='space-y-0.5'>
-                  <FormLabel className='text-base'>{fields.active.label}</FormLabel>
+                  <FormLabel className='text-base'>{fields.active?.label}</FormLabel>
                 </div>
                 <FormControl>
                   <Switch checked={field.value} onCheckedChange={field.onChange} />

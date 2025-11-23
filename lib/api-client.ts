@@ -33,7 +33,7 @@ export class ApiClient {
     }
 
     // Request interceptor
-    if (this.interceptors.request) {
+    if (this.interceptors?.request) {
       config = this.interceptors.request(config)
     }
 
@@ -41,7 +41,7 @@ export class ApiClient {
 
     // Response interceptor
     let processedResponse = response
-    if (this.interceptors.response) {
+    if (this.interceptors?.response) {
       processedResponse = await this.interceptors.response(response)
     }
 

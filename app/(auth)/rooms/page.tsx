@@ -106,17 +106,17 @@ export default function RoomsPage() {
       {/* Header */}
       <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
         <div>
-          <h1 className='text-3xl font-bold tracking-tight'>
+          <h1 className='text-4xl font-bold tracking-tight text-white'>
             Добро пожаловать, Иван! 👋
           </h1>
-          <p className='text-muted-foreground'>
+          <p className='text-gray-400 text-lg'>
             Управляйте своими вебинарами и настройками
           </p>
         </div>
 
         <div className='flex items-center gap-2 w-full sm:w-auto'>
           <div className='relative flex-1 sm:flex-initial'>
-            <Search className='absolute left-2 top-2.5 h-4 w-4 text-muted-foreground' />
+            <Search className='absolute left-2 top-2.5 h-4 w-4 text-gray-400' />
             <Input
               placeholder='Поиск вебинаров...'
               value={searchTerm}
@@ -128,7 +128,7 @@ export default function RoomsPage() {
             <RefreshCw className='h-4 w-4 mr-2' />
             Обновить
           </Button>
-          <Button size='sm'>
+          <Button size='sm' className='gradient-primary hover:opacity-90 transition-opacity'>
             <Plus className='h-4 w-4 mr-2' />
             Создать
           </Button>
@@ -175,7 +175,7 @@ export default function RoomsPage() {
                     ? 'Попробуйте изменить поисковый запрос'
                     : 'У вас пока нет вебинаров. Создайте свой первый вебинар!'}
                 </p>
-                <Button>
+                <Button className='gradient-primary hover:opacity-90 transition-opacity'>
                   <Plus className='h-4 w-4 mr-2' />
                   Создать вебинар
                 </Button>
@@ -219,7 +219,7 @@ export default function RoomsPage() {
               <CardTitle>Быстрые действия</CardTitle>
             </CardHeader>
             <CardContent className='space-y-2'>
-              <Button className='w-full' size='sm'>
+              <Button className='w-full gradient-primary hover:opacity-90 transition-opacity' size='sm'>
                 <Plus className='h-4 w-4 mr-2' />
                 Новый вебинар
               </Button>

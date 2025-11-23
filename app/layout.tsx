@@ -13,9 +13,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ISRA Platform",
-  description: "Платформа для управления вебинарами",
-};
+  title: "ISRA.kz - Платформа для управления вебинарами",
+  description: "Современная платформа для создания и управления вебинарами с инструментами аналитики и взаимодействия",
+  icons: {
+    icon: '/icon.svg',
+    apple: '/icon.svg',
+  },
+  manifest: '/manifest.json',
+}
+
+export const viewport = {
+  themeColor: '#7B2FF7',
+}
 
 export default function RootLayout({
   children,
@@ -23,7 +32,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

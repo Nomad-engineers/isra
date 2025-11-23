@@ -29,16 +29,16 @@ export function Navigation({ userName = 'Пользователь', userAvatar }
   const pathname = usePathname()
 
   return (
-    <nav className="bg-white border-b border-gray-200">
+    <nav className="bg-isra-medium/90 backdrop-blur-lg border border-isra sticky top-0 z-50">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <Link href="/" className="text-xl font-bold text-gray-900">
+              <Link href="/" className="text-2xl font-bold text-white">
                 ISRA
               </Link>
             </div>
-            <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+            <div className="hidden sm:ml-6 sm:flex sm:space-x-1">
               {navigation.map((item) => {
                 const Icon = item.icon
                 const isActive = pathname === item.href
@@ -48,10 +48,10 @@ export function Navigation({ userName = 'Пользователь', userAvatar }
                     key={item.name}
                     href={item.href}
                     className={cn(
-                      "inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium",
+                      "inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200",
                       isActive
-                        ? "border-indigo-500 text-gray-900"
-                        : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                        ? "bg-gradient-primary text-white shadow-lg"
+                        : "text-gray-400 hover:text-white hover:bg-isra-medium/50"
                     )}
                   >
                     <Icon className="h-4 w-4 mr-2" />
@@ -62,13 +62,13 @@ export function Navigation({ userName = 'Пользователь', userAvatar }
             </div>
           </div>
 
-          <div className="flex items-center">
+          <div className="flex items-center gap-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full border border-isra hover:border-isra-primary/50 transition-colors text-white">
+                  <Avatar className="h-9 w-9">
                     <AvatarImage src={userAvatar} alt="Аватар" />
-                    <AvatarFallback>
+                    <AvatarFallback className="bg-gradient-primary text-primary-foreground font-semibold">
                       {userName.split(' ').map(n => n[0]).join('').toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
@@ -82,19 +82,19 @@ export function Navigation({ userName = 'Пользователь', userAvatar }
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/profile">
+                  <Link href="/profile" className="cursor-pointer">
                     <User className="mr-2 h-4 w-4" />
                     <span>Профиль</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/settings">
+                  <Link href="/settings" className="cursor-pointer">
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Настройки</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer">
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Выйти</span>
                 </DropdownMenuItem>

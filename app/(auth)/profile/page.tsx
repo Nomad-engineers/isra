@@ -37,14 +37,14 @@ export default function ProfilePage() {
   return (
     <div className='space-y-6'>
       <div>
-        <h1 className='text-3xl font-bold tracking-tight'>Профиль</h1>
-        <p className='text-muted-foreground'>Управление вашей учетной записью и настройками</p>
+        <h1 className='text-3xl font-bold tracking-tight text-white'>Профиль</h1>
+        <p className='text-gray-400'>Управление вашей учетной записью и настройками</p>
       </div>
 
       {/* Профиль пользователя */}
       <Card>
         <CardHeader>
-          <CardTitle className='flex items-center gap-2'>
+          <CardTitle className='flex items-center gap-2 text-white'>
             <User className='h-5 w-5' />
             Профиль пользователя
           </CardTitle>
@@ -61,7 +61,7 @@ export default function ProfilePage() {
       {/* Дополнительные настройки */}
       <Card>
         <CardHeader>
-          <CardTitle className='flex items-center gap-2'>
+          <CardTitle className='flex items-center gap-2 text-white'>
             <Settings className='h-5 w-5' />
             Дополнительные настройки
           </CardTitle>
@@ -98,7 +98,7 @@ export default function ProfilePage() {
 
       {/* Статистика */}
       <div>
-        <h2 className='text-xl font-semibold mb-4 flex items-center gap-2'>
+        <h2 className='text-xl font-semibold mb-4 flex items-center gap-2 text-white'>
           <BarChart3 className='h-5 w-5' />
           Статистика
         </h2>
@@ -133,7 +133,7 @@ export default function ProfilePage() {
       {/* Быстрые действия */}
       <Card>
         <CardHeader>
-          <CardTitle>Быстрые действия</CardTitle>
+          <CardTitle className='text-white'>Быстрые действия</CardTitle>
         </CardHeader>
         <CardContent>
           <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
@@ -169,7 +169,7 @@ export default function ProfilePage() {
       {/* Текущий тариф */}
       <Card>
         <CardHeader>
-          <CardTitle className='flex items-center justify-between'>
+          <CardTitle className='flex items-center justify-between text-white'>
             <div className='flex items-center gap-2'>
               <CreditCard className='h-5 w-5' />
               Текущий тариф
@@ -180,16 +180,16 @@ export default function ProfilePage() {
         <CardContent>
           <div className='space-y-2'>
             <div className='flex justify-between'>
-              <span className='text-muted-foreground'>Статус</span>
-              <span className='font-medium'>Активен</span>
+              <span className='text-gray-400'>Статус</span>
+              <span className='font-medium text-white'>Активен</span>
             </div>
             <div className='flex justify-between'>
-              <span className='text-muted-foreground'>Следующее списание</span>
-              <span className='font-medium'>15 декабря 2024</span>
+              <span className='text-gray-400'>Следующее списание</span>
+              <span className='font-medium text-white'>15 декабря 2024</span>
             </div>
             <div className='flex justify-between'>
-              <span className='text-muted-foreground'>Участников на вебинаре</span>
-              <span className='font-medium'>До 100</span>
+              <span className='text-gray-400'>Участников на вебинаре</span>
+              <span className='font-medium text-white'>До 100</span>
             </div>
             <div className='pt-4'>
               <Link href="/tariffs">

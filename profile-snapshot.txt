@@ -1,0 +1,254 @@
+uid=1_0 RootWebArea "ISRA.kz - Платформа для управления вебинарами" url="http://localhost:3001/profile"
+  uid=1_1 ignored
+    uid=1_2 ignored
+      uid=1_3 ignored
+        uid=1_4 navigation
+          uid=1_5 ignored
+            uid=1_6 ignored
+              uid=1_7 ignored
+                uid=1_8 ignored
+                  uid=1_9 link "ISRA" url="http://localhost:3001/"
+                    uid=1_10 StaticText "ISRA"
+                      uid=1_11 InlineTextBox "ISRA"
+                uid=1_12 ignored
+                  uid=1_13 link "Вебинары" url="http://localhost:3001/rooms"
+                    uid=1_14 StaticText "Вебинары"
+                      uid=1_15 InlineTextBox "Вебинары"
+                  uid=1_16 link "Профиль" url="http://localhost:3001/profile"
+                    uid=1_17 StaticText "Профиль"
+                      uid=1_18 InlineTextBox "Профиль"
+                  uid=1_19 link "Тарифы" url="http://localhost:3001/tariffs"
+                    uid=1_20 StaticText "Тарифы"
+                      uid=1_21 InlineTextBox "Тарифы"
+              uid=1_22 ignored
+                uid=1_23 button "ИП" haspopup="menu"
+                  uid=1_24 ignored
+                    uid=1_25 ignored
+                      uid=1_26 StaticText "ИП"
+                        uid=1_27 InlineTextBox "ИП"
+        uid=1_28 main
+          uid=1_29 ignored
+            uid=1_30 ignored
+              uid=1_31 ignored
+                uid=1_32 heading "Профиль" level="1"
+                  uid=1_33 StaticText "Профиль"
+                    uid=1_34 InlineTextBox "Профиль"
+                uid=1_35 paragraph
+                  uid=1_36 StaticText "Управление вашей учетной записью и настройками"
+                    uid=1_37 InlineTextBox "Управление вашей учетной записью и настройками"
+              uid=1_38 ignored
+                uid=1_39 ignored
+                  uid=1_40 heading "Профиль пользователя" level="3"
+                    uid=1_41 StaticText "Профиль пользователя"
+                      uid=1_42 InlineTextBox "Профиль пользователя"
+                uid=1_43 ignored
+                  uid=1_44 generic
+                    uid=1_45 ignored
+                      uid=1_46 ignored
+                        uid=1_47 ignored
+                          uid=1_48 StaticText "ИП"
+                            uid=1_49 InlineTextBox "ИП"
+                      uid=1_50 ignored
+                        uid=1_51 heading "Аватар профиля" level="3"
+                          uid=1_52 StaticText "Аватар профиля"
+                            uid=1_53 InlineTextBox "Аватар профиля"
+                        uid=1_54 paragraph
+                          uid=1_55 StaticText "Загрузите изображение для вашего профиля"
+                            uid=1_56 InlineTextBox "Загрузите изображение для вашего профиля"
+                        uid=1_57 button "Изменить аватар"
+                          uid=1_58 StaticText "Изменить аватар"
+                            uid=1_59 InlineTextBox "Изменить аватар"
+                    uid=1_60 ignored
+                      uid=1_61 ignored
+                        uid=1_62 LabelText
+                          uid=1_63 StaticText "Имя"
+                            uid=1_64 InlineTextBox "Имя"
+                        uid=1_65 textbox "Имя" value="Иван"
+                          uid=1_66 ignored
+                          uid=1_67 generic
+                            uid=1_68 StaticText "Иван"
+                              uid=1_69 InlineTextBox "Иван"
+                      uid=1_70 ignored
+                        uid=1_71 LabelText
+                          uid=1_72 StaticText "Фамилия"
+                            uid=1_73 InlineTextBox "Фамилия"
+                        uid=1_74 textbox "Фамилия" value="Петров"
+                          uid=1_75 ignored
+                          uid=1_76 generic
+                            uid=1_77 StaticText "Петров"
+                              uid=1_78 InlineTextBox "Петров"
+                    uid=1_79 ignored
+                      uid=1_80 LabelText
+                        uid=1_81 StaticText "Email"
+                          uid=1_82 InlineTextBox "Email"
+                      uid=1_83 textbox "Email" value="ivan.petrov@example.com"
+                        uid=1_84 ignored
+                        uid=1_85 generic
+                          uid=1_86 StaticText "ivan.petrov@example.com"
+                            uid=1_87 InlineTextBox "ivan.petrov@example.com"
+                    uid=1_88 ignored
+                      uid=1_89 LabelText
+                        uid=1_90 StaticText "Телефон"
+                          uid=1_91 InlineTextBox "Телефон"
+                      uid=1_92 textbox "Телефон" value="+7 (999) 123-45-67"
+                        uid=1_93 ignored
+                        uid=1_94 generic
+                          uid=1_95 StaticText "+7 (999) 123-45-67"
+                            uid=1_96 InlineTextBox "+7 (999) 123-45-67"
+                    uid=1_97 button "Сохранить изменения"
+                      uid=1_98 StaticText "Сохранить изменения"
+                        uid=1_99 InlineTextBox "Сохранить изменения"
+              uid=1_100 ignored
+                uid=1_101 ignored
+                  uid=1_102 heading "Дополнительные настройки" level="3"
+                    uid=1_103 StaticText "Дополнительные настройки"
+                      uid=1_104 InlineTextBox "Дополнительные настройки"
+                uid=1_105 ignored
+                  uid=1_106 ignored
+                    uid=1_107 button "Изменить пароль" haspopup="dialog"
+                      uid=1_108 StaticText "Изменить пароль"
+                        uid=1_109 InlineTextBox "Изменить пароль"
+                    uid=1_110 link "Управление тарифом" url="http://localhost:3001/tariffs"
+                      uid=1_111 button "Управление тарифом"
+                        uid=1_112 StaticText "Управление тарифом"
+                          uid=1_113 InlineTextBox "Управление тарифом"
+              uid=1_114 ignored
+                uid=1_115 heading "Статистика" level="2"
+                  uid=1_116 StaticText "Статистика"
+                    uid=1_117 InlineTextBox "Статистика"
+                uid=1_118 ignored
+                  uid=1_119 ignored
+                    uid=1_120 ignored
+                      uid=1_121 heading "Всего вебинаров" level="3"
+                        uid=1_122 StaticText "Всего вебинаров"
+                          uid=1_123 InlineTextBox "Всего вебинаров"
+                    uid=1_124 ignored
+                      uid=1_125 generic
+                        uid=1_126 StaticText "24"
+                          uid=1_127 InlineTextBox "24"
+                      uid=1_128 paragraph
+                        uid=1_129 StaticText "За все время"
+                          uid=1_130 InlineTextBox "За все время"
+                  uid=1_131 ignored
+                    uid=1_132 ignored
+                      uid=1_133 heading "Активных" level="3"
+                        uid=1_134 StaticText "Активных"
+                          uid=1_135 InlineTextBox "Активных"
+                    uid=1_136 ignored
+                      uid=1_137 generic
+                        uid=1_138 StaticText "3"
+                          uid=1_139 InlineTextBox "3"
+                      uid=1_140 paragraph
+                        uid=1_141 StaticText "Сейчас идут"
+                          uid=1_142 InlineTextBox "Сейчас идут"
+                  uid=1_143 ignored
+                    uid=1_144 ignored
+                      uid=1_145 heading "Запланированных" level="3"
+                        uid=1_146 StaticText "Запланированных"
+                          uid=1_147 InlineTextBox "Запланированных"
+                    uid=1_148 ignored
+                      uid=1_149 generic
+                        uid=1_150 StaticText "5"
+                          uid=1_151 InlineTextBox "5"
+                      uid=1_152 paragraph
+                        uid=1_153 StaticText "На этой неделе"
+                          uid=1_154 InlineTextBox "На этой неделе"
+                  uid=1_155 ignored
+                    uid=1_156 ignored
+                      uid=1_157 heading "Участников" level="3"
+                        uid=1_158 StaticText "Участников"
+                          uid=1_159 InlineTextBox "Участников"
+                    uid=1_160 ignored
+                      uid=1_161 generic
+                        uid=1_162 StaticText "1,234"
+                          uid=1_163 InlineTextBox "1,234"
+                      uid=1_164 paragraph
+                        uid=1_165 StaticText "Всего участников"
+                          uid=1_166 InlineTextBox "Всего участников"
+              uid=1_167 ignored
+                uid=1_168 ignored
+                  uid=1_169 heading "Быстрые действия" level="3"
+                    uid=1_170 StaticText "Быстрые действия"
+                      uid=1_171 InlineTextBox "Быстрые действия"
+                uid=1_172 ignored
+                  uid=1_173 ignored
+                    uid=1_174 link "Мои комнаты Управление вебинарами" url="http://localhost:3001/rooms"
+                      uid=1_175 button "Мои комнаты Управление вебинарами"
+                        uid=1_176 ignored
+                          uid=1_177 generic
+                            uid=1_178 StaticText "Мои комнаты"
+                              uid=1_179 InlineTextBox "Мои комнаты"
+                          uid=1_180 generic
+                            uid=1_181 StaticText "Управление вебинарами"
+                              uid=1_182 InlineTextBox "Управление вебинарами"
+                    uid=1_183 button "Отчеты Аналитика и статистика"
+                      uid=1_184 ignored
+                        uid=1_185 generic
+                          uid=1_186 StaticText "Отчеты"
+                            uid=1_187 InlineTextBox "Отчеты"
+                        uid=1_188 generic
+                          uid=1_189 StaticText "Аналитика и статистика"
+                            uid=1_190 InlineTextBox "Аналитика и статистика"
+                    uid=1_191 button "Настройки Конфигурация платформы"
+                      uid=1_192 ignored
+                        uid=1_193 generic
+                          uid=1_194 StaticText "Настройки"
+                            uid=1_195 InlineTextBox "Настройки"
+                        uid=1_196 generic
+                          uid=1_197 StaticText "Конфигурация платформы"
+                            uid=1_198 InlineTextBox "Конфигурация платформы"
+              uid=1_199 ignored
+                uid=1_200 ignored
+                  uid=1_201 heading "Текущий тариф PRO" level="3"
+                    uid=1_202 ignored
+                      uid=1_203 StaticText "Текущий тариф"
+                        uid=1_204 InlineTextBox "Текущий тариф"
+                    uid=1_205 ignored
+                      uid=1_206 StaticText "PRO"
+                        uid=1_207 InlineTextBox "PRO"
+                uid=1_208 ignored
+                  uid=1_209 ignored
+                    uid=1_210 ignored
+                      uid=1_211 ignored
+                        uid=1_212 StaticText "Статус"
+                          uid=1_213 InlineTextBox "Статус"
+                      uid=1_214 ignored
+                        uid=1_215 StaticText "Активен"
+                          uid=1_216 InlineTextBox "Активен"
+                    uid=1_217 ignored
+                      uid=1_218 ignored
+                        uid=1_219 StaticText "Следующее списание"
+                          uid=1_220 InlineTextBox "Следующее списание"
+                      uid=1_221 ignored
+                        uid=1_222 StaticText "15 декабря 2024"
+                          uid=1_223 InlineTextBox "15 декабря 2024"
+                    uid=1_224 ignored
+                      uid=1_225 ignored
+                        uid=1_226 StaticText "Участников на вебинаре"
+                          uid=1_227 InlineTextBox "Участников на вебинаре"
+                      uid=1_228 ignored
+                        uid=1_229 StaticText "До 100"
+                          uid=1_230 InlineTextBox "До 100"
+                    uid=1_231 generic
+                      uid=1_232 link "Управление тарифом" url="http://localhost:3001/tariffs"
+                        uid=1_233 button "Управление тарифом"
+                          uid=1_234 StaticText "Управление тарифом"
+                            uid=1_235 InlineTextBox "Управление тарифом"
+            uid=1_236 region "Notifications (F8)"
+              uid=1_237 list
+      uid=1_238 generic
+        uid=1_239 generic
+          uid=1_240 generic
+            uid=1_241 ignored
+              uid=1_242 ignored
+                uid=1_243 generic
+                  uid=1_244 ignored
+                    uid=1_245 button "Open Next.js Dev Tools" haspopup="menu"
+                      uid=1_246 image
+                        uid=1_247 ignored
+                        uid=1_248 ignored
+                        uid=1_249 ignored
+                        uid=1_250 ignored
+                        uid=1_251 ignored
+      uid=1_252 generic
+        uid=1_253 alert

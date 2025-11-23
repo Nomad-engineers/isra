@@ -87,14 +87,16 @@ export function CreateWebinarModal({
           </DialogTitle>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="pt-6">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="title"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Название вебинара *</FormLabel>
+                  <div className="pt-0.5"> </div>
                   <FormControl>
                     <Input
                       placeholder="Введите название вебинара"
@@ -115,6 +117,7 @@ export function CreateWebinarModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Спикер *</FormLabel>
+                  <div className="pt-0.5"> </div>
                   <FormControl>
                     <Input
                       placeholder="Введите имя спикера"
@@ -135,6 +138,7 @@ export function CreateWebinarModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Время проведения</FormLabel>
+                  <div className="pt-0.5"> </div>
                   <FormControl>
                     <Input
                       type="datetime-local"
@@ -154,6 +158,7 @@ export function CreateWebinarModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Описание</FormLabel>
+                  <div className="pt-0.5"> </div>
                   <FormControl>
                     <Textarea
                       placeholder="Введите описание вебинара"
@@ -173,6 +178,7 @@ export function CreateWebinarModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Ссылка на трансляцию</FormLabel>
+                  <div className="pt-0.5"> </div>
                   <FormControl>
                     <Input
                       type="url"
@@ -206,6 +212,7 @@ export function CreateWebinarModal({
             </div>
           </form>
         </Form>
+        </div>
       </DialogContent>
     </Dialog>
   )

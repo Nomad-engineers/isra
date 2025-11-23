@@ -50,7 +50,7 @@ export function Navigation({ userName = 'Пользователь', userAvatar }
                     className={cn(
                       "inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200",
                       isActive
-                        ? "bg-gradient-primary text-white shadow-lg"
+                        ? "text-isra-purple-main bg-transparent"
                         : "text-gray-400 hover:text-white hover:bg-isra-medium/50"
                     )}
                   >
@@ -68,7 +68,7 @@ export function Navigation({ userName = 'Пользователь', userAvatar }
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full border border-isra hover:border-isra-primary/50 transition-colors text-white">
                   <Avatar className="h-9 w-9">
                     <AvatarImage src={userAvatar} alt="Аватар" />
-                    <AvatarFallback className="bg-gradient-primary text-primary-foreground font-semibold">
+                    <AvatarFallback className="gradient-primary text-primary-foreground font-semibold">
                       {userName.split(' ').map(n => n[0]).join('').toUpperCase()}
                     </AvatarFallback>
                   </Avatar>

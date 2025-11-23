@@ -48,3 +48,9 @@ export type FilterParams = {
 }
 
 export type ListParams = PaginationParams & FilterParams
+
+export interface BaseFormData {
+  name: string
+  description?: string
+  active?: boolean
+}

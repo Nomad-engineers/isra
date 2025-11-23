@@ -18,6 +18,8 @@ export const mockWebinars: Webinar[] = [
       allowScreenShare: false,
       requirePassword: false,
     },
+    hostId: 'host-1',
+    hostName: 'Иван Петров',
     tags: ['React', 'Frontend', 'JavaScript'],
   },
   {
@@ -39,6 +41,8 @@ export const mockWebinars: Webinar[] = [
       requirePassword: true,
       password: 'ts2024',
     },
+    hostId: 'host-2',
+    hostName: 'Мария Сидорова',
     tags: ['TypeScript', 'Frontend', 'Advanced'],
   },
   {
@@ -58,6 +62,8 @@ export const mockWebinars: Webinar[] = [
       allowScreenShare: true,
       requirePassword: false,
     },
+    hostId: 'host-3',
+    hostName: 'Алексей Козлов',
     tags: ['Node.js', 'Backend', 'Architecture'],
   },
   {
@@ -74,6 +80,8 @@ export const mockWebinars: Webinar[] = [
       allowScreenShare: true,
       requirePassword: false,
     },
+    hostId: 'host-4',
+    hostName: 'Елена Новикова',
     tags: ['CSS', 'Frontend', 'Layout'],
   },
   {
@@ -96,6 +104,8 @@ export const mockWebinars: Webinar[] = [
       allowScreenShare: false,
       requirePassword: false,
     },
+    hostId: 'host-5',
+    hostName: 'Сергей Волков',
     tags: ['MongoDB', 'Database', 'NoSQL'],
   },
 ]

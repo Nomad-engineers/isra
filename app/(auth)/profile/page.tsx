@@ -21,8 +21,8 @@ export default function ProfilePage() {
     firstName: 'Иван',
     lastName: 'Петров',
     email: 'ivan.petrov@example.com',
-    phone: '+7 (999) 123-45-67',
-    avatar: '',
+    phone: '+7 (999) 123-45-67' as string | undefined,
+    avatar: '' as string | undefined,
   })
 
   const updateProfileOperation = useAsyncOperation(profileApi.updateProfile)
@@ -59,7 +59,7 @@ export default function ProfilePage() {
           firstName: data.firstName,
           lastName: data.lastName,
           email: data.email,
-          phone: data.phone,
+          phone: data.phone || undefined,
           avatar: avatarUrl,
         }))
 
@@ -71,7 +71,7 @@ export default function ProfilePage() {
           lastName: data.lastName,
           email: data.email,
           phone: data.phone,
-          avatar: data.avatar,
+          avatar: data.avatar || undefined,
         })
 
         setProfile(prev => ({
@@ -79,7 +79,7 @@ export default function ProfilePage() {
           firstName: data.firstName,
           lastName: data.lastName,
           email: data.email,
-          phone: data.phone,
+          phone: data.phone || undefined,
         }))
 
         toast.success('Профиль успешно обновлен!')

@@ -11,7 +11,7 @@ import { ProfileForm } from '@/components/forms/profile-form'
 import { ChangePasswordForm } from '@/components/forms/change-password-form'
 import { useAsyncOperation } from '@/hooks/use-async-operation'
 import { profileApi } from '@/api/profile'
-import { User, Lock, CreditCard, BarChart3, Video, FileText, Settings } from 'lucide-react'
+import { User, Lock, CreditCard, BarChart3, Video, FileText } from 'lucide-react'
 import Link from 'next/link'
 
 export default function ProfilePage() {
@@ -184,24 +184,15 @@ export default function ProfilePage() {
                     <div className='text-sm text-muted-foreground'>Аналитика и статистика</div>
                   </div>
                 </Button>
-
-                <Button variant='outline' className='w-full flex items-center gap-3 h-auto p-4 justify-start'>
-                  <Settings className='h-5 w-5 flex-shrink-0' />
-                  <div className='text-left'>
-                    <div className='font-medium'>Настройки</div>
-                    <div className='text-sm text-muted-foreground'>Конфигурация платформы</div>
-                  </div>
-                </Button>
               </div>
             </CardContent>
           </Card>
 
-          {/* Дополнительные настройки */}
+          {/* Управление аккаунтом */}
           <Card>
             <CardHeader>
-              <CardTitle className='flex items-center gap-2 text-white'>
-                <Settings className='h-5 w-5' />
-                Настройки
+              <CardTitle className='text-white'>
+                Управление аккаунтом
               </CardTitle>
             </CardHeader>
             <CardContent className='space-y-3'>

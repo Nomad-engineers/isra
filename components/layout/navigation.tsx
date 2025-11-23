@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { User, Settings, LogOut, Users, BarChart3, UserCircle } from 'lucide-react'
+import { User, LogOut, Users, BarChart3, UserCircle } from 'lucide-react'
 
 const navigation = [
   { name: 'Вебинары', href: '/rooms', icon: Users },
@@ -87,14 +87,7 @@ export function Navigation({ userName = 'Пользователь', userAvatar }
                     <span>Профиль</span>
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/settings" className="cursor-pointer">
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Настройки</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer">
+                  <DropdownMenuItem className="cursor-pointer">
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Выйти</span>
                 </DropdownMenuItem>

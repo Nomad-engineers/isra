@@ -1,10 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { LucideIcon } from 'lucide-react'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 
 interface StatsCardProps {
@@ -17,7 +12,6 @@ interface StatsCardProps {
     isUp: boolean
   }
   className?: string
-  tooltipText?: string
 }
 
 export function StatsCard({
@@ -26,10 +20,9 @@ export function StatsCard({
   description,
   icon: Icon,
   trend,
-  className,
-  tooltipText
+  className
 }: StatsCardProps) {
-  const cardContent = (
+  return (
     <Card className={cn(
       "transition-all duration-200 hover:shadow-lg hover:shadow-isra-primary/10 hover:-translate-y-1 border-isra/30 card-glass",
       className
@@ -63,19 +56,4 @@ export function StatsCard({
       </CardContent>
     </Card>
   )
-
-  if (tooltipText) {
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          {cardContent}
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{tooltipText}</p>
-        </TooltipContent>
-      </Tooltip>
-    )
-  }
-
-  return cardContent
 }

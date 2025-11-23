@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { MoreHorizontal, Edit, Trash2, Eye, Copy, Calendar, Users, Clock, FileText } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { formatDate } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { Webinar } from '@/types/webinar'
@@ -73,16 +72,9 @@ export function WebinarCard({
     )}>
       <CardHeader className="pb-3">
         <CardTitle className='flex justify-between items-start gap-2'>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className='text-lg leading-tight font-semibold text-foreground line-clamp-2 group-hover:text-isra-primary transition-colors cursor-default'>
-                {webinar.title}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{webinar.title}</p>
-            </TooltipContent>
-          </Tooltip>
+          <span className='text-lg leading-tight font-semibold text-foreground line-clamp-2 group-hover:text-isra-primary transition-colors cursor-default'>
+            {webinar.title}
+          </span>
           <div className='flex items-center gap-2 flex-shrink-0'>
             <Badge
               variant={statusInfo.variant}
@@ -94,17 +86,10 @@ export function WebinarCard({
               {statusInfo.label}
             </Badge>
             {webinar.active ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge variant='outline' className='text-green-400 border-green-400/50 bg-green-500/10 animate-pulse cursor-help'>
-                    <div className="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5 animate-pulse" />
-                    В прямом эфире
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Вебинар сейчас идет в прямом эфире</p>
-                </TooltipContent>
-              </Tooltip>
+              <Badge variant='outline' className='text-green-400 border-green-400/50 bg-green-500/10 animate-pulse'>
+                <div className="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5 animate-pulse" />
+                В прямом эфире
+              </Badge>
             ) : webinar.scheduledAt ? (
               <Badge variant='outline' className='text-blue-400 border-blue-400/50 bg-blue-500/10'>
                 <Calendar className="w-3 h-3 mr-1" />
@@ -193,32 +178,25 @@ export function WebinarCard({
           )}
 
           {participantInfo && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className='flex items-center gap-2 text-muted-foreground cursor-help'>
-                  <Users className='h-4 w-4 text-isra-cyan' />
-                  <span className="text-sm font-medium">
-                    {participantInfo.current}/{participantInfo.max}
-                  </span>
-                  <div className='flex-1 bg-isra-medium/50 rounded-full h-2 overflow-hidden'>
-                    <div
-                      className={cn(
-                        'h-full transition-all duration-500 rounded-full',
-                        participantInfo.percentage >= 90
-                          ? 'bg-red-500'
-                          : participantInfo.percentage >= 70
-                          ? 'bg-orange-500'
-                          : 'bg-gradient-to-r from-isra-cyan to-isra-primary'
-                      )}
-                      style={{ width: `${participantInfo.percentage}%` }}
-                    />
-                  </div>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Заполнено: {participantInfo.percentage}% ({participantInfo.current} из {participantInfo.max} участников)</p>
-              </TooltipContent>
-            </Tooltip>
+            <div className='flex items-center gap-2 text-muted-foreground'>
+              <Users className='h-4 w-4 text-isra-cyan' />
+              <span className="text-sm font-medium">
+                {participantInfo.current}/{participantInfo.max}
+              </span>
+              <div className='flex-1 bg-isra-medium/50 rounded-full h-2 overflow-hidden'>
+                <div
+                  className={cn(
+                    'h-full transition-all duration-500 rounded-full',
+                    participantInfo.percentage >= 90
+                      ? 'bg-red-500'
+                      : participantInfo.percentage >= 70
+                      ? 'bg-orange-500'
+                      : 'bg-gradient-to-r from-isra-cyan to-isra-primary'
+                  )}
+                  style={{ width: `${participantInfo.percentage}%` }}
+                />
+              </div>
+            </div>
           )}
         </div>
 
@@ -238,26 +216,12 @@ export function WebinarCard({
         )}
 
         <div className='flex justify-between text-xs text-muted-foreground pt-3 border-t border-isra/30'>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="cursor-help hover:text-foreground transition-colors">
-                Создан: {formatDate(webinar.createdAt)}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Дата создания вебинара</p>
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="cursor-help hover:text-foreground transition-colors">
-                Обновлен: {formatDate(webinar.updatedAt)}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Дата последнего обновления</p>
-            </TooltipContent>
-          </Tooltip>
+          <span className="hover:text-foreground transition-colors">
+            Создан: {formatDate(webinar.createdAt)}
+          </span>
+          <span className="hover:text-foreground transition-colors">
+            Обновлен: {formatDate(webinar.updatedAt)}
+          </span>
         </div>
       </CardContent>
     </Card>

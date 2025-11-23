@@ -171,6 +171,22 @@
   .hover\:bg-isra-purple-light:hover {
     background-color: #8A3FFC;
   }
+
+  /* Glass morphism for dropdown menus */
+  .dropdown-glass {
+    background: rgba(18, 18, 18, 0.9); /* #121212 with 90% opacity */
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(123, 47, 247, 0.2); /* Purple accent with 20% opacity */
+    box-shadow: 0 10px 40px rgba(123, 47, 247, 0.1); /* Purple shadow with 10% opacity */
+  }
+
+  /* Alternative with medium background */
+  .dropdown-glass-medium {
+    background: rgba(30, 30, 30, 0.85); /* #1E1E1E with 85% opacity */
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(123, 47, 247, 0.25);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
 }
 
 /* Прямые стили для темной темы */

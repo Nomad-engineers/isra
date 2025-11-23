@@ -154,13 +154,22 @@ export function CreateWebinarModal({
                     <FormLabel>Время проведения</FormLabel>
                     <div className="pt-0.5"> </div>
                     <FormControl>
-                      <Input
-                        type="text"
-                        placeholder="Выберите дату"
-                        {...field}
-                        value={field.value || ""}
-                        onChange={(e) => field.onChange(e.target.value)}
-                      />
+                      <div className="datetime-input-wrapper">
+                        <Input
+                          type="datetime-local"
+                          {...field}
+                          value={field.value || ""}
+                          onChange={(e) => field.onChange(e.target.value)}
+                          placeholder="Выберите дату"
+                          className={cn(
+                            "text-white placeholder:text-gray-400 bg-transparent",
+                            // remove calendar icon completely
+                            "[&::-webkit-calendar-picker-indicator]:hidden",
+                            "[&::-webkit-inner-spin-button]:hidden",
+                            "[&::-webkit-clear-button]:hidden"
+                          )}
+                        />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

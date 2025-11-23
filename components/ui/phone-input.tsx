@@ -24,68 +24,35 @@ export function PhoneInput({
   className,
 }: PhoneInputProps) {
   const formatPhoneNumber = useCallback((input: string): string => {
-    // If input is empty or just formatting characters, return empty
-    if (!input || input.replace(/\D/g, "").length === 0) {
-      return "";
-    }
+    const digits = input.replace(/\D/g, ""); // оставляем только цифры
+    if (!digits) return ""; // если нет цифр, возвращаем пустую строку
 
-    // Remove all non-digit characters first
-    const digits = input.replace(/\D/g, "");
+    let result = "+7";
 
-    // Don't format if less than 1 digit
-    if (digits.length === 0) {
-      return "";
-    }
-
-    let result = "+7(";
-
-    // Add first 3 digits (area code)
-    if (digits.length > 0) {
-      // Handle case where input starts with 8
-      const areaCode = digits.startsWith("8")
-        ? digits.slice(1, 4)
-        : digits.startsWith("7")
-        ? digits.slice(1, 4)
-        : digits.slice(0, 3);
-      result += areaCode;
-    }
-
-    // Close parentheses if we have at least 1 digit after +7
+    // первые 3 цифры — код оператора
     if (digits.length > 1) {
-      result += ")";
+      const areaCode =
+        digits.length >= 4 ? digits.slice(1, 4) : digits.slice(1);
+      result += `(${areaCode}`;
+      if (areaCode.length === 3) result += ")";
     }
 
-    // Add next 3 digits
-    if (digits.length > 3) {
-      const nextDigits =
-        digits.startsWith("8") || digits.startsWith("7")
-          ? digits.slice(4, 7)
-          : digits.slice(3, 6);
-      if (nextDigits.length > 0) {
-        result += "-" + nextDigits;
-      }
+    // следующие 3 цифры
+    if (digits.length >= 4) {
+      const next3 = digits.length >= 7 ? digits.slice(4, 7) : digits.slice(4);
+      result += next3 ? `-${next3}` : "";
     }
 
-    // Add next 2 digits
-    if (digits.length > 6) {
-      const nextDigits =
-        digits.startsWith("8") || digits.startsWith("7")
-          ? digits.slice(7, 9)
-          : digits.slice(6, 8);
-      if (nextDigits.length > 0) {
-        result += "-" + nextDigits;
-      }
+    // следующие 2 цифры
+    if (digits.length >= 7) {
+      const next2 = digits.length >= 9 ? digits.slice(7, 9) : digits.slice(7);
+      result += next2 ? `-${next2}` : "";
     }
 
-    // Add last 2 digits
-    if (digits.length > 8) {
-      const nextDigits =
-        digits.startsWith("8") || digits.startsWith("7")
-          ? digits.slice(9, 11)
-          : digits.slice(8, 10);
-      if (nextDigits.length > 0) {
-        result += "-" + nextDigits;
-      }
+    // последние 2 цифры
+    if (digits.length >= 9) {
+      const last2 = digits.length >= 11 ? digits.slice(9, 11) : digits.slice(9);
+      result += last2 ? `-${last2}` : "";
     }
 
     return result;
@@ -94,9 +61,10 @@ export function PhoneInput({
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const input = e.target.value;
+      const digits = input.replace(/\D/g, "");
 
-      // If input is empty, return empty string
-      if (!input.trim()) {
+      // если полностью удалили, очищаем поле
+      if (!digits) {
         onChange("");
         return;
       }

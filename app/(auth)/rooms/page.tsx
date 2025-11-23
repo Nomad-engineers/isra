@@ -12,6 +12,7 @@ import { useDebounce } from '@/hooks/use-debounce'
 import { formatDate } from '@/lib/utils'
 import { mockWebinars, getMockStats } from './mock-data'
 import { RefreshCw, Plus, Search, Calendar, Users, FileText, Video, Filter } from 'lucide-react'
+import { CreateWebinarModal } from '@/components/webinars/create-webinar-modal'
 
 export default function RoomsPage() {
   const [webinars] = useState(mockWebinars)
@@ -128,10 +129,12 @@ export default function RoomsPage() {
             <RefreshCw className='h-4 w-4 mr-2' />
             Обновить
           </Button>
-          <Button size='sm' className='gradient-primary hover:opacity-90 transition-opacity'>
-            <Plus className='h-4 w-4 mr-2' />
-            Создать
-          </Button>
+          <CreateWebinarModal
+            buttonText="Создать"
+            buttonSize="sm"
+            buttonClassName="gradient-primary hover:opacity-90 transition-opacity"
+            showIcon={true}
+          />
         </div>
       </div>
 
@@ -175,10 +178,11 @@ export default function RoomsPage() {
                     ? 'Попробуйте изменить поисковый запрос'
                     : 'У вас пока нет вебинаров. Создайте свой первый вебинар!'}
                 </p>
-                <Button className='gradient-primary hover:opacity-90 transition-opacity'>
-                  <Plus className='h-4 w-4 mr-2' />
-                  Создать вебинар
-                </Button>
+                <CreateWebinarModal
+                  buttonText="Создать вебинар"
+                  buttonClassName="gradient-primary hover:opacity-90 transition-opacity"
+                  showIcon={true}
+                />
               </CardContent>
             </Card>
           )}
@@ -219,10 +223,12 @@ export default function RoomsPage() {
               <CardTitle>Быстрые действия</CardTitle>
             </CardHeader>
             <CardContent className='space-y-2'>
-              <Button className='w-full gradient-primary hover:opacity-90 transition-opacity' size='sm'>
-                <Plus className='h-4 w-4 mr-2' />
-                Новый вебинар
-              </Button>
+              <CreateWebinarModal
+                buttonText="Новый вебинар"
+                buttonSize="sm"
+                buttonClassName="w-full gradient-primary hover:opacity-90 transition-opacity"
+                showIcon={true}
+              />
               <Button variant='outline' className='w-full' size='sm'>
                 <Calendar className='h-4 w-4 mr-2' />
                 Расписание

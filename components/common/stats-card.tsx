@@ -24,7 +24,7 @@ export function StatsCard({
 }: StatsCardProps) {
   return (
     <Card className={cn(
-      "transition-all duration-200 hover:shadow-lg hover:shadow-isra-primary/10 hover:-translate-y-1 border-isra/30 card-glass",
+      "transition-all duration-200 hover:shadow-lg hover:shadow-isra-primary/10 hover:-translate-y-1 card-glass",
       className
     )}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

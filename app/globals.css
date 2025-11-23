@@ -28,36 +28,58 @@
   /* ISRA.kz Dark Theme - Exact Color Scheme */
   .dark {
     /* Background Colors */
-    --background: 240 10% 7%; /* #121212 */
-    --foreground: 0 0% 100%; /* #FFFFFF */
-    --card: 240 10% 12%; /* #1E1E1E */
-    --card-foreground: 0 0% 100%; /* #FFFFFF */
-    --popover: 240 10% 12%; /* #1E1E1E */
-    --popover-foreground: 0 0% 100%; /* #FFFFFF */
+    --background: 240 10% 7%;
+    /* #121212 */
+    --foreground: 0 0% 100%;
+    /* #FFFFFF */
+    --card: 240 10% 12%;
+    /* #1E1E1E */
+    --card-foreground: 0 0% 100%;
+    /* #FFFFFF */
+    --popover: 240 10% 12%;
+    /* #1E1E1E */
+    --popover-foreground: 0 0% 100%;
+    /* #FFFFFF */
 
     /* Primary Colors (Purple) */
-    --primary: 277 84% 66%; /* #7B2FF7 */
-    --primary-foreground: 0 0% 100%; /* #FFFFFF */
-    --primary-light: 277 84% 70%; /* #8A3FFC */
-    --primary-dark: 277 84% 50%; /* #6A1B9A */
+    --primary: 277 84% 66%;
+    /* #7B2FF7 */
+    --primary-foreground: 0 0% 100%;
+    /* #FFFFFF */
+    --primary-light: 277 84% 70%;
+    /* #8A3FFC */
+    --primary-dark: 277 84% 50%;
+    /* #6A1B9A */
 
     /* Secondary Colors */
-    --secondary: 240 10% 12%; /* #1E1E1E */
-    --secondary-foreground: 0 0% 100%; /* #FFFFFF */
-    --muted: 240 8% 15%; /* rgba(30, 30, 30, 0.8) */
-    --muted-foreground: 0 0% 88%; /* #E0E0E0 */
+    --secondary: 240 10% 12%;
+    /* #1E1E1E */
+    --secondary-foreground: 0 0% 100%;
+    /* #FFFFFF */
+    --muted: 240 8% 15%;
+    /* rgba(30, 30, 30, 0.8) */
+    --muted-foreground: 0 0% 88%;
+    /* #E0E0E0 */
 
     /* Accent Colors */
-    --accent: 187 100% 50%; /* #00D4FF (Cyan) */
-    --accent-foreground: 0 0% 100%; /* #FFFFFF */
-    --accent-pink: 0 100% 71%; /* #FF6B6B */
+    --accent: 187 100% 50%;
+    /* #00D4FF (Cyan) */
+    --accent-foreground: 0 0% 100%;
+    /* #FFFFFF */
+    --accent-pink: 0 100% 71%;
+    /* #FF6B6B */
 
     /* Other Colors */
-    --destructive: 0 72% 51%; /* Similar to red */
-    --destructive-foreground: 0 0% 100%; /* #FFFFFF */
-    --border: 240 10% 18%; /* rgba(123, 47, 247, 0.3) */
-    --input: 240 10% 12%; /* #1E1E1E */
-    --ring: 277 84% 66%; /* #7B2FF7 */
+    --destructive: 0 72% 51%;
+    /* Similar to red */
+    --destructive-foreground: 0 0% 100%;
+    /* #FFFFFF */
+    --border: 240 10% 18%;
+    /* rgba(123, 47, 247, 0.3) */
+    --input: 240 10% 12%;
+    /* #1E1E1E */
+    --ring: 277 84% 66%;
+    /* #7B2FF7 */
   }
 }
 
@@ -65,6 +87,7 @@
   * {
     border-color: hsl(var(--border));
   }
+
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
@@ -84,7 +107,6 @@
   .card-glass {
     background: rgba(30, 30, 30, 0.8);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(123, 47, 247, 0.3);
   }
 
   .text-gradient-accent {
@@ -159,13 +181,6 @@
     background-color: #FF6B6B;
   }
 
-  .border-isra {
-    border-color: rgba(123, 47, 247, 0.3);
-  }
-
-  .border-isra-purple {
-    border-color: #7B2FF7;
-  }
 
   /* Hover states */
   .hover\:bg-isra-purple-light:hover {
@@ -174,17 +189,18 @@
 
   /* Glass morphism for dropdown menus */
   .dropdown-glass {
-    background: rgba(18, 18, 18, 0.9); /* #121212 with 90% opacity */
+    background: rgba(18, 18, 18, 0.9);
+    /* #121212 with 90% opacity */
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(123, 47, 247, 0.2); /* Purple accent with 20% opacity */
-    box-shadow: 0 10px 40px rgba(123, 47, 247, 0.1); /* Purple shadow with 10% opacity */
+    box-shadow: 0 10px 40px rgba(123, 47, 247, 0.1);
+    /* Purple shadow with 10% opacity */
   }
 
   /* Alternative with medium background */
   .dropdown-glass-medium {
-    background: rgba(30, 30, 30, 0.85); /* #1E1E1E with 85% opacity */
+    background: rgba(30, 30, 30, 0.85);
+    /* #1E1E1E with 85% opacity */
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(123, 47, 247, 0.25);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   }
 }

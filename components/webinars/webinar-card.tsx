@@ -20,69 +20,58 @@ const statusConfig = {
   draft: {
     label: 'Черновик',
     variant: 'secondary' as const,
-    className: 'bg-gray-500/10 text-gray-400 border-gray-500/20'
+    className: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
   },
   scheduled: {
     label: 'Запланирован',
     variant: 'default' as const,
-    className: 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+    className: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
   },
   active: {
     label: 'Активный',
     variant: 'default' as const,
-    className: 'bg-green-500/10 text-green-400 border-green-500/20 animate-pulse'
+    className: 'bg-green-500/10 text-green-400 border-green-500/20 animate-pulse',
   },
   ended: {
     label: 'Завершен',
     variant: 'secondary' as const,
-    className: 'bg-orange-500/10 text-orange-400 border-orange-500/20'
+    className: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
   },
   cancelled: {
     label: 'Отменен',
     variant: 'destructive' as const,
-    className: 'bg-red-500/10 text-red-400 border-red-500/20'
+    className: 'bg-red-500/10 text-red-400 border-red-500/20',
   },
 }
 
-export function WebinarCard({
-  webinar,
-  onView,
-  onEdit,
-  onDelete,
-  onCopyLink,
-  actions
-}: WebinarCardProps) {
+export function WebinarCard({ webinar, onView, onEdit, onDelete, onCopyLink, actions }: WebinarCardProps) {
   const statusInfo = statusConfig[webinar.status] || statusConfig.draft
 
   const getParticipantInfo = () => {
     if (!webinar.maxParticipants) return null
-    const percentage = Math.round((webinar.currentParticipants || 0) / webinar.maxParticipants * 100)
+    const percentage = Math.round(((webinar.currentParticipants || 0) / webinar.maxParticipants) * 100)
     return {
       current: webinar.currentParticipants || 0,
       max: webinar.maxParticipants,
-      percentage
+      percentage,
     }
   }
 
   const participantInfo = getParticipantInfo()
 
   return (
-    <Card className={cn(
-      'w-full card-glass border-isra/30 transition-all duration-300 hover:shadow-lg hover:shadow-isra-primary/10 hover:-translate-y-1 group',
-    )}>
-      <CardHeader className="pb-3">
+    <Card
+      className={cn(
+        'w-full card-glass transition-all duration-300 hover:shadow-lg hover:shadow-isra-primary/10 hover:-translate-y-1 group'
+      )}
+    >
+      <CardHeader className='pb-3'>
         <CardTitle className='flex justify-between items-start gap-2'>
           <span className='text-lg leading-tight font-semibold text-foreground line-clamp-2 group-hover:text-isra-primary transition-colors cursor-default'>
             {webinar.title}
           </span>
           <div className='flex items-center gap-2 flex-shrink-0'>
-            <Badge
-              variant={statusInfo.variant}
-              className={cn(
-                "text-xs px-2 py-1",
-                statusInfo.className
-              )}
-            >
+            <Badge variant={statusInfo.variant} className={cn('text-xs px-2 py-1', statusInfo.className)}>
               {statusInfo.label}
             </Badge>
             {webinar.active ? (
@@ -92,7 +81,7 @@ export function WebinarCard({
               </Badge>
             ) : webinar.scheduledAt ? (
               <Badge variant='outline' className='text-blue-400 border-blue-400/50 bg-blue-500/10'>
-                <Calendar className="w-3 h-3 mr-1" />
+                <Calendar className='w-3 h-3 mr-1' />
                 Запланирован
               </Badge>
             ) : webinar.tags && webinar.tags.length > 0 ? (
@@ -101,7 +90,7 @@ export function WebinarCard({
               </Badge>
             ) : (
               <Badge variant='outline' className='text-gray-400 border-gray-400/50 bg-gray-500/10'>
-                <FileText className="w-3 h-3 mr-1" />
+                <FileText className='w-3 h-3 mr-1' />
                 Черновик
               </Badge>
             )}
@@ -150,11 +139,7 @@ export function WebinarCard({
         </CardTitle>
       </CardHeader>
       <CardContent className='space-y-4'>
-        {webinar.description && (
-          <p className='text-sm text-muted-foreground line-clamp-2'>
-            {webinar.description}
-          </p>
-        )}
+        {webinar.description && <p className='text-sm text-muted-foreground line-clamp-2'>{webinar.description}</p>}
 
         <div className='space-y-2 text-sm'>
           {webinar.scheduledAt && (

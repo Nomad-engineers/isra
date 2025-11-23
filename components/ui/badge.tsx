@@ -22,7 +22,11 @@ const badgeVariants = cva(
         info:
           "border-transparent bg-blue-600/90 text-white hover:bg-blue-700 hover:shadow-sm hover:shadow-blue-600/20",
         glass:
-          "border-isra/30 bg-isra-dark/60 backdrop-blur-md text-white hover:bg-isra-medium/40 hover:border-isra-primary/50 hover:shadow-sm"
+          "border-isra/30 bg-isra-dark/60 backdrop-blur-md text-white hover:bg-isra-medium/40 hover:border-isra-primary/50 hover:shadow-sm",
+        blue:
+          "border-transparent bg-blue-600/90 text-white hover:bg-blue-700 hover:shadow-sm hover:shadow-blue-600/20",
+        green:
+          "border-transparent bg-green-600/90 text-white hover:bg-green-700 hover:shadow-sm hover:shadow-green-600/20"
       },
     },
     defaultVariants: {

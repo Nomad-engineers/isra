@@ -24,12 +24,12 @@ const statusConfig = {
   },
   scheduled: {
     label: 'Запланирован',
-    variant: 'default' as const,
+    variant: 'blue' as const,
     className: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
   },
   active: {
     label: 'Активный',
-    variant: 'default' as const,
+    variant: 'green' as const,
     className: 'bg-green-500/10 text-green-400 border-green-500/20 animate-pulse',
   },
   ended: {
@@ -80,7 +80,7 @@ export function WebinarCard({ webinar, onView, onEdit, onDelete, onCopyLink, act
                 В прямом эфире
               </Badge>
             ) : webinar.scheduledAt ? (
-              <Badge variant='outline' className='text-blue-400 border-blue-400/50 bg-blue-500/10'>
+              <Badge variant='blue' className='text-xs px-2 py-1'>
                 <Calendar className='w-3 h-3 mr-1' />
                 Запланирован
               </Badge>

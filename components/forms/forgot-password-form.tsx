@@ -62,22 +62,22 @@ export function ForgotPasswordForm({ onSubmit, loading = false, onBackToLogin }:
         </div>
 
         <div className="space-y-2">
-          <h2 className="text-2xl font-bold text-white">Check your email</h2>
+          <h2 className="text-2xl font-bold text-white">Проверьте свою электронную почту</h2>
           <p className="text-muted-foreground">
-            We've sent a password reset link to<br />
+            Мы отправили ссылку для сброса пароля на адрес<br />
             <span className="font-medium text-white">{submittedEmail}</span>
           </p>
         </div>
 
         <div className="space-y-4 text-sm text-muted-foreground">
           <p>
-            Didn't receive the email? Check your spam folder or<br />
+            Не получили письмо? Проверьте папку со спамом или<br />
             <button
               onClick={handleResetForm}
               className="text-primary hover:underline font-medium"
               disabled={loading}
             >
-              try again with a different email
+              попробуйте еще раз с другим адресом электронной почты
             </button>
           </p>
 
@@ -87,7 +87,7 @@ export function ForgotPasswordForm({ onSubmit, loading = false, onBackToLogin }:
               className="flex items-center justify-center mx-auto text-primary hover:underline font-medium"
             >
               <ArrowLeft className="h-4 w-4 mr-1" />
-              Back to login
+              Вернуться к входу
             </button>
           )}
         </div>

@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { ForgotPasswordForm } from '@/components/forms/forgot-password-form'
 import { ForgotPasswordFormData } from '@/lib/validations'
 import { toast } from 'sonner'
-import { sdk } from '@/lib/sdk'
 
 export default function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -15,12 +14,21 @@ export default function ForgotPasswordPage() {
     setIsLoading(true)
 
     try {
-      const result = await sdk.forgotPassword({
-        collection: 'users',
-        data: {
-          email: data.email,
+      // Direct API call instead of using SDK to avoid configuration issues
+      const response = await fetch('https://isracms.vercel.app/api/users/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          email: data.email,
+        }),
       })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.errors?.[0]?.message || 'Failed to send reset link')
+      }
 
       // Show success message
       toast.success('Инструкции по восстановлению отправлены на вашу почту')

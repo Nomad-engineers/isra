@@ -108,5 +108,13 @@ export const signUpSchema = z.object({
   }
 )
 
+export const forgotPasswordSchema = z.object({
+  email: z
+    .string()
+    .min(1, 'Email is required')
+    .regex(emailRegex, 'Invalid email format'),
+})
+
 export type LoginFormData = z.infer<typeof loginSchema>
 export type SignUpFormData = z.infer<typeof signUpSchema>
+export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>

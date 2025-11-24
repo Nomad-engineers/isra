@@ -60,11 +60,6 @@ export function LoginForm({ onSubmit, onGoogleSignIn, loading = false, googleLoa
 
   return (
     <div className="w-full max-w-md space-y-6">
-      <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-bold">Welcome back</h1>
-        <p className="text-muted-foreground">Sign in to your account to continue</p>
-      </div>
-
       {/* Google Sign In Button */}
       {onGoogleSignIn && (
         <div className="space-y-4">
@@ -178,7 +173,7 @@ export function LoginForm({ onSubmit, onGoogleSignIn, loading = false, googleLoa
                 Remember me
               </Label>
             </div>
-            <Link href="/forgot-password" className="text-sm text-primary hover:underline">
+            <Link href="/auth/forgot-password" className="text-sm text-primary hover:underline">
               Forgot password?
             </Link>
           </div>
@@ -191,7 +186,7 @@ export function LoginForm({ onSubmit, onGoogleSignIn, loading = false, googleLoa
 
       <div className="text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{' '}
-        <Link href="/signup" className="text-primary hover:underline">
+        <Link href="/auth/signup" className="text-primary hover:underline">
           Sign up
         </Link>
       </div>

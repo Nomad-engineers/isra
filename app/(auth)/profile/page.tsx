@@ -1,50 +1,64 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { StatsCard } from '@/components/common/stats-card'
-import { ProfileForm } from '@/components/forms/profile-form'
-import { ChangePasswordForm } from '@/components/forms/change-password-form'
-import { useAsyncOperation } from '@/hooks/use-async-operation'
-import { profileApi } from '@/api/profile'
-import { ProfileFormDataWithAvatar } from '@/lib/validations'
-import { User, Lock, CreditCard, BarChart3, Video, FileText, Settings } from 'lucide-react'
-import Link from 'next/link'
-import { toast } from 'sonner'
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { StatsCard } from "@/components/common/stats-card";
+import { ProfileForm } from "@/components/forms/profile-form";
+import { ChangePasswordForm } from "@/components/forms/change-password-form";
+import { useAsyncOperation } from "@/hooks/use-async-operation";
+import { profileApi } from "@/api/profile";
+import { ProfileFormDataWithAvatar } from "@/lib/validations";
+import {
+  User,
+  Lock,
+  CreditCard,
+  BarChart3,
+  Video,
+  FileText,
+  Settings,
+} from "lucide-react";
+import Link from "next/link";
+import { toast } from "sonner";
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState({
-    firstName: 'Иван',
-    lastName: 'Петров',
-    email: 'ivan.petrov@example.com',
-    phone: '+7 (999) 123-45-67' as string | undefined,
-    avatar: '' as string | undefined,
-  })
+    firstName: "Иван",
+    lastName: "Петров",
+    email: "ivan.petrov@example.com",
+    phone: "+7 (999) 123-45-67" as string | undefined,
+    avatar: "" as string | undefined,
+  });
 
-  const updateProfileOperation = useAsyncOperation(profileApi.updateProfile)
-  const changePasswordOperation = useAsyncOperation(profileApi.changePassword)
+  const updateProfileOperation = useAsyncOperation(profileApi.updateProfile);
+  const changePasswordOperation = useAsyncOperation(profileApi.changePassword);
 
   const handleProfileUpdate = async (data: ProfileFormDataWithAvatar) => {
     try {
       // Handle avatar upload if present
       if (data.avatar) {
         // Create FormData for file upload
-        const formData = new FormData()
-        formData.append('avatar', data.avatar)
-        formData.append('firstName', data.firstName)
-        formData.append('lastName', data.lastName)
-        formData.append('email', data.email)
+        const formData = new FormData();
+        formData.append("avatar", data.avatar);
+        formData.append("firstName", data.firstName);
+        formData.append("lastName", data.lastName);
+        formData.append("email", data.email);
         if (data.phone) {
-          formData.append('phone', data.phone)
+          formData.append("phone", data.phone);
         }
 
         // Here you would typically upload to your API
         // For now, we'll simulate the upload and create a preview URL
-        const avatarUrl = URL.createObjectURL(data.avatar)
+        const avatarUrl = URL.createObjectURL(data.avatar);
 
         await updateProfileOperation.execute({
           firstName: data.firstName,
@@ -52,18 +66,18 @@ export default function ProfilePage() {
           email: data.email,
           phone: data.phone,
           avatar: avatarUrl,
-        })
+        });
 
-        setProfile(prev => ({
+        setProfile((prev) => ({
           ...prev,
           firstName: data.firstName,
           lastName: data.lastName,
           email: data.email,
           phone: data.phone || undefined,
           avatar: avatarUrl,
-        }))
+        }));
 
-        toast.success('Профиль успешно обновлен!')
+        toast.success("Профиль успешно обновлен!");
       } else {
         // Update without avatar
         await updateProfileOperation.execute({
@@ -72,59 +86,63 @@ export default function ProfilePage() {
           email: data.email,
           phone: data.phone,
           avatar: data.avatar || undefined,
-        })
+        });
 
-        setProfile(prev => ({
+        setProfile((prev) => ({
           ...prev,
           firstName: data.firstName,
           lastName: data.lastName,
           email: data.email,
           phone: data.phone || undefined,
-        }))
+        }));
 
-        toast.success('Профиль успешно обновлен!')
+        toast.success("Профиль успешно обновлен!");
       }
     } catch (error) {
-      toast.error('Ошибка при обновлении профиля')
-      console.error('Profile update error:', error)
+      toast.error("Ошибка при обновлении профиля");
+      console.error("Profile update error:", error);
     }
-  }
+  };
 
   const handlePasswordChange = async (data: any) => {
-    await changePasswordOperation.execute(data)
-  }
+    await changePasswordOperation.execute(data);
+  };
 
   return (
-    <div className='flex flex-col lg:flex-row gap-6'>
+    <div className="flex flex-col lg:flex-row gap-6">
       {/* Основной контент с табами */}
-      <div className='flex-1'>
-        <div className='mb-6'>
-          <h1 className='text-3xl font-bold tracking-tight text-white'>Профиль</h1>
-          <p className='text-gray-400'>Управление вашей учетной записью и настройками</p>
+      <div className="flex-1">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold tracking-tight text-white">
+            Профиль
+          </h1>
+          <p className="text-gray-400">
+            Управление вашей учетной записью и настройками
+          </p>
         </div>
 
-        <Tabs defaultValue='profile' className='space-y-6'>
-          <TabsList className='grid w-full grid-cols-3'>
-            <TabsTrigger value='profile' className='flex items-center gap-2'>
-              <User className='h-4 w-4' />
+        <Tabs defaultValue="profile" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="profile" className="flex items-center gap-2">
+              <User className="h-4 w-4" />
               Профиль
             </TabsTrigger>
-            <TabsTrigger value='statistics' className='flex items-center gap-2'>
-              <BarChart3 className='h-4 w-4' />
+            <TabsTrigger value="statistics" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
               Статистика
             </TabsTrigger>
-            <TabsTrigger value='tariff' className='flex items-center gap-2'>
-              <CreditCard className='h-4 w-4' />
+            <TabsTrigger value="tariff" className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4" />
               Тариф
             </TabsTrigger>
           </TabsList>
 
           {/* Таб: Профиль */}
-          <TabsContent value='profile' className='space-y-6'>
+          <TabsContent value="profile" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className='flex items-center gap-2 text-white'>
-                  <User className='h-5 w-5' />
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <User className="h-5 w-5" />
                   Профиль пользователя
                 </CardTitle>
               </CardHeader>
@@ -139,35 +157,35 @@ export default function ProfilePage() {
           </TabsContent>
 
           {/* Таб: Статистика */}
-          <TabsContent value='statistics' className='space-y-6'>
+          <TabsContent value="statistics" className="space-y-6">
             <div>
-              <h2 className='text-xl font-semibold mb-4 flex items-center gap-2 text-white'>
-                <BarChart3 className='h-5 w-5' />
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-white">
+                <BarChart3 className="h-5 w-5" />
                 Статистика
               </h2>
-              <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatsCard
-                  title='Всего вебинаров'
-                  value='24'
-                  description='За все время'
+                  title="Всего вебинаров"
+                  value="24"
+                  description="За все время"
                   icon={Video}
                 />
                 <StatsCard
-                  title='Активных'
-                  value='3'
-                  description='Сейчас идут'
+                  title="Активных"
+                  value="3"
+                  description="Сейчас идут"
                   icon={Video}
                 />
                 <StatsCard
-                  title='Запланированных'
-                  value='5'
-                  description='На этой неделе'
+                  title="Запланированных"
+                  value="5"
+                  description="На этой неделе"
                   icon={Video}
                 />
                 <StatsCard
-                  title='Участников'
-                  value='1,234'
-                  description='Всего участников'
+                  title="Участников"
+                  value="1,234"
+                  description="Всего участников"
                   icon={User}
                 />
               </div>
@@ -175,34 +193,38 @@ export default function ProfilePage() {
           </TabsContent>
 
           {/* Таб: Тариф */}
-          <TabsContent value='tariff' className='space-y-6'>
+          <TabsContent value="tariff" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className='flex items-center justify-between text-white'>
-                  <div className='flex items-center gap-2'>
-                    <CreditCard className='h-5 w-5' />
+                <CardTitle className="flex items-center justify-between text-white">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="h-5 w-5" />
                     Текущий тариф
                   </div>
-                  <Badge variant='default'>PRO</Badge>
+                  <Badge variant="default">PRO</Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className='space-y-2'>
-                  <div className='flex justify-between'>
-                    <span className='text-gray-400'>Статус</span>
-                    <span className='font-medium text-white'>Активен</span>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Статус</span>
+                    <span className="font-medium text-white">Активен</span>
                   </div>
-                  <div className='flex justify-between'>
-                    <span className='text-gray-400'>Следующее списание</span>
-                    <span className='font-medium text-white'>15 декабря 2024</span>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Следующее списание</span>
+                    <span className="font-medium text-white">
+                      15 декабря 2024
+                    </span>
                   </div>
-                  <div className='flex justify-between'>
-                    <span className='text-gray-400'>Участников на вебинаре</span>
-                    <span className='font-medium text-white'>До 100</span>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">
+                      Участников на вебинаре
+                    </span>
+                    <span className="font-medium text-white">До 100</span>
                   </div>
-                  <div className='pt-4'>
+                  <div className="pt-4">
                     <Link href="/tariffs">
-                      <Button variant='outline' className='w-full'>
+                      <Button variant="outline" className="w-full">
                         Управление тарифом
                       </Button>
                     </Link>
@@ -215,32 +237,39 @@ export default function ProfilePage() {
       </div>
 
       {/* Правый сайдбар с быстрыми действиями и настройками */}
-      <div className='lg:w-80'>
-        <div className='space-y-6'>
+      <div className="lg:w-80">
+        <div className="space-y-6">
           {/* Быстрые действия */}
           <Card>
             <CardHeader>
-              <CardTitle className='text-white'>Быстрые действия</CardTitle>
+              <CardTitle className="text-white">Быстрые действия</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className='space-y-3'>
+              <div className="space-y-3">
                 <Link href="/rooms">
-                  <Button className='w-full flex items-center gap-3 h-auto p-4 justify-start'>
-                    <Video className='h-5 w-5 flex-shrink-0' />
-                    <div className='text-left'>
-                      <div className='font-medium'>Мои комнаты</div>
-                      <div className='text-sm text-muted-foreground'>Управление вебинарами</div>
+                  <Button className="w-full flex items-center gap-3 h-auto p-4 justify-start">
+                    <Video className="h-5 w-5 flex-shrink-0" />
+                    <div className="text-left">
+                      <div className="font-medium">Мои комнаты</div>
+                      <div className="text-sm text-muted-foreground">
+                        Управление вебинарами
+                      </div>
                     </div>
                   </Button>
                 </Link>
 
-                <div className='h-2'></div>
+                <div className="h-2"></div>
 
-                <Button variant='outline' className='w-full flex items-center gap-3 h-auto p-4 justify-start'>
-                  <FileText className='h-5 w-5 flex-shrink-0' />
-                  <div className='text-left'>
-                    <div className='font-medium'>Отчеты</div>
-                    <div className='text-sm text-muted-foreground'>Аналитика и статистика</div>
+                <Button
+                  variant="outline"
+                  className="w-full flex items-center gap-3 h-auto p-4 justify-start"
+                >
+                  <FileText className="h-5 w-5 flex-shrink-0" />
+                  <div className="text-left">
+                    <div className="font-medium">Отчеты</div>
+                    <div className="text-sm text-muted-foreground">
+                      Аналитика и статистика
+                    </div>
                   </div>
                 </Button>
               </div>
@@ -250,15 +279,16 @@ export default function ProfilePage() {
           {/* Управление аккаунтом */}
           <Card>
             <CardHeader>
-              <CardTitle className='text-white'>
-                Управление аккаунтом
-              </CardTitle>
+              <CardTitle className="text-white">Управление аккаунтом</CardTitle>
             </CardHeader>
-            <CardContent className='space-y-3'>
+            <CardContent className="space-y-3">
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button variant='outline' className='w-full flex items-center gap-2'>
-                    <Lock className='h-4 w-4' />
+                  <Button
+                    variant="outline"
+                    className="w-full flex items-center gap-2"
+                  >
+                    <Lock className="h-4 w-4" />
                     Изменить пароль
                   </Button>
                 </DialogTrigger>
@@ -274,8 +304,11 @@ export default function ProfilePage() {
               </Dialog>
 
               <Link href="/tariffs">
-                <Button variant='outline' className='w-full flex items-center gap-2'>
-                  <CreditCard className='h-4 w-4' />
+                <Button
+                  variant="outline"
+                  className="w-full flex items-center gap-2"
+                >
+                  <CreditCard className="h-4 w-4" />
                   Управление тарифом
                 </Button>
               </Link>
@@ -284,5 +317,5 @@ export default function ProfilePage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

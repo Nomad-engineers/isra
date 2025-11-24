@@ -81,16 +81,6 @@ export default function NotFound() {
                   Вернуться на главную
                 </Link>
               </Button>
-
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => window.history.back()}
-                className="border-isra/30 text-white hover:bg-isra-medium/50 hover:border-isra-primary hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-200"
-              >
-                <Search className="w-4 h-4 mr-2" />
-                Назад
-              </Button>
             </div>
 
             {/* Additional help text */}

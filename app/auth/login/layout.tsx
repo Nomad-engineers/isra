@@ -7,8 +7,8 @@ export default function LoginLayout({
 }) {
   return (
     <AuthLayout
-      title="Welcome back"
-      subtitle="Sign in to your account to continue"
+      title="Добро пожаловать"
+      subtitle="Войдите в свою учетную запись, чтобы продолжить"
     >
       {children}
     </AuthLayout>

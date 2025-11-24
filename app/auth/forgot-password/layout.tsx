@@ -7,8 +7,8 @@ export default function ForgotPasswordLayout({
 }) {
   return (
     <AuthLayout
-      title="Reset your password"
-      subtitle="Enter your email to receive a password reset link"
+      title="Сбросить пароль"
+      subtitle="Введите свой адрес электронной почты, чтобы получить ссылку для сброса пароля"
     >
       {children}
     </AuthLayout>

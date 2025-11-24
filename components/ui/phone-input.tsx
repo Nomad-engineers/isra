@@ -1,7 +1,14 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import { Input } from "@/components/ui/input";
+import {
+  FormField,
+  FormItem,
+  FormControl,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
 interface PhoneInputProps {
   value?: string;
@@ -17,49 +24,37 @@ export function PhoneInput({
   className,
 }: PhoneInputProps) {
   const formatPhoneNumber = useCallback((input: string): string => {
-    const digits = input.replace(/\D/g, ""); // оставляем только цифры
-    if (!digits) return ""; // если нет цифр, возвращаем пустую строку
+    const digits = input.replace(/\D/g, "");
 
-    // Если осталась только '7' (т.е. только код страны), считаем это пустым
-    if (digits === "7") return "";
+    // Allow complete deletion
+    if (!digits || digits.length === 0) return "";
 
-    // Гарантируем, что страна +7
+    // If only "7" is left, clear it
+    if (digits === "7" || digits.length === 1) return "";
+
     let result = "+7";
 
-    // Обрабатываем код оператора (следующие 3 цифры после 7)
-    // Берём срез начиная со второй цифры оригинального массива цифр (index 1)
     if (digits.length > 1) {
-      const areaCode =
-        digits.length >= 4 ? digits.slice(1, 4) : digits.slice(1);
-      if (areaCode.length > 0) {
+      const areaCode = digits.slice(1, 4);
+      if (areaCode.length) {
         result += `(${areaCode}`;
         if (areaCode.length === 3) result += ")";
       }
     }
 
-    // Следующие 3 цифры
-    if (digits.length >= 4) {
-      const next3 = digits.length >= 7 ? digits.slice(4, 7) : digits.slice(4);
-      if (next3.length > 0) {
-        // добавляем дефис только если есть закрывающая скобка или код оператора уже был
-        result += `-${next3}`;
-      }
+    if (digits.length >= 5) {
+      const next3 = digits.slice(4, 7);
+      if (next3.length) result += `-${next3}`;
     }
 
-    // Следующие 2 цифры
-    if (digits.length >= 7) {
-      const next2 = digits.length >= 9 ? digits.slice(7, 9) : digits.slice(7);
-      if (next2.length > 0) {
-        result += `-${next2}`;
-      }
+    if (digits.length >= 8) {
+      const next2 = digits.slice(7, 9);
+      if (next2.length) result += `-${next2}`;
     }
 
-    // Последние 2 цифры
-    if (digits.length >= 9) {
-      const last2 = digits.length >= 11 ? digits.slice(9, 11) : digits.slice(9);
-      if (last2.length > 0) {
-        result += `-${last2}`;
-      }
+    if (digits.length >= 10) {
+      const last2 = digits.slice(9, 11);
+      if (last2.length) result += `-${last2}`;
     }
 
     return result;
@@ -67,56 +62,72 @@ export function PhoneInput({
 
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const input = e.target.value;
-      const digits = input.replace(/\D/g, "");
+      const inputValue = e.target.value;
 
-      // если полностью удалили или осталось только '7', очищаем поле
-      if (!digits || digits === "7") {
+      // Allow complete deletion
+      if (inputValue === "" || inputValue === "+7" || inputValue === "+") {
         onChange("");
         return;
       }
 
-      const formatted = formatPhoneNumber(input);
-      onChange(formatted);
+      const digits = inputValue.replace(/\D/g, "");
+
+      // Clear if only "7" or empty
+      if (!digits || digits === "7" || digits.length <= 1) {
+        onChange("");
+        return;
+      }
+
+      onChange(formatPhoneNumber(inputValue));
     },
     [formatPhoneNumber, onChange]
-  );
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      // Allow backspace, delete, tab, escape, enter, left, right arrow keys
-      if ([8, 9, 27, 13, 37, 39, 46].includes((e as any).keyCode)) {
-        return;
-      }
-
-      // Allow Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
-      if (
-        (e.ctrlKey || e.metaKey) &&
-        [65, 67, 86, 88].includes((e as any).keyCode)
-      ) {
-        return;
-      }
-
-      // Ensure that it is a number and stop the keypress
-      if (
-        e.shiftKey ||
-        (((e as any).keyCode < 48 || (e as any).keyCode > 57) &&
-          ((e as any).keyCode < 96 || (e as any).keyCode > 105))
-      ) {
-        e.preventDefault();
-      }
-    },
-    []
   );
 
   return (
     <Input
       value={value}
       onChange={handleInputChange}
-      onKeyDown={handleKeyDown}
       placeholder={placeholder}
       className={className}
-      maxLength={18} // +7(XXX)-XXX-XX-XX = 18 characters
+      maxLength={18}
+      inputMode="tel"
+    />
+  );
+}
+
+interface FormPhoneInputProps {
+  control: any;
+  name: string;
+  label?: string;
+  placeholder?: string;
+  className?: string;
+}
+
+export function FormPhoneInput({
+  control,
+  name,
+  label = "Телефон",
+  placeholder,
+  className,
+}: FormPhoneInputProps) {
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>{label}</FormLabel>
+          <FormControl>
+            <PhoneInput
+              value={field.value || ""}
+              onChange={field.onChange}
+              placeholder={placeholder}
+              className={className}
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
     />
   );
 }

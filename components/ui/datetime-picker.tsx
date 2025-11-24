@@ -60,7 +60,7 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className="w-full justify-between bg-neutral-900 text-white border-neutral-700"
+          className="w-full justify-between bg-neutral-900 text-white border-neutral-700 "
         >
           {value
             ? format(value, "d MMMM yyyy г., HH:mm", { locale: ru })
@@ -69,7 +69,7 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent className="p-4 w-[420px] bg-black border border-neutral-800 shadow-xl rounded-xl">
+      <PopoverContent className="p-4 w-[420px] bg-black border border-neutral-800 shadow-xl rounded-xl mt-2 pb-0">
         <div className="flex gap-4">
           {}
           <Calendar

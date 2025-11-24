@@ -16,17 +16,33 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const result = await sdk.login({
-        collection: 'users',
-        data: {
+      // Direct API call instead of using SDK to avoid configuration issues
+      const response = await fetch('https://isracms.vercel.app/api/users/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           email: data.email,
           password: data.password,
-        },
+        }),
       })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.errors?.[0]?.message || 'Login failed')
+      }
+
+      const result = await response.json()
 
       // Save token if returned
       if (result.token) {
         localStorage.setItem('payload-token', result.token)
+      }
+
+      // Save user data
+      if (result.user) {
+        localStorage.setItem('payload-user', JSON.stringify(result.user))
       }
 
       // On successful login, redirect to rooms
@@ -35,8 +51,8 @@ export default function LoginPage() {
 
     } catch (error) {
       console.error('Login error:', error)
-      toast.error('Неверный email или пароль')
-      throw new Error('Неверный email или пароль')
+      toast.error(error instanceof Error ? error.message : 'Неверный email или пароль')
+      throw error
     } finally {
       setIsLoading(false)
     }

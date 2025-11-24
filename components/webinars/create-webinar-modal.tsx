@@ -24,6 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
+import { DateTimePicker } from "@/components/ui/datetime-picker";
 
 const formSchema = z.object({
   title: z.string().min(1, "Название вебинара обязательно для заполнения"),
@@ -152,25 +153,15 @@ export function CreateWebinarModal({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Время проведения</FormLabel>
-                    <div className="pt-0.5"> </div>
-                    <FormControl>
-                      <div className="datetime-input-wrapper">
-                        <Input
-                          type="datetime-local"
-                          {...field}
-                          value={field.value || ""}
-                          onChange={(e) => field.onChange(e.target.value)}
-                          placeholder="Выберите дату"
-                          className={cn(
-                            "text-white placeholder:text-gray-400 bg-transparent",
-                            // remove calendar icon completely
-                            "[&::-webkit-calendar-picker-indicator]:hidden",
-                            "[&::-webkit-inner-spin-button]:hidden",
-                            "[&::-webkit-clear-button]:hidden"
-                          )}
-                        />
-                      </div>
-                    </FormControl>
+                    <div className="pt-0.5" />
+
+                    <DateTimePicker
+                      value={field.value ? new Date(field.value) : null}
+                      onChange={(date) =>
+                        field.onChange(date?.toISOString() || "")
+                      }
+                    />
+
                     <FormMessage />
                   </FormItem>
                 )}

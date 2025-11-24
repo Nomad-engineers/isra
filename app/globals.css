@@ -285,11 +285,27 @@
   color: #ffffff !important;
 }
 
-/* Также для всех datetime-local в темной теме */
 input[type="datetime-local"] {
   color-scheme: #ffffff !important;
 }
 
 input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   filter: invert(1) !important;
+}
+.custom-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scroll::-webkit-scrollbar-track {
+  background: #1a1a1a;
+  border-radius: 10px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 10px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+  background: #777;
 }

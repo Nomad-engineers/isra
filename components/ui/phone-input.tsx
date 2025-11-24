@@ -1,14 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
-import {
-  FormField,
-  FormItem,
-  FormControl,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 
 interface PhoneInputProps {
   value?: string;
@@ -27,32 +20,46 @@ export function PhoneInput({
     const digits = input.replace(/\D/g, ""); // оставляем только цифры
     if (!digits) return ""; // если нет цифр, возвращаем пустую строку
 
+    // Если осталась только '7' (т.е. только код страны), считаем это пустым
+    if (digits === "7") return "";
+
+    // Гарантируем, что страна +7
     let result = "+7";
 
-    // первые 3 цифры — код оператора
+    // Обрабатываем код оператора (следующие 3 цифры после 7)
+    // Берём срез начиная со второй цифры оригинального массива цифр (index 1)
     if (digits.length > 1) {
       const areaCode =
         digits.length >= 4 ? digits.slice(1, 4) : digits.slice(1);
-      result += `(${areaCode}`;
-      if (areaCode.length === 3) result += ")";
+      if (areaCode.length > 0) {
+        result += `(${areaCode}`;
+        if (areaCode.length === 3) result += ")";
+      }
     }
 
-    // следующие 3 цифры
+    // Следующие 3 цифры
     if (digits.length >= 4) {
       const next3 = digits.length >= 7 ? digits.slice(4, 7) : digits.slice(4);
-      result += next3 ? `-${next3}` : "";
+      if (next3.length > 0) {
+        // добавляем дефис только если есть закрывающая скобка или код оператора уже был
+        result += `-${next3}`;
+      }
     }
 
-    // следующие 2 цифры
+    // Следующие 2 цифры
     if (digits.length >= 7) {
       const next2 = digits.length >= 9 ? digits.slice(7, 9) : digits.slice(7);
-      result += next2 ? `-${next2}` : "";
+      if (next2.length > 0) {
+        result += `-${next2}`;
+      }
     }
 
-    // последние 2 цифры
+    // Последние 2 цифры
     if (digits.length >= 9) {
       const last2 = digits.length >= 11 ? digits.slice(9, 11) : digits.slice(9);
-      result += last2 ? `-${last2}` : "";
+      if (last2.length > 0) {
+        result += `-${last2}`;
+      }
     }
 
     return result;
@@ -63,8 +70,8 @@ export function PhoneInput({
       const input = e.target.value;
       const digits = input.replace(/\D/g, "");
 
-      // если полностью удалили, очищаем поле
-      if (!digits) {
+      // если полностью удалили или осталось только '7', очищаем поле
+      if (!digits || digits === "7") {
         onChange("");
         return;
       }
@@ -78,20 +85,23 @@ export function PhoneInput({
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       // Allow backspace, delete, tab, escape, enter, left, right arrow keys
-      if ([8, 9, 27, 13, 37, 39, 46].includes(e.keyCode)) {
+      if ([8, 9, 27, 13, 37, 39, 46].includes((e as any).keyCode)) {
         return;
       }
 
       // Allow Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
-      if ((e.ctrlKey || e.metaKey) && [65, 67, 86, 88].includes(e.keyCode)) {
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        [65, 67, 86, 88].includes((e as any).keyCode)
+      ) {
         return;
       }
 
       // Ensure that it is a number and stop the keypress
       if (
         e.shiftKey ||
-        ((e.keyCode < 48 || e.keyCode > 57) &&
-          (e.keyCode < 96 || e.keyCode > 105))
+        (((e as any).keyCode < 48 || (e as any).keyCode > 57) &&
+          ((e as any).keyCode < 96 || (e as any).keyCode > 105))
       ) {
         e.preventDefault();
       }
@@ -107,43 +117,6 @@ export function PhoneInput({
       placeholder={placeholder}
       className={className}
       maxLength={18} // +7(XXX)-XXX-XX-XX = 18 characters
-    />
-  );
-}
-
-interface FormPhoneInputProps {
-  control: any;
-  name: string;
-  label?: string;
-  placeholder?: string;
-  className?: string;
-}
-
-export function FormPhoneInput({
-  control,
-  name,
-  label = "Телефон",
-  placeholder,
-  className,
-}: FormPhoneInputProps) {
-  return (
-    <FormField
-      control={control}
-      name={name}
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>{label}</FormLabel>
-          <FormControl>
-            <PhoneInput
-              value={field.value || ""}
-              onChange={field.onChange}
-              placeholder={placeholder}
-              className={className}
-            />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
     />
   );
 }

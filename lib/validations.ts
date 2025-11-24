@@ -84,30 +84,18 @@ export const signUpSchema = z
         passwordRegex,
         "Password must contain at least one uppercase letter, one lowercase letter, and one number"
       ),
-    name: z
+    first_name: z
       .string()
-      .min(2, "Name must be at least 2 characters")
-      .max(50, "Name must be less than 50 characters")
-      .regex(/^[a-zA-Zа-яА-Я\s]+$/, "Name can only contain letters and spaces"),
-    surname: z
+      .min(2, "First name must be at least 2 characters")
+      .max(50, "First name must be less than 50 characters")
+      .regex(/^[a-zA-Zа-яА-Я\s]+$/, "First name can only contain letters and spaces"),
+    last_name: z
       .string()
-      .min(2, "Surname must be at least 2 characters")
-      .max(50, "Surname must be less than 50 characters")
+      .min(2, "Last name must be at least 2 characters")
+      .max(50, "Last name must be less than 50 characters")
       .regex(
         /^[a-zA-Zа-яА-Я\s]+$/,
-        "Surname can only contain letters and spaces"
-      ),
-    phone: z
-      .string()
-      .optional()
-      .refine(
-        (value) => {
-          if (!value || value.trim() === "") return true;
-          return phoneRegex.test(value);
-        },
-        {
-          message: "Invalid phone number format",
-        }
+        "Last name can only contain letters and spaces"
       ),
     confirmPassword: z.string().min(1, "Please confirm your password"),
   })

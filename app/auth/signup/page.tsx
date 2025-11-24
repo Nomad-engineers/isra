@@ -15,19 +15,40 @@ export default function SignUpPage() {
     setIsLoading(true)
 
     try {
-      // TODO: Implement actual API call
       const { confirmPassword, ...signupData } = data
-      console.log('Sign up with email:', signupData)
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      // Call our signup API endpoint
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(signupData),
+      })
 
-      // On successful signup, redirect to verification page or login
-      toast.success('Account created successfully! Please check your email to verify your account.')
-      router.push('/login')
+      const result = await response.json()
+
+      if (!response.ok) {
+        // Handle specific error messages
+        if (response.status === 409) {
+          throw new Error('User with this email already exists')
+        } else if (response.status === 400 && result.details) {
+          // Handle validation errors
+          const validationErrors = result.details.map((err: any) => err.message).join(', ')
+          throw new Error(validationErrors)
+        } else {
+          throw new Error(result.error || 'Failed to create account')
+        }
+      }
+
+      // On successful signup, redirect to login page
+      toast.success('Account created successfully! Please sign in to continue.')
+      router.push('/auth/login')
 
     } catch (error) {
       console.error('Sign up error:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create account'
+      toast.error(errorMessage)
       throw error
     } finally {
       setIsLoading(false)

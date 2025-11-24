@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { LoginForm } from '@/components/forms/login-form'
 import { LoginFormData } from '@/lib/validations'
 import { toast } from 'sonner'
+import { sdk } from '@/lib/sdk'
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -15,18 +16,42 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      // TODO: Implement actual API call
-      console.log('Login with email:', data)
+      // Direct API call instead of using SDK to avoid configuration issues
+      const response = await fetch('https://isracms.vercel.app/api/users/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+        }),
+      })
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.errors?.[0]?.message || 'Login failed')
+      }
 
-      // On successful login, redirect to dashboard or intended page
+      const result = await response.json()
+
+      // Save token if returned
+      if (result.token) {
+        localStorage.setItem('payload-token', result.token)
+      }
+
+      // Save user data
+      if (result.user) {
+        localStorage.setItem('payload-user', JSON.stringify(result.user))
+      }
+
+      // On successful login, redirect to rooms
       toast.success('Successfully logged in!')
-      router.push('/profile')
+      router.push('/rooms')
 
     } catch (error) {
       console.error('Login error:', error)
+      toast.error(error instanceof Error ? error.message : 'Неверный email или пароль')
       throw error
     } finally {
       setIsLoading(false)

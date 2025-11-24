@@ -111,6 +111,7 @@ export function LoginForm({ onSubmit, onGoogleSignIn, loading = false, googleLoa
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Email</FormLabel>
+                                  <div className="pt-0.5"> </div>
                 <FormControl>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -133,6 +134,8 @@ export function LoginForm({ onSubmit, onGoogleSignIn, loading = false, googleLoa
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Password</FormLabel>
+                                  <div className="pt-0.5"> </div>
+
                 <FormControl>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />

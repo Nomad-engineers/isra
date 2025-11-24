@@ -97,14 +97,6 @@ export function ForgotPasswordForm({ onSubmit, loading = false, onBackToLogin }:
 
   return (
     <div className="w-full max-w-md space-y-6">
-      {/* Header */}
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-white">Forgot your password?</h2>
-        <p className="text-muted-foreground">
-          Enter your email address and we'll send you a link to reset your password.
-        </p>
-      </div>
-
       {/* Form */}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
@@ -114,6 +106,8 @@ export function ForgotPasswordForm({ onSubmit, loading = false, onBackToLogin }:
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Email</FormLabel>
+                                                    <div className="pt-0.3"> </div>
+
                 <FormControl>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />

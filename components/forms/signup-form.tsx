@@ -118,6 +118,8 @@ export function SignUpForm({ onSubmit, onGoogleSignUp, loading = false, googleLo
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Name</FormLabel>
+                                    <div className="pt-0.3"> </div>
+
                   <FormControl>
                     <div className="relative">
                       <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -139,6 +141,8 @@ export function SignUpForm({ onSubmit, onGoogleSignUp, loading = false, googleLo
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Surname</FormLabel>
+                                    <div className="pt-0.3"> </div>
+
                   <FormControl>
                     <div className="relative">
                       <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -161,6 +165,8 @@ export function SignUpForm({ onSubmit, onGoogleSignUp, loading = false, googleLo
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Email</FormLabel>
+                                                    <div className="pt-0.3"> </div>
+
                 <FormControl>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -183,6 +189,8 @@ export function SignUpForm({ onSubmit, onGoogleSignUp, loading = false, googleLo
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Phone (optional)</FormLabel>
+                                                    <div className="pt-0.3"> </div>
+
                 <FormControl>
                   <div className="relative">
                     <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
@@ -205,6 +213,8 @@ export function SignUpForm({ onSubmit, onGoogleSignUp, loading = false, googleLo
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Password</FormLabel>
+                                                    <div className="pt-0.3"> </div>
+
                 <FormControl>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -240,6 +250,8 @@ export function SignUpForm({ onSubmit, onGoogleSignUp, loading = false, googleLo
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Confirm Password</FormLabel>
+                                                    <div className="pt-0.3"> </div>
+
                 <FormControl>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />

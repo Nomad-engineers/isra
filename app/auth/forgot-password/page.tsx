@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ForgotPasswordForm } from '@/components/forms/forgot-password-form'
 import { ForgotPasswordFormData } from '@/lib/validations'
 import { toast } from 'sonner'
+import { sdk } from '@/lib/sdk'
 
 export default function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -14,17 +15,19 @@ export default function ForgotPasswordPage() {
     setIsLoading(true)
 
     try {
-      // TODO: Implement actual API call
-      console.log('Send password reset email to:', data.email)
+      const result = await sdk.forgotPassword({
+        collection: 'users',
+        data: {
+          email: data.email,
+        },
+      })
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500))
-
-      // The form will show the success message, we don't need to redirect here
-      // The user can use the "Back to login" button when ready
+      // Show success message
+      toast.success('Инструкции по восстановлению отправлены на вашу почту')
 
     } catch (error) {
       console.error('Forgot password error:', error)
+      toast.error('Ошибка. Попробуйте снова.')
       throw error
     } finally {
       setIsLoading(false)

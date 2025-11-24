@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { LoginForm } from '@/components/forms/login-form'
 import { LoginFormData } from '@/lib/validations'
 import { toast } from 'sonner'
+import { sdk } from '@/lib/sdk'
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -15,19 +16,27 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      // TODO: Implement actual API call
-      console.log('Login with email:', data)
+      const result = await sdk.login({
+        collection: 'users',
+        data: {
+          email: data.email,
+          password: data.password,
+        },
+      })
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Save token if returned
+      if (result.token) {
+        localStorage.setItem('payload-token', result.token)
+      }
 
-      // On successful login, redirect to dashboard or intended page
+      // On successful login, redirect to rooms
       toast.success('Successfully logged in!')
-      router.push('/profile')
+      router.push('/rooms')
 
     } catch (error) {
       console.error('Login error:', error)
-      throw error
+      toast.error('Неверный email или пароль')
+      throw new Error('Неверный email или пароль')
     } finally {
       setIsLoading(false)
     }

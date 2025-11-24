@@ -30,7 +30,7 @@ export function AuthLayout({
                 </Link>
               )}
             </div>
-            <ThemeToggle />
+            {/* <ThemeToggle /> */}
           </div>
         </div>
       </header>

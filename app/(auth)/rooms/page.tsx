@@ -154,6 +154,11 @@ export default function RoomsPage() {
     setTimeout(() => setLoading(false), 1000);
   };
 
+  const handleWebinarCreated = () => {
+    // Refresh rooms list after successful webinar creation
+    refetchRooms();
+  };
+
   const handleOpen = (id: string) => {
     console.log("Open webinar:", id);
   };
@@ -366,6 +371,7 @@ export default function RoomsPage() {
             buttonSize="sm"
             buttonClassName="gradient-primary hover:opacity-90 transition-opacity"
             showIcon={true}
+            onSuccess={handleWebinarCreated}
           />
         </div>
       </div>
@@ -403,6 +409,7 @@ export default function RoomsPage() {
                   buttonText="Создать комнату"
                   buttonClassName="gradient-primary hover:opacity-90 transition-opacity"
                   showIcon={true}
+                  onSuccess={handleWebinarCreated}
                 />
               </CardContent>
             </Card>
@@ -455,6 +462,7 @@ export default function RoomsPage() {
                 buttonSize="sm"
                 buttonClassName="w-full gradient-primary hover:opacity-90 transition-opacity"
                 showIcon={true}
+                onSuccess={handleWebinarCreated}
               />
 
               <Button variant="outline" className="w-full" size="sm">

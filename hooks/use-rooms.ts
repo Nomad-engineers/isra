@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { Room, RoomResponse } from "@/types/room"
+import { Webinar } from "@/types/webinar"
 import { toast } from "sonner"
 
 interface UseRoomsOptions {
@@ -81,6 +82,55 @@ export function useRooms(options: UseRoomsOptions = {}) {
     return fetchRooms()
   }, [fetchRooms])
 
+  const createWebinar = useCallback(async (data: {
+    name: string
+    speaker: string
+    type: 'live' | 'auto'
+    videoUrl?: string
+    description?: string
+    scheduledDate?: string
+  }): Promise<Webinar | null> => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      const url = `https://isracms.vercel.app/api/rooms/create`
+
+      const response = await fetch(url, {
+        method: "POST",
+        credentials: "include", // Important: include cookies for authentication
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(
+          errorData.message ||
+          errorData.error?.message ||
+          `API Error: ${response.status} ${response.statusText}`
+        )
+      }
+
+      const result: Webinar = await response.json()
+
+      // Show success message
+      toast.success("Вебинар успешно создан!")
+
+      return result
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to create webinar"
+      setError(errorMessage)
+      toast.error(errorMessage)
+      console.error("Webinar creation error:", err)
+      return null
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
   const clearError = useCallback(() => {
     setError(null)
   }, [])
@@ -92,5 +142,6 @@ export function useRooms(options: UseRoomsOptions = {}) {
     fetchRooms,
     refetch,
     clearError,
+    createWebinar,
   }
 }

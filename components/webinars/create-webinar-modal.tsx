@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import * as z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,11 +28,12 @@ import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { WebinarType } from "@/types/webinar";
+import { useRooms } from "@/hooks/use-rooms";
 
 const formSchema = z.object({
   title: z.string().min(1, "Название вебинара обязательно для заполнения"),
   speaker: z.string().min(1, "Спикер обязателен для заполнения"),
-  type: z.enum(["live", "auto"]).default("live"),
+  type: z.enum(["live", "auto"]),
   datetime: z.string().optional(),
   description: z.string().optional(),
   streamUrl: z
@@ -55,6 +57,7 @@ interface CreateWebinarModalProps {
     | "link";
   buttonSize?: "default" | "sm" | "lg" | "icon";
   showIcon?: boolean;
+  onSuccess?: () => void; // Callback for successful webinar creation
 }
 
 export function CreateWebinarModal({
@@ -63,7 +66,11 @@ export function CreateWebinarModal({
   buttonVariant = "default",
   buttonSize = "default",
   showIcon = false,
+  onSuccess,
 }: CreateWebinarModalProps) {
+  const { createWebinar, loading } = useRooms();
+  const [open, setOpen] = useState(false);
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -76,11 +83,30 @@ export function CreateWebinarModal({
     },
   });
 
-  const onSubmit = (data: FormData) => {
-    console.log("Creating webinar:", data);
-    // Здесь в будущем будет логика сохранения
-    // Сейчас просто закрываем модальное окно после успешной валидации
-    form.reset();
+  const onSubmit = async (data: FormData) => {
+    try {
+      // Map form data to API payload format
+      const payload = {
+        name: data.title,
+        speaker: data.speaker,
+        type: data.type as 'live' | 'auto',
+        videoUrl: data.streamUrl || undefined,
+        description: data.description || undefined,
+        scheduledDate: data.datetime ? new Date(data.datetime).toISOString() : undefined,
+      };
+
+      const result = await createWebinar(payload);
+
+      if (result) {
+        // Success! Close modal and reset form
+        form.reset();
+        onSuccess?.(); // Call success callback if provided
+        setOpen(false); // Close modal
+      }
+    } catch (error) {
+      console.error("Webinar creation failed:", error);
+      // Error is already handled by useRooms hook with toast notifications
+    }
   };
 
   const handleCancel = () => {
@@ -88,7 +114,7 @@ export function CreateWebinarModal({
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
           variant={buttonVariant}
@@ -270,6 +296,7 @@ export function CreateWebinarModal({
                     variant="outline"
                     className="flex-1"
                     onClick={handleCancel}
+                    data-dialog-close
                   >
                     Отмена
                   </Button>
@@ -277,9 +304,9 @@ export function CreateWebinarModal({
                 <Button
                   type="submit"
                   className="flex-1"
-                  disabled={form.formState.isSubmitting}
+                  disabled={loading || form.formState.isSubmitting}
                 >
-                  {form.formState.isSubmitting
+                  {loading || form.formState.isSubmitting
                     ? "Создание..."
                     : "Создать вебинар"}
                 </Button>

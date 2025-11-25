@@ -6,6 +6,7 @@ import { LoginForm } from '@/components/forms/login-form'
 import { LoginFormData } from '@/lib/validations'
 import { toast } from 'sonner'
 import { sdk } from '@/lib/sdk'
+import { setToken, isValidToken } from '@/lib/auth-utils'
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -35,14 +36,9 @@ export default function LoginPage() {
 
       const result = await response.json()
 
-      // Save token if returned
-      if (result.token) {
-        localStorage.setItem('payload-token', result.token)
-      }
-
-      // Save user data
-      if (result.user) {
-        localStorage.setItem('payload-user', JSON.stringify(result.user))
+      // Save token and user data using our auth utilities
+      if (result.token && isValidToken(result.token)) {
+        setToken(result.token, result.user)
       }
 
       // On successful login, redirect to rooms

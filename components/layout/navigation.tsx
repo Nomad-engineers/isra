@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -13,6 +13,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { User, LogOut, Users, BarChart3, UserCircle } from 'lucide-react'
+import { useToast } from '@/components/ui/use-toast'
+import { useState } from 'react'
 
 const navigation = [
   { name: 'Вебинары', href: '/rooms', icon: Users },
@@ -27,6 +29,55 @@ interface NavigationProps {
 
 export function Navigation({ userName = 'Пользователь', userAvatar }: NavigationProps) {
   const pathname = usePathname()
+  const router = useRouter()
+  const { toast } = useToast()
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+  const handleLogout = async (): Promise<void> => {
+    if (isLoggingOut) return
+
+    setIsLoggingOut(true)
+
+    try {
+        // Get token from localStorage
+        const token = localStorage.getItem('payload-token');
+
+      const res = await fetch(
+        'https://isracms.vercel.app/api/users/logout',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `JWT ${token}`,
+          },
+        }
+      )
+
+      if (!res.ok) {
+        throw new Error('Logout failed')
+      }
+
+      // Clear token from localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token')
+      }
+
+      // Clear token from cookies (will be handled by backend)
+      document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+
+      // Redirect to login
+      router.push('/auth/login')
+    } catch (error) {
+      console.error('Logout error:', error)
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка выхода',
+        description: 'Попробуйте снова.',
+      })
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
 
   return (
     <nav className="bg-isra-medium/90 backdrop-blur-lg border border-isra sticky top-0 z-50">
@@ -87,10 +138,14 @@ export function Navigation({ userName = 'Пользователь', userAvatar }
                     <span>Профиль</span>
                   </Link>
                 </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Выйти</span>
-                </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onClick={handleLogout}
+                    disabled={isLoggingOut}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>{isLoggingOut ? 'Выход...' : 'Выйти'}</span>
+                  </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

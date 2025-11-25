@@ -143,12 +143,12 @@ export default function RoomsPage() {
 
       try {
         await navigator.clipboard.writeText(linkToCopy);
-        toast({
+        shadcnToast({
           title: "Ссылка скопирована",
           description: "Ссылка на вебинар успешно скопирована.",
         });
       } catch (error) {
-        toast({
+        shadcnToast({
           title: "Ошибка копирования",
           description: "Не удалось скопировать ссылку. Попробуйте еще раз.",
           variant: "destructive",

@@ -15,12 +15,12 @@ export const profileFormSchema = z.object({
   email: z.string().email("Некорректный email"),
   phone: z
     .string()
-    .regex(
-      /^\+?[1-9]\d{1,14}$/,
-      "Телефон должен быть в формате +XXXXXXXXXX"
-    )
+
+    .regex(/^\d{10,11}$/, "Введите корректный номер (только цифры)")
+
     .optional()
     .or(z.literal("")),
+
   avatar: z.instanceof(File).optional().nullable(),
 });
 
@@ -88,7 +88,10 @@ export const signUpSchema = z
       .string()
       .min(2, "First name must be at least 2 characters")
       .max(50, "First name must be less than 50 characters")
-      .regex(/^[a-zA-Zа-яА-Я\s]+$/, "First name can only contain letters and spaces"),
+      .regex(
+        /^[a-zA-Zа-яА-Я\s]+$/,
+        "First name can only contain letters and spaces"
+      ),
     lastName: z
       .string()
       .min(2, "Last name must be at least 2 characters")
@@ -97,6 +100,12 @@ export const signUpSchema = z
         /^[a-zA-Zа-яА-Я\s]+$/,
         "Last name can only contain letters and spaces"
       ),
+    phone: z
+      .string()
+      .regex(/^\d{10,11}$/, "Введите корректный номер (только цифры)")
+      .optional()
+      .or(z.literal("")),
+
     confirmPassword: z.string().min(1, "Please confirm your password"),
   })
   .refine((data) => data.password === data.confirmPassword, {

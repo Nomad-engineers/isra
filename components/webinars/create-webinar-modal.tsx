@@ -23,12 +23,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
+import { WebinarType } from "@/types/webinar";
 
 const formSchema = z.object({
   title: z.string().min(1, "Название вебинара обязательно для заполнения"),
   speaker: z.string().min(1, "Спикер обязателен для заполнения"),
+  type: z.enum(["live", "auto"]).default("live"),
   datetime: z.string().optional(),
   description: z.string().optional(),
   streamUrl: z
@@ -66,6 +69,7 @@ export function CreateWebinarModal({
     defaultValues: {
       title: "",
       speaker: "",
+      type: "live" as WebinarType,
       datetime: "",
       description: "",
       streamUrl: "",
@@ -141,6 +145,59 @@ export function CreateWebinarModal({
                           form.formState.errors.speaker && "border-destructive"
                         )}
                       />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel className="text-base">Тип вебинара</FormLabel>
+                    <FormControl>
+                      <div className="flex flex-col space-y-3">
+                        <div className="flex items-center space-x-3">
+                          <input
+                            type="radio"
+                            id="live"
+                            name="webinar-type"
+                            value="live"
+                            checked={field.value === "live"}
+                            onChange={() => field.onChange("live")}
+                            className="w-4 h-4 text-primary border-gray-300 focus:ring-primary focus:ring-2"
+                          />
+                          <div className="grid gap-1">
+                            <Label htmlFor="live" className="font-normal cursor-pointer">
+                              Прямой эфир (Live)
+                            </Label>
+                            <p className="text-sm text-muted-foreground">
+                              Вебинар в прямом эфире с живым общением
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <input
+                            type="radio"
+                            id="auto"
+                            name="webinar-type"
+                            value="auto"
+                            checked={field.value === "auto"}
+                            onChange={() => field.onChange("auto")}
+                            className="w-4 h-4 text-primary border-gray-300 focus:ring-primary focus:ring-2"
+                          />
+                          <div className="grid gap-1">
+                            <Label htmlFor="auto" className="font-normal cursor-pointer">
+                              Автоматический (Auto)
+                            </Label>
+                            <p className="text-sm text-muted-foreground">
+                              Автоматический вебинар по расписанию
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

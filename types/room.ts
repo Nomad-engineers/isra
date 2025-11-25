@@ -1,10 +1,30 @@
 import { BaseEntity } from './common'
 
+export interface User {
+  id: number
+  lastName?: string | null
+  firstName?: string | null
+  role: string
+  phone?: string | null
+  isPhoneVerified: boolean
+  updatedAt: string
+  createdAt: string
+  email: string
+  sessions: Array<{
+    id: string
+    createdAt: string
+    expiresAt: string
+  }>
+}
+
 export interface Room extends BaseEntity {
   id: string
-  title: string
+  name: string
+  title?: string // Optional for backward compatibility
   description?: string
-  user: number | string // User ID who owns the room
+  speaker: string
+  type: 'live' | 'auto'
+  user: User // User object who owns the room
   createdAt: string
   updatedAt: string
 }

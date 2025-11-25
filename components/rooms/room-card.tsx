@@ -26,7 +26,7 @@ export function RoomCard({ room, onView, onEdit, onDelete, onCopyLink, actions }
       <CardHeader className='pb-3'>
         <CardTitle className='flex justify-between items-start gap-2'>
           <span className='text-lg leading-tight font-semibold text-foreground line-clamp-2 group-hover:text-isra-primary transition-colors cursor-default'>
-            {room.title}
+            {room.name || room.title}
           </span>
           <div className='flex items-center gap-2 flex-shrink-0'>
             <Badge variant='outline' className='text-isra-cyan border-isra-cyan/50 bg-isra-cyan/10'>
@@ -101,7 +101,7 @@ export function RoomCard({ room, onView, onEdit, onDelete, onCopyLink, actions }
             ID: {room.id}
           </span>
           <span className="hover:text-foreground transition-colors">
-            Пользователь: {room.user}
+            Пользователь: {room.user?.email || room.user?.firstName || room.user?.lastName || 'Unknown'}
           </span>
         </div>
       </CardContent>

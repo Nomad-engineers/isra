@@ -1,68 +1,86 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { Eye, EyeOff, Mail, Lock, User, Phone } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Separator } from '@/components/ui/separator'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
-import { signUpSchema, SignUpFormData } from '@/lib/validations'
-import { PhoneInput } from '@/components/ui/phone-input'
-import { useToast } from '@/components/ui/use-toast'
+import { useState } from "react";
+import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Eye, EyeOff, Mail, Lock, User, Phone } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { signUpSchema, SignUpFormData } from "@/lib/validations";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { useToast } from "@/components/ui/use-toast";
 
 interface SignUpFormProps {
-  onSubmit: (data: SignUpFormData) => Promise<void>
-  onGoogleSignUp?: () => Promise<void>
-  loading?: boolean
-  googleLoading?: boolean
+  onSubmit: (data: SignUpFormData) => Promise<void>;
+  onGoogleSignUp?: () => Promise<void>;
+  loading?: boolean;
+  googleLoading?: boolean;
 }
 
-export function SignUpForm({ onSubmit, onGoogleSignUp, loading = false, googleLoading = false }: SignUpFormProps) {
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const { toast } = useToast()
+export function SignUpForm({
+  onSubmit,
+  onGoogleSignUp,
+  loading = false,
+  googleLoading = false,
+}: SignUpFormProps) {
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const { toast } = useToast();
 
   const form = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
-      email: '',
-      password: '',
-      confirmPassword: '',
-      name: '',
-      surname: '',
-      phone: '',
+      email: "",
+      password: "",
+      confirmPassword: "",
+      name: "",
+      surname: "",
+      phone: "",
     },
-  })
+  });
 
   const handleSubmit = async (data: SignUpFormData) => {
     try {
-      await onSubmit(data)
+      await onSubmit(data);
     } catch (error) {
       toast({
-        variant: 'destructive',
-        title: 'Sign up failed',
-        description: error instanceof Error ? error.message : 'An unexpected error occurred',
-      })
+        variant: "destructive",
+        title: "Sign up failed",
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred",
+      });
     }
-  }
+  };
 
   const handleGoogleSignUp = async () => {
-    if (!onGoogleSignUp) return
+    if (!onGoogleSignUp) return;
 
     try {
-      await onGoogleSignUp()
+      await onGoogleSignUp();
     } catch (error) {
       toast({
-        variant: 'destructive',
-        title: 'Google sign up failed',
-        description: error instanceof Error ? error.message : 'An unexpected error occurred',
-      })
+        variant: "destructive",
+        title: "Google sign up failed",
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred",
+      });
     }
-  }
+  };
 
   return (
     <div className="w-full max-w-md space-y-6">
@@ -94,7 +112,7 @@ export function SignUpForm({ onSubmit, onGoogleSignUp, loading = false, googleLo
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            {googleLoading ? 'Creating account...' : 'Continue with Google'}
+            {googleLoading ? "Creating account..." : "Continue with Google"}
           </Button>
 
           <div className="relative">
@@ -102,7 +120,9 @@ export function SignUpForm({ onSubmit, onGoogleSignUp, loading = false, googleLo
               <Separator className="w-full" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Или продолжить с электронной почтой</span>
+              <span className="bg-background px-2 text-muted-foreground">
+                Или продолжить с электронной почтой
+              </span>
             </div>
           </div>
         </div>
@@ -118,11 +138,11 @@ export function SignUpForm({ onSubmit, onGoogleSignUp, loading = false, googleLo
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Name</FormLabel>
-                                    <div className="pt-0.3"> </div>
+                  <div className="pt-0.3"> </div>
 
                   <FormControl>
                     <div className="relative">
-                      <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
                       <Input
                         placeholder="First name"
                         className="pl-10"
@@ -141,11 +161,11 @@ export function SignUpForm({ onSubmit, onGoogleSignUp, loading = false, googleLo
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Surname</FormLabel>
-                                    <div className="pt-0.3"> </div>
+                  <div className="pt-0.3"> </div>
 
                   <FormControl>
                     <div className="relative">
-                      <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
                       <Input
                         placeholder="Last name"
                         className="pl-10"
@@ -165,11 +185,11 @@ export function SignUpForm({ onSubmit, onGoogleSignUp, loading = false, googleLo
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Email</FormLabel>
-                                                    <div className="pt-0.3"> </div>
+                <div className="pt-0.3"> </div>
 
                 <FormControl>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
                     <Input
                       placeholder="Enter your email"
                       className="pl-10"
@@ -189,7 +209,7 @@ export function SignUpForm({ onSubmit, onGoogleSignUp, loading = false, googleLo
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Phone (optional)</FormLabel>
-                                                    <div className="pt-0.3"> </div>
+                <div className="pt-0.3"> </div>
 
                 <FormControl>
                   <div className="relative">
@@ -213,15 +233,15 @@ export function SignUpForm({ onSubmit, onGoogleSignUp, loading = false, googleLo
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Password</FormLabel>
-                                                    <div className="pt-0.3"> </div>
+                <div className="pt-0.3"> </div>
 
                 <FormControl>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
                     <Input
                       placeholder="Create a password"
                       className="pl-10 pr-10"
-                      type={showPassword ? 'text' : 'password'}
+                      type={showPassword ? "text" : "password"}
                       {...field}
                     />
                     <Button
@@ -250,15 +270,15 @@ export function SignUpForm({ onSubmit, onGoogleSignUp, loading = false, googleLo
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Confirm Password</FormLabel>
-                                                    <div className="pt-0.3"> </div>
+                <div className="pt-0.3"> </div>
 
                 <FormControl>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
                     <Input
                       placeholder="Confirm your password"
                       className="pl-10 pr-10"
-                      type={showConfirmPassword ? 'text' : 'password'}
+                      type={showConfirmPassword ? "text" : "password"}
                       {...field}
                     />
                     <Button
@@ -266,7 +286,9 @@ export function SignUpForm({ onSubmit, onGoogleSignUp, loading = false, googleLo
                       variant="ghost"
                       size="sm"
                       className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
                     >
                       {showConfirmPassword ? (
                         <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -290,11 +312,11 @@ export function SignUpForm({ onSubmit, onGoogleSignUp, loading = false, googleLo
                 required
               />
               <Label htmlFor="terms" className="text-sm text-muted-foreground">
-                I agree to the{' '}
+                I agree to the{" "}
                 <Link href="/terms" className="text-primary hover:underline">
                   Terms of Service
-                </Link>{' '}
-                and{' '}
+                </Link>{" "}
+                and{" "}
                 <Link href="/privacy" className="text-primary hover:underline">
                   Privacy Policy
                 </Link>
@@ -307,24 +329,27 @@ export function SignUpForm({ onSubmit, onGoogleSignUp, loading = false, googleLo
                 id="marketing"
                 className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
               />
-              <Label htmlFor="marketing" className="text-sm text-muted-foreground">
+              <Label
+                htmlFor="marketing"
+                className="text-sm text-muted-foreground"
+              >
                 I agree to receive marketing emails
               </Label>
             </div>
           </div>
 
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Creating account...' : 'Create account'}
+            {loading ? "Creating account..." : "Create account"}
           </Button>
         </form>
       </Form>
 
       <div className="text-center text-sm text-muted-foreground">
-        Already have an account?{' '}
+        Already have an account?{" "}
         <Link href="/auth/login" className="text-primary hover:underline">
           Login
         </Link>
       </div>
     </div>
-  )
+  );
 }

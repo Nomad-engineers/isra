@@ -1,62 +1,80 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Separator } from '@/components/ui/separator'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
-import { loginSchema, LoginFormData } from '@/lib/validations'
-import { useToast } from '@/components/ui/use-toast'
+import { useState } from "react";
+import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { loginSchema, LoginFormData } from "@/lib/validations";
+import { useToast } from "@/components/ui/use-toast";
 
 interface LoginFormProps {
-  onSubmit: (data: LoginFormData) => Promise<void>
-  onGoogleSignIn?: () => Promise<void>
-  loading?: boolean
-  googleLoading?: boolean
+  onSubmit: (data: LoginFormData) => Promise<void>;
+  onGoogleSignIn?: () => Promise<void>;
+  loading?: boolean;
+  googleLoading?: boolean;
 }
 
-export function LoginForm({ onSubmit, onGoogleSignIn, loading = false, googleLoading = false }: LoginFormProps) {
-  const [showPassword, setShowPassword] = useState(false)
-  const { toast } = useToast()
+export function LoginForm({
+  onSubmit,
+  onGoogleSignIn,
+  loading = false,
+  googleLoading = false,
+}: LoginFormProps) {
+  const [showPassword, setShowPassword] = useState(false);
+  const { toast } = useToast();
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
-      password: '',
+      email: "",
+      password: "",
     },
-  })
+  });
 
   const handleSubmit = async (data: LoginFormData) => {
     try {
-      await onSubmit(data)
+      await onSubmit(data);
     } catch (error) {
       toast({
-        variant: 'destructive',
-        title: 'Login failed',
-        description: error instanceof Error ? error.message : 'An unexpected error occurred',
-      })
+        variant: "destructive",
+        title: "Login failed",
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred",
+      });
     }
-  }
+  };
 
   const handleGoogleSignIn = async () => {
-    if (!onGoogleSignIn) return
+    if (!onGoogleSignIn) return;
 
     try {
-      await onGoogleSignIn()
+      await onGoogleSignIn();
     } catch (error) {
       toast({
-        variant: 'destructive',
-        title: 'Google sign in failed',
-        description: error instanceof Error ? error.message : 'An unexpected error occurred',
-      })
+        variant: "destructive",
+        title: "Google sign in failed",
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred",
+      });
     }
-  }
+  };
 
   return (
     <div className="w-full max-w-md space-y-6">
@@ -88,7 +106,7 @@ export function LoginForm({ onSubmit, onGoogleSignIn, loading = false, googleLoa
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            {googleLoading ? 'Signing in...' : 'Continue with Google'}
+            {googleLoading ? "Signing in..." : "Continue with Google"}
           </Button>
 
           <div className="relative">
@@ -96,7 +114,9 @@ export function LoginForm({ onSubmit, onGoogleSignIn, loading = false, googleLoa
               <Separator className="w-full" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Или продолжить с электронной почтой</span>
+              <span className="bg-background px-2 text-muted-foreground">
+                Или продолжить с электронной почтой
+              </span>
             </div>
           </div>
         </div>
@@ -111,10 +131,10 @@ export function LoginForm({ onSubmit, onGoogleSignIn, loading = false, googleLoa
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Email</FormLabel>
-                                  <div className="pt-0.5"> </div>
+                <div className="pt-0.5"> </div>
                 <FormControl>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
                     <Input
                       placeholder="Enter your email"
                       className="pl-10"
@@ -134,15 +154,15 @@ export function LoginForm({ onSubmit, onGoogleSignIn, loading = false, googleLoa
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Password</FormLabel>
-                                  <div className="pt-0.5"> </div>
+                <div className="pt-0.5"> </div>
 
                 <FormControl>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
                     <Input
                       placeholder="Enter your password"
                       className="pl-10 pr-10"
-                      type={showPassword ? 'text' : 'password'}
+                      type={showPassword ? "text" : "password"}
                       {...field}
                     />
                     <Button
@@ -172,27 +192,33 @@ export function LoginForm({ onSubmit, onGoogleSignIn, loading = false, googleLoa
                 id="remember"
                 className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
               />
-              <Label htmlFor="remember" className="text-sm text-muted-foreground">
+              <Label
+                htmlFor="remember"
+                className="text-sm text-muted-foreground"
+              >
                 Remember me
               </Label>
             </div>
-            <Link href="/auth/forgot-password" className="text-sm text-primary hover:underline">
+            <Link
+              href="/auth/forgot-password"
+              className="text-sm text-primary hover:underline"
+            >
               Forgot password?
             </Link>
           </div>
 
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign in'}
+            {loading ? "Signing in..." : "Sign in"}
           </Button>
         </form>
       </Form>
 
       <div className="text-center text-sm text-muted-foreground">
-        Don&apos;t have an account?{' '}
+        Don&apos;t have an account?{" "}
         <Link href="/auth/signup" className="text-primary hover:underline">
           Sign up
         </Link>
       </div>
     </div>
-  )
+  );
 }

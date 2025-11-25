@@ -28,7 +28,7 @@ import {
 import { CreateWebinarModal } from "@/components/webinars/create-webinar-modal";
 import { EditWebinarModal } from "@/components/webinars/edit-webinar-modal";
 import { Webinar } from "@/types/webinar";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/use-toast";
 
 interface UserData {
   id: string;
@@ -59,27 +59,34 @@ export default function RoomsPage() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        // Get token from localStorage
-        const token = localStorage.getItem('payload-token');
+        const token = localStorage.getItem("payload-token");
 
         if (!token) {
-          toast.error("Требуется авторизация");
-          router.push('/auth/login');
+          toast({
+            title: "Требуется авторизация",
+            description: "Авторизуйтесь, чтобы продолжить",
+            variant: "destructive",
+          });
+          router.push("/auth/login");
           return;
         }
 
-        // Fetch user data using direct API call (same pattern as login and profile)
-        const response = await fetch('https://isracms.vercel.app/api/users/me', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `JWT ${token}`,
-          },
-        });
+        const response = await fetch(
+          "https://isracms.vercel.app/api/users/me",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `JWT ${token}`,
+            },
+          }
+        );
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.errors?.[0]?.message || 'Failed to fetch user data');
+          throw new Error(
+            errorData.errors?.[0]?.message || "Failed to fetch user data"
+          );
         }
 
         const result = await response.json();
@@ -87,19 +94,29 @@ export default function RoomsPage() {
         if (result && result.user) {
           setUserData(result.user as UserData);
         } else {
-          throw new Error('No user data received');
+          throw new Error("No user data received");
         }
       } catch (error) {
-        console.error('User data fetch error:', error);
+        console.error("User data fetch error:", error);
 
-        // Check if it's an authentication error
-        if (error instanceof Error &&
-            (error.message.includes('401') || error.message.includes('Unauthorized') ||
-             error.message.includes('token'))) {
-          toast.error("Срок действия токена истек");
-          router.push('/auth/login');
+        if (
+          error instanceof Error &&
+          (error.message.includes("401") ||
+            error.message.includes("Unauthorized") ||
+            error.message.includes("token"))
+        ) {
+          toast({
+            title: "Срок действия токена истек",
+            description: "Авторизуйтесь снова",
+            variant: "destructive",
+          });
+          router.push("/auth/login");
         } else {
-          toast.error("Ошибка загрузки данных пользователя");
+          toast({
+            title: "Ошибка загрузки данных",
+            description: "Не удалось получить данные профиля",
+            variant: "destructive",
+          });
         }
       } finally {
         setUserLoading(false);
@@ -213,12 +230,12 @@ export default function RoomsPage() {
 
     if (userData.name) {
       // If name is "First Last", use first name only
-      const nameParts = userData.name.split(' ');
+      const nameParts = userData.name.split(" ");
       return nameParts[0] || userData.name;
     }
 
     // Extract name from email if no name fields available
-    const emailName = userData.email.split('@')[0];
+    const emailName = userData.email.split("@")[0];
     return emailName.charAt(0).toUpperCase() + emailName.slice(1);
   };
 
@@ -239,9 +256,7 @@ export default function RoomsPage() {
             Управляйте своими вебинарами и настройками
           </p>
           {userData?.email && (
-            <p className="text-gray-500 text-sm mt-1">
-              {userData.email}
-            </p>
+            <p className="text-gray-500 text-sm mt-1">{userData.email}</p>
           )}
         </div>
 

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+
 import {
   Form,
   FormControl,
@@ -26,6 +27,15 @@ interface SignUpFormProps {
   loading?: boolean;
   googleLoading?: boolean;
 }
+
+const handlePhoneChange = (
+  e: React.ChangeEvent<HTMLInputElement>,
+  field: any
+) => {
+  const cleaned = e.target.value.replace(/\D/g, "");
+  const limited = cleaned.slice(0, 11);
+  field.onChange(limited);
+};
 
 export function SignUpForm({
   onSubmit,
@@ -45,6 +55,7 @@ export function SignUpForm({
       confirmPassword: "",
       firstName: "",
       lastName: "",
+      phone: "",
     },
   });
 
@@ -78,6 +89,15 @@ export function SignUpForm({
             : "An unexpected error occurred",
       });
     }
+  };
+
+  const handlePhoneChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    field: any
+  ) => {
+    const cleaned = e.target.value.replace(/\D/g, "");
+    const limited = cleaned.slice(0, 11);
+    field.onChange(limited);
   };
 
   return (
@@ -176,6 +196,33 @@ export function SignUpForm({
               )}
             />
           </div>
+
+          <FormField
+            control={form.control}
+            name="phone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Phone</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
+                    <Input
+                      placeholder="+7(707)777-77-77"
+                      className="pl-10"
+                      {...field}
+                      onChange={(e) => handlePhoneChange(e, field)}
+                      type="tel"
+                      maxLength={11}
+                    />
+                  </div>
+                </FormControl>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Введите цифры, без форматирования
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <FormField
             control={form.control}

@@ -35,17 +35,20 @@ export function useRooms(options: UseRoomsOptions = {}) {
 
       // Get JWT token from localStorage
       const token = localStorage.getItem("payload-token")
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
+
+      if (!token) {
+        throw new Error("No authentication token found")
       }
 
-      if (token) {
-        headers['Authorization'] = `JWT ${token}`
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `JWT ${token}`,
       }
+
+      console.log('Making request to:', url, 'with headers:', headers)
 
       const response = await fetch(url, {
         method: "GET",
-        credentials: "include", // Important: include cookies for authentication
         headers,
       })
 
@@ -106,17 +109,18 @@ export function useRooms(options: UseRoomsOptions = {}) {
 
       // Get JWT token from localStorage
       const token = localStorage.getItem("payload-token")
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
+
+      if (!token) {
+        throw new Error("No authentication token found")
       }
 
-      if (token) {
-        headers['Authorization'] = `JWT ${token}`
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `JWT ${token}`,
       }
 
       const response = await fetch(url, {
         method: "POST",
-        credentials: "include", // Important: include cookies for authentication
         headers,
         body: JSON.stringify(data),
       })
@@ -154,17 +158,18 @@ export function useRooms(options: UseRoomsOptions = {}) {
     try {
       // Get JWT token from localStorage
       const token = localStorage.getItem("payload-token")
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
+
+      if (!token) {
+        throw new Error("No authentication token found")
       }
 
-      if (token) {
-        headers['Authorization'] = `JWT ${token}`
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `JWT ${token}`,
       }
 
       const response = await fetch(`https://isracms.vercel.app/api/rooms/${roomId}`, {
         method: "DELETE",
-        credentials: "include", // Important: include cookies for authentication
         headers,
       })
 

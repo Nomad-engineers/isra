@@ -147,6 +147,54 @@ export function useRooms(options: UseRoomsOptions = {}) {
     }
   }, [])
 
+  const deleteRoom = useCallback(async (roomId: string): Promise<boolean> => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      // Get JWT token from localStorage
+      const token = localStorage.getItem("payload-token")
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      }
+
+      if (token) {
+        headers['Authorization'] = `JWT ${token}`
+      }
+
+      const response = await fetch(`https://isracms.vercel.app/api/rooms/${roomId}`, {
+        method: "DELETE",
+        credentials: "include", // Important: include cookies for authentication
+        headers,
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(
+          errorData.message ||
+          errorData.error?.message ||
+          `API Error: ${response.status} ${response.statusText}`
+        )
+      }
+
+      // Remove the deleted room from the local state
+      setRooms(prevRooms => prevRooms.filter(room => room.id !== roomId))
+
+      // Show success message
+      toast.success("Комната успешно удалена!")
+
+      return true
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to delete room"
+      setError(errorMessage)
+      toast.error(errorMessage)
+      console.error("Room deletion error:", err)
+      return false
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
   const clearError = useCallback(() => {
     setError(null)
   }, [])
@@ -159,5 +207,6 @@ export function useRooms(options: UseRoomsOptions = {}) {
     refetch,
     clearError,
     createWebinar,
+    deleteRoom,
   }
 }

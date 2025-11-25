@@ -7,12 +7,76 @@ import { LoginFormData } from '@/lib/validations'
 import { toast } from 'sonner'
 import { sdk } from '@/lib/sdk'
 import { setToken, isValidToken } from '@/lib/auth-utils'
-import { googleOAuthFixed as googleOAuth } from '@/lib/google-oauth-fixed'
+import { googleOAuthV2 as googleOAuth } from '@/lib/google-oauth-v2'
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const router = useRouter()
+
+  // Handle Google OAuth callback when returning from Google
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const hashParams = new URLSearchParams(window.location.hash.substring(1))
+
+    const idToken = urlParams.get('id_token') || hashParams.get('id_token')
+    const state = urlParams.get('state') || hashParams.get('state')
+
+    if (idToken && state) {
+      // We're returning from Google OAuth
+      const storedState = sessionStorage.getItem('googleOAuthState')
+
+      if (state === storedState) {
+        // Valid state - process login
+        processGoogleLogin(idToken)
+      } else {
+        toast.error('Invalid OAuth state')
+      }
+
+      // Clean up URL and session
+      sessionStorage.removeItem('googleOAuthState')
+      sessionStorage.removeItem('googleOAuthNonce')
+      window.history.replaceState({}, document.title, window.location.pathname)
+    }
+  }, [])
+
+  const processGoogleLogin = async (idToken: string) => {
+    try {
+      setIsGoogleLoading(true)
+
+      console.log('Processing Google login with idToken:', idToken.substring(0, 20) + '...')
+
+      // Send idToken to backend via query parameters
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_PAYLOAD_API_URL || 'https://isracms.vercel.app'}/api/users/google?idToken=${encodeURIComponent(idToken)}`,
+        {
+          method: 'GET',
+        }
+      )
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Google authentication failed')
+      }
+
+      const result = await response.json()
+
+      // Save token and user data using existing auth utilities
+      if (result.token && isValidToken(result.token)) {
+        setToken(result.token, result.user)
+      }
+
+      // On successful login, redirect to rooms
+      toast.success('Successfully logged in with Google!')
+      router.push('/rooms')
+
+    } catch (error) {
+      console.error('Google login error:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to login with Google')
+    } finally {
+      setIsGoogleLoading(false)
+    }
+  }
 
   const handleEmailLogin = async (data: LoginFormData) => {
     setIsLoading(true)
@@ -68,12 +132,9 @@ export default function LoginPage() {
         await googleOAuth.initialize({ client_id: clientId })
       }
 
-      // Mark this as login flow (not signup)
-      sessionStorage.setItem('googleSignUpFlow', 'false')
-
-      // Start Google OAuth flow (redirects to Google)
-      // The rest will be handled by the callback page
+      // Start Google OAuth flow (redirects to Google page)
       await googleOAuth.signIn()
+      // The rest will be handled by the useEffect callback when user returns from Google
     } catch (error) {
       console.error('Google login error:', error)
       if (error instanceof Error) {

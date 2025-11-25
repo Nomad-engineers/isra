@@ -12,6 +12,8 @@ declare global {
         }
       }
     }
+    googleOAuthResolve?: (value: { idToken: string }) => void
+    googleOAuthReject?: (error: Error) => void
   }
 }
 
@@ -27,6 +29,7 @@ export interface GoogleUser {
 
 export interface GoogleOAuthConfig {
   client_id: string
+  redirect_uri?: string
 }
 
 class GoogleOAuthV2 {
@@ -90,7 +93,7 @@ class GoogleOAuthV2 {
       // Test Google API availability first
       const testUrl = `https://accounts.google.com/gsi/status?client_id=${this.config.client_id}`
 
-      const statusResponse = await fetch(testUrl).catch(err => {
+      const statusResponse = await fetch(testUrl).catch((err) => {
         console.warn('Google API status check failed:', err)
         return null
       })
@@ -112,59 +115,40 @@ class GoogleOAuthV2 {
         }
       }
 
-      // Use Google Sign-In with prompt
+      // Use OAuth2 redirect flow (full page redirect)
       return new Promise((resolve, reject) => {
         const timeoutId = setTimeout(() => {
-          reject(new Error('Google sign-in timed out after 30 seconds'))
-        }, 30000)
+          reject(new Error('Google sign-in timed out after 60 seconds'))
+        }, 60000)
 
-        // Initialize with callback
-        window.google.accounts.id.initialize({
-          client_id: this.config!.client_id,
-          callback: (response: any) => {
-            clearTimeout(timeoutId)
+        // Generate state and nonce for security
+        const state = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+        const nonce = Math.random().toString(36).substring(2, 15)
 
-            try {
-              console.log('Received Google response:', response)
+        // Store in sessionStorage for callback validation
+        sessionStorage.setItem('googleOAuthState', state)
+        sessionStorage.setItem('googleOAuthNonce', nonce)
 
-              if (!response.credential) {
-                throw new Error('No credential received from Google')
-              }
+        // Build OAuth2 URL for full page redirect
+        const redirectUri = this.config!.redirect_uri || window.location.origin + '/auth/login'
+        const authUrl =
+          `https://accounts.google.com/o/oauth2/v2/auth?` +
+          `client_id=${encodeURIComponent(this.config!.client_id)}&` +
+          `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+          `response_type=id_token&` +
+          `scope=openid email profile&` +
+          `state=${encodeURIComponent(state)}&` +
+          `nonce=${encodeURIComponent(nonce)}`
 
-              // Decode token to get user info
-              const payload = this.decodeJWT(response.credential)
-              console.log('Decoded user info:', payload)
+        console.log('Redirecting to Google OAuth page:', authUrl)
 
-              const googleUser = {
-                id: payload.sub,
-                email: payload.email,
-                name: payload.name,
-                picture: payload.picture,
-                given_name: payload.given_name,
-                family_name: payload.family_name,
-                idToken: response.credential,
-              }
+        // Store resolve function for callback after redirect
+        window.googleOAuthResolve = resolve
+        window.googleOAuthReject = reject
 
-              console.log('Google sign-in successful:', googleUser)
-              resolve({ idToken: response.credential })
-
-            } catch (error) {
-              console.error('Error processing Google response:', error)
-              reject(new Error('Failed to process Google authentication response'))
-            }
-          },
-          auto_select: false,
-          cancel_on_tap_outside: false,
-        })
-
-        // Show the Google sign-in prompt
-        console.log('Showing Google sign-in prompt...')
-        window.google.accounts.id.prompt({
-          moment_type: 'signIn',
-        })
-
+        // Redirect to Google OAuth page
+        window.location.href = authUrl
       })
-
     } catch (error) {
       console.error('Google sign-in error:', error)
       throw error
@@ -181,7 +165,7 @@ class GoogleOAuthV2 {
       const jsonPayload = decodeURIComponent(
         atob(base64)
           .split('')
-          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
           .join('')
       )
       return JSON.parse(jsonPayload)
@@ -216,7 +200,7 @@ class GoogleOAuthV2 {
       currentOrigin: window.location.origin,
       hasGoogleAPI: !!window.google,
       userAgent: navigator.userAgent,
-      location: window.location.href
+      location: window.location.href,
     }
   }
 }

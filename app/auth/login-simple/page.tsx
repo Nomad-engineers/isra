@@ -7,9 +7,9 @@ import { LoginFormData } from '@/lib/validations'
 import { toast } from 'sonner'
 import { sdk } from '@/lib/sdk'
 import { setToken, isValidToken } from '@/lib/auth-utils'
-import { googleOAuthFixed as googleOAuth } from '@/lib/google-oauth-fixed'
+import { googleOAuthV2 } from '@/lib/google-oauth-v2'
 
-export default function LoginPage() {
+export default function SimpleLoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const router = useRouter()
@@ -45,6 +45,7 @@ export default function LoginPage() {
       // On successful login, redirect to rooms
       toast.success('Successfully logged in!')
       router.push('/rooms')
+
     } catch (error) {
       console.error('Login error:', error)
       toast.error(error instanceof Error ? error.message : 'Неверный email или пароль')
@@ -64,20 +65,50 @@ export default function LoginPage() {
         throw new Error('Google OAuth not configured. Missing NEXT_PUBLIC_GOOGLE_CLIENT_ID.')
       }
 
-      if (!googleOAuth.isReady()) {
-        await googleOAuth.initialize({ client_id: clientId })
+      if (!googleOAuthV2.isReady()) {
+        await googleOAuthV2.initialize({ client_id: clientId })
       }
 
-      // Mark this as login flow (not signup)
-      sessionStorage.setItem('googleSignUpFlow', 'false')
+      // Start Google OAuth flow (returns idToken directly)
+      const { idToken } = await googleOAuthV2.signIn()
 
-      // Start Google OAuth flow (redirects to Google)
-      // The rest will be handled by the callback page
-      await googleOAuth.signIn()
+      console.log('Got idToken:', idToken.substring(0, 20) + '...')
+
+      // Send idToken to backend
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_PAYLOAD_API_URL || 'https://isracms.vercel.app'}/api/auth/google`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            idToken: idToken,
+            isSignUp: false,
+          }),
+        }
+      )
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Google authentication failed')
+      }
+
+      const result = await response.json()
+
+      // Save token and user data using existing auth utilities
+      if (result.token && isValidToken(result.token)) {
+        setToken(result.token, result.user)
+      }
+
+      // On successful login, redirect to rooms
+      toast.success('Successfully logged in with Google!')
+      router.push('/rooms')
+
     } catch (error) {
       console.error('Google login error:', error)
       if (error instanceof Error) {
-        if (error.message.includes('cancelled')) {
+        if (error.message.includes('cancelled') || error.message.includes('timed out')) {
           toast.info('Google sign-in was cancelled')
         } else {
           toast.error(error.message)
@@ -92,11 +123,33 @@ export default function LoginPage() {
   }
 
   return (
-    <LoginForm
-      onSubmit={handleEmailLogin}
-      onGoogleSignIn={handleGoogleLogin}
-      loading={isLoading}
-      googleLoading={isGoogleLoading}
-    />
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Simple Google OAuth Test
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Test page for Google OAuth
+          </p>
+        </div>
+
+        <LoginForm
+          onSubmit={handleEmailLogin}
+          onGoogleSignIn={handleGoogleLogin}
+          loading={isLoading}
+          googleLoading={isGoogleLoading}
+        />
+
+        <div className="mt-4 text-center">
+          <button
+            onClick={() => router.push('/auth/login')}
+            className="text-sm text-blue-600 hover:text-blue-500"
+          >
+            ← Back to regular login
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }

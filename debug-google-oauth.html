@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google OAuth Debug</title>
+</head>
+<body>
+    <h1>Google OAuth Debug</h1>
+    <div id="status">Checking Google API...</div>
+    <div id="error" style="color: red;"></div>
+    <button onclick="testGoogleOAuth()">Test Google OAuth</button>
+
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+        const clientId = '673993847428-0eo30q2tttk7hajf5cfhrmvs9v03jqll.apps.googleusercontent.com';
+
+        function testGoogleOAuth() {
+            document.getElementById('status').textContent = 'Initializing Google OAuth...';
+
+            try {
+                window.google.accounts.id.initialize({
+                    client_id: clientId,
+                    callback: (response) => {
+                        document.getElementById('status').textContent = 'SUCCESS: Got Google token!';
+                        console.log('Google response:', response);
+
+                        // Decode token to show user info
+                        const payload = JSON.parse(atob(response.credential.split('.')[1]));
+                        console.log('User info:', payload);
+
+                        alert(`Success! User: ${payload.name} (${payload.email})`);
+                    },
+                    auto_select: false
+                });
+
+                // Show popup
+                window.google.accounts.id.prompt();
+
+                // Also try button version
+                window.google.accounts.id.renderButton(
+                    document.body,
+                    {
+                        theme: 'filled_blue',
+                        size: 'large',
+                        text: 'signin_with',
+                        shape: 'rectangular'
+                    }
+                );
+
+            } catch (error) {
+                document.getElementById('error').textContent = `Error: ${error.message}`;
+                console.error('Google OAuth error:', error);
+            }
+        }
+
+        // Check if Google API loaded
+        window.addEventListener('load', () => {
+            if (window.google) {
+                document.getElementById('status').textContent = 'Google API loaded successfully!';
+            } else {
+                document.getElementById('error').textContent = 'Google API failed to load';
+            }
+        });
+
+        // Check Google API status
+        setTimeout(() => {
+            fetch(`https://accounts.google.com/gsi/status?client_id=${clientId}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Google API Status:', data);
+                    document.getElementById('status').innerHTML = `
+                        Google API Status: ${JSON.stringify(data, null, 2)}
+                    `;
+                })
+                .catch(error => {
+                    document.getElementById('error').textContent = `Status check failed: ${error.message}`;
+                });
+        }, 1000);
+    </script>
+</body>
+</html>

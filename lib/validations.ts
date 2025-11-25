@@ -16,8 +16,8 @@ export const profileFormSchema = z.object({
   phone: z
     .string()
     .regex(
-      /^\+7\\d{3}\)-\d{3}-\d{2}-\d{2}$/,
-      "Телефон должен быть в формате +7(XXX)-XXX-XX-XX"
+      /^\+?[1-9]\d{1,14}$/,
+      "Телефон должен быть в формате +XXXXXXXXXX"
     )
     .optional()
     .or(z.literal("")),

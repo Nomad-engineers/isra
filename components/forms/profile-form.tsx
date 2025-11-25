@@ -112,7 +112,7 @@ export function ProfileForm({
           control={form.control}
           name="phone"
           label="Телефон"
-          placeholder="+7(700)-111-2222"
+          placeholder="+77001112222"
         />
 
         <Button type="submit" className="w-full" disabled={loading}>

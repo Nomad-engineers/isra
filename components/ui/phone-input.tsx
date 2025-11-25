@@ -20,7 +20,7 @@ interface PhoneInputProps {
 export function PhoneInput({
   value = "",
   onChange,
-  placeholder = "+7(702)-242-1618",
+  placeholder = "+77022421618",
   className,
 }: PhoneInputProps) {
   const formatPhoneNumber = useCallback((input: string): string => {
@@ -29,32 +29,14 @@ export function PhoneInput({
     // Allow complete deletion
     if (!digits || digits.length === 0) return "";
 
-    // If only "7" is left, clear it
-    if (digits === "7" || digits.length === 1) return "";
+    // If only "7" is left, keep it
+    if (digits === "7" || digits.length === 1) return "+7";
 
     let result = "+7";
 
+    // Add all remaining digits without formatting
     if (digits.length > 1) {
-      const areaCode = digits.slice(1, 4);
-      if (areaCode.length) {
-        result += `(${areaCode}`;
-        if (areaCode.length === 3) result += ")";
-      }
-    }
-
-    if (digits.length >= 5) {
-      const next3 = digits.slice(4, 7);
-      if (next3.length) result += `-${next3}`;
-    }
-
-    if (digits.length >= 8) {
-      const next2 = digits.slice(7, 9);
-      if (next2.length) result += `-${next2}`;
-    }
-
-    if (digits.length >= 10) {
-      const last2 = digits.slice(9, 11);
-      if (last2.length) result += `-${last2}`;
+      result += digits.slice(1);
     }
 
     return result;
@@ -89,7 +71,7 @@ export function PhoneInput({
       onChange={handleInputChange}
       placeholder={placeholder}
       className={className}
-      maxLength={18}
+      maxLength={12}
       inputMode="tel"
     />
   );

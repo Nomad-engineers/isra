@@ -66,28 +66,50 @@ export function AuthGuard({ children }: AuthGuardProps) {
 
   // Add token to all client-side requests via fetch interceptor
   useEffect(() => {
-    // Store original fetch
-    const originalFetch = window.fetch
+    // Store original fetch with proper binding to prevent recursion
+    const originalFetch = globalThis.fetch.bind(globalThis)
 
     // Override fetch to add auth token
-    window.fetch = async (...args) => {
+    const interceptedFetch = async (...args: Parameters<typeof fetch>): Promise<Response> => {
       const [url, options = {}] = args
 
+      // Skip intercepting ONLY for local Next.js API routes, not external CMS URLs
+      const isInternalRoute =
+        typeof url === 'string' &&
+        url.startsWith(window.location.origin + '/api/users/')
+
+      if (isInternalRoute) {
+        return await originalFetch(url, options)
+      }
+
       // Add token to request headers for our API
-      if (token && typeof url === 'string' && url.startsWith('/')) {
-        options.headers = {
-          ...options.headers,
-          'Authorization': `Bearer ${token}`,
-          'x-local-storage-token': token, // Custom header for middleware
+      if (token && typeof url === 'string') {
+        // Handle both relative URLs and Payload CMS URLs
+        const isOurApi = url.startsWith('/') || url.includes('isracms.vercel.app')
+
+        if (isOurApi) {
+          options.headers = {
+            ...options.headers,
+            'Authorization': `JWT ${token}`, // Use JWT format for Payload CMS
+            'x-local-storage-token': token, // Custom header for middleware
+          }
         }
       }
 
-      return originalFetch(url, options)
+      try {
+        return await originalFetch(url, options)
+      } catch (error) {
+        console.error('Fetch error:', error)
+        throw error
+      }
     }
 
-    // Cleanup on unmount
+    // Override global fetch with our intercepted version
+    globalThis.fetch = interceptedFetch
+
+    // Cleanup on unmount - restore original fetch
     return () => {
-      window.fetch = originalFetch
+      globalThis.fetch = originalFetch
     }
   }, [token])
 

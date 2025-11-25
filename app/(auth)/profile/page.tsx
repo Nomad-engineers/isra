@@ -54,8 +54,11 @@ export default function ProfilePage() {
   });
   const [isLoading, setIsLoading] = useState(true);
 
-  const updateProfileOperation = useAsyncOperation(profileApi.updateProfile);
   const changePasswordOperation = useAsyncOperation(profileApi.changePassword);
+
+  // State for managing current user data and authentication
+  const [currentUserId, setCurrentUserId] = useState<string>('');
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Fetch user data on component mount
   useEffect(() => {
@@ -88,6 +91,7 @@ export default function ProfilePage() {
 
         if (result && result.user) {
           const userData = result.user as UserData;
+          setCurrentUserId(userData.id); // Store user ID for updates
 
           // Extract first and last name from name field if available, or use dedicated fields
           let firstName = userData.firstName || '';
@@ -104,7 +108,7 @@ export default function ProfilePage() {
             firstName: firstName || 'Имя',
             lastName: lastName || 'Фамилия',
             email: userData.email || '',
-            phone: userData.phone,
+            phone: userData.phone || '',
             avatar: userData.avatar,
           });
         } else if (result && result.message === "Account") {
@@ -113,7 +117,7 @@ export default function ProfilePage() {
             firstName: 'Тестовый',
             lastName: 'Пользователь',
             email: 'test@example.com',
-            phone: '+7 (999) 123-45-67',
+            phone: '+79991234567',
             avatar: undefined,
           });
         } else {
@@ -140,7 +144,30 @@ export default function ProfilePage() {
   }, [router]);
 
   const handleProfileUpdate = async (data: ProfileFormDataWithAvatar) => {
+    setIsUpdating(true);
+
     try {
+      const token = localStorage.getItem('payload-token');
+
+      if (!token) {
+        toast.error("Требуется авторизация");
+        router.push('/auth/login');
+        return;
+      }
+
+      if (!currentUserId) {
+        toast.error("ID пользователя не найден");
+        return;
+      }
+
+      // Prepare update data
+      const updateData = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        phone: data.phone ? data.phone.replace(/\D/g, '') : data.phone,
+      };
+
       // Handle avatar upload if present
       if (data.avatar) {
         // Create FormData for file upload
@@ -150,58 +177,64 @@ export default function ProfilePage() {
         formData.append("lastName", data.lastName);
         formData.append("email", data.email);
         if (data.phone) {
-          formData.append("phone", data.phone);
+          formData.append("phone", data.phone.replace(/\D/g, ''));
         }
 
-        // Here you would typically upload to your API
-        // For now, we'll simulate the upload and create a preview URL
-        const avatarUrl = URL.createObjectURL(data.avatar);
-
-        await updateProfileOperation.execute({
-          firstName: data.firstName,
-          lastName: data.lastName,
-          email: data.email,
-          phone: data.phone,
-          avatar: avatarUrl,
+        // Upload avatar first
+        const avatarResponse = await fetch('https://isracms.vercel.app/api/upload/avatar', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            Authorization: `JWT ${token}`,
+          },
+          body: formData,
         });
 
-        setProfile((prev) => ({
-          ...prev,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          email: data.email,
-          phone: data.phone || undefined,
-          avatar: avatarUrl,
-        }));
-
-        toast.success("Профиль успешно обновлен!");
-      } else {
-        // Update without avatar
-        await updateProfileOperation.execute({
-          firstName: data.firstName,
-          lastName: data.lastName,
-          email: data.email,
-          phone: data.phone,
-          avatar: data.avatar || undefined,
-        });
-
-        setProfile((prev) => ({
-          ...prev,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          email: data.email,
-          phone: data.phone || undefined,
-        }));
-
-        toast.success("Профиль успешно обновлен!");
+        if (avatarResponse.ok) {
+          const avatarResult = await avatarResponse.json();
+          (updateData as { avatar?: string }).avatar = avatarResult.url;
+        } else {
+          // If avatar upload fails, continue without it
+          console.warn("Avatar upload failed, continuing without avatar");
+        }
       }
+
+      // Make PATCH request to update user
+      const response = await fetch(`https://isracms.vercel.app/api/users/${currentUserId}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `JWT ${token}`,
+        },
+        body: JSON.stringify(updateData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.errors?.[0]?.message || 'Failed to update profile');
+      }
+
+      // Update local state with new user data
+      setProfile({
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        phone: data.phone || undefined,
+        avatar: (updateData as { avatar?: string }).avatar || data.avatar || profile.avatar,
+      });
+
+      toast.success("Данные успешно обновлены");
+
     } catch (error) {
-      toast.error("Ошибка при обновлении профиля");
       console.error("Profile update error:", error);
+      toast.error("Ошибка обновления данных");
+    } finally {
+      setIsUpdating(false);
     }
   };
 
-  const handlePasswordChange = async (data: any) => {
+  const handlePasswordChange = async (data: { currentPassword: string; newPassword: string; confirmPassword: string }) => {
     await changePasswordOperation.execute(data);
   };
 
@@ -259,7 +292,7 @@ export default function ProfilePage() {
                 <ProfileForm
                   initialData={profile}
                   onSubmit={handleProfileUpdate}
-                  loading={updateProfileOperation.loading}
+                  loading={isUpdating}
                 />
               </CardContent>
             </Card>

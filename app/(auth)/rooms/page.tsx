@@ -144,7 +144,7 @@ export default function RoomsPage() {
 
   const filteredRooms = rooms.filter(
     (room) =>
-      room.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      room.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
       room.description?.toLowerCase().includes(debouncedSearch.toLowerCase())
   );
 
@@ -180,13 +180,19 @@ export default function RoomsPage() {
   const handleEditRoom = (id: string) => {
     console.log("Edit room:", id);
     // TODO: Implement room editing functionality
-    toast.info("Редактирование комнат скоро будет доступно");
+    shadcnToast({
+      title: "Информация",
+      description: "Редактирование комнат скоро будет доступно",
+    });
   };
 
   const handleDeleteRoom = async (id: string) => {
     console.log("Delete room:", id);
     // TODO: Implement room deletion functionality
-    toast.info("Удаление комнат скоро будет доступно");
+    shadcnToast({
+      title: "Информация",
+      description: "Удаление комнат скоро будет доступно",
+    });
   };
 
   const handleCopyRoomLink = async (id: string) => {

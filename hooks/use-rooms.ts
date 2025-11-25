@@ -31,14 +31,22 @@ export function useRooms(options: UseRoomsOptions = {}) {
     setError(null)
 
     try {
-      const url = `https://isracms.vercel.app/api/rooms?where[user][equals]=${effectiveUserId}`
+      const url = `https://isracms.vercel.app/api/rooms/my`
+
+      // Get JWT token from localStorage
+      const token = localStorage.getItem("payload-token")
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      }
+
+      if (token) {
+        headers['Authorization'] = `JWT ${token}`
+      }
 
       const response = await fetch(url, {
         method: "GET",
         credentials: "include", // Important: include cookies for authentication
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
       })
 
       if (!response.ok) {
@@ -96,12 +104,20 @@ export function useRooms(options: UseRoomsOptions = {}) {
     try {
       const url = `https://isracms.vercel.app/api/rooms/create`
 
+      // Get JWT token from localStorage
+      const token = localStorage.getItem("payload-token")
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      }
+
+      if (token) {
+        headers['Authorization'] = `JWT ${token}`
+      }
+
       const response = await fetch(url, {
         method: "POST",
         credentials: "include", // Important: include cookies for authentication
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(data),
       })
 

@@ -84,12 +84,12 @@ export const signUpSchema = z
         passwordRegex,
         "Password must contain at least one uppercase letter, one lowercase letter, and one number"
       ),
-    first_name: z
+    firstName: z
       .string()
       .min(2, "First name must be at least 2 characters")
       .max(50, "First name must be less than 50 characters")
       .regex(/^[a-zA-Zа-яА-Я\s]+$/, "First name can only contain letters and spaces"),
-    last_name: z
+    lastName: z
       .string()
       .min(2, "Last name must be at least 2 characters")
       .max(50, "Last name must be less than 50 characters")

@@ -10,8 +10,8 @@ const PAYLOAD_ADMIN_PASSWORD = process.env.PAYLOAD_ADMIN_PASSWORD
 const signupSchema = z.object({
   email: z.string().email('Некорректный формат email'),
   password: z.string().min(6, 'Пароль должен содержать минимум 6 символов'),
-  first_name: z.string().min(1, 'Имя обязательно для заполнения'),
-  last_name: z.string().min(1, 'Фамилия обязательна для заполнения'),
+  firstName: z.string().min(1, 'Имя обязательно для заполнения'),
+  lastName: z.string().min(1, 'Фамилия обязательна для заполнения'),
 })
 
 // Authentication cache to avoid repeated login attempts
@@ -101,14 +101,14 @@ async function getPayloadToken(): Promise<string> {
 async function createUser(data: {
   email: string
   password: string
-  first_name: string
-  last_name: string
+  firstName: string
+  lastName: string
 }) {
   try {
     console.log('Creating user in Payload CMS:', {
       email: data.email,
-      first_name: data.first_name,
-      last_name: data.last_name,
+      firstName: data.firstName,
+      lastName: data.lastName,
     })
 
     const response = await fetch(`${PAYLOAD_API_URL}/users/register`, {
@@ -119,8 +119,8 @@ async function createUser(data: {
       body: JSON.stringify({
         email: data.email,
         password: data.password,
-        name: data.first_name,
-        surname: data.last_name,
+        name: data.firstName,
+        surname: data.lastName,
         phone: '',
         role: 'client',
       }),
@@ -170,8 +170,8 @@ async function createUser(data: {
             body: JSON.stringify({
               email: data.email,
               password: data.password,
-              name: data.first_name,
-              surname: data.last_name,
+              name: data.firstName,
+              surname: data.lastName,
               phone: '',
               role: 'client',
             }),
@@ -223,8 +223,8 @@ export async function POST(request: NextRequest) {
 
     console.log('Signup request validated:', {
       email: validatedData.email,
-      first_name: validatedData.first_name,
-      last_name: validatedData.last_name,
+      firstName: validatedData.firstName,
+      lastName: validatedData.lastName,
     })
 
     // Create user in Payload CMS

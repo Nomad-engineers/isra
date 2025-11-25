@@ -31,8 +31,8 @@ export function SignUpForm({ onSubmit, onGoogleSignUp, loading = false, googleLo
       email: '',
       password: '',
       confirmPassword: '',
-      first_name: '',
-      last_name: '',
+      firstName: '',
+      lastName: '',
     },
   })
 
@@ -112,7 +112,7 @@ export function SignUpForm({ onSubmit, onGoogleSignUp, loading = false, googleLo
           <div className="grid grid-cols-2 gap-4">
             <FormField
               control={form.control}
-              name="first_name"
+              name="firstName"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>First Name</FormLabel>
@@ -135,7 +135,7 @@ export function SignUpForm({ onSubmit, onGoogleSignUp, loading = false, googleLo
 
             <FormField
               control={form.control}
-              name="last_name"
+              name="lastName"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Last Name</FormLabel>

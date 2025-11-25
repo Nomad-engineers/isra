@@ -24,10 +24,14 @@ import {
   Filter,
   Upload,
   Loader2,
+  DoorOpen,
 } from "lucide-react";
 import { CreateWebinarModal } from "@/components/webinars/create-webinar-modal";
 import { EditWebinarModal } from "@/components/webinars/edit-webinar-modal";
 import { Webinar } from "@/types/webinar";
+import { Room } from "@/types/room";
+import { useRooms } from "@/hooks/use-rooms";
+import { RoomCard } from "@/components/rooms/room-card";
 import { toast } from "sonner";
 
 interface UserData {
@@ -52,6 +56,12 @@ export default function RoomsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearch = useDebounce(searchTerm, 300);
   const [editingWebinar, setEditingWebinar] = useState<Webinar | null>(null);
+
+  // Fetch rooms using the API when user data is available
+  const { rooms, loading: roomsLoading, error: roomsError, refetch: refetchRooms } = useRooms({
+    userId: userData?.id,
+    autoFetch: !!userData?.id,
+  });
 
   const stats = getMockStats();
 
@@ -115,8 +125,15 @@ export default function RoomsPage() {
       webinar.description?.toLowerCase().includes(debouncedSearch.toLowerCase())
   );
 
+  const filteredRooms = rooms.filter(
+    (room) =>
+      room.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      room.description?.toLowerCase().includes(debouncedSearch.toLowerCase())
+  );
+
   const handleRefresh = () => {
     setLoading(true);
+    refetchRooms(); // Fetch fresh rooms data
     setTimeout(() => setLoading(false), 1000);
   };
 
@@ -128,6 +145,42 @@ export default function RoomsPage() {
     const webinar = webinars.find((w) => w.id === id);
     if (webinar) {
       setEditingWebinar(webinar);
+    }
+  };
+
+  // Room handlers
+  const handleOpenRoom = (id: string) => {
+    console.log("Open room:", id);
+    // Navigate to room page or open room modal
+    router.push(`/room/${id}`);
+  };
+
+  const handleEditRoom = (id: string) => {
+    console.log("Edit room:", id);
+    // TODO: Implement room editing functionality
+    toast.info("Редактирование комнат скоро будет доступно");
+  };
+
+  const handleDeleteRoom = async (id: string) => {
+    console.log("Delete room:", id);
+    // TODO: Implement room deletion functionality
+    toast.info("Удаление комнат скоро будет доступно");
+  };
+
+  const handleCopyRoomLink = async (id: string) => {
+    const roomLink = `${window.location.origin}/room/${id}`;
+    try {
+      await navigator.clipboard.writeText(roomLink);
+      shadcnToast({
+        title: "Ссылка скопирована",
+        description: "Ссылка на комнату успешно скопирована.",
+      });
+    } catch (error) {
+      shadcnToast({
+        title: "Ошибка копирования",
+        description: "Не удалось скопировать ссылку. Попробуйте еще раз.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -222,9 +275,28 @@ export default function RoomsPage() {
     return emailName.charAt(0).toUpperCase() + emailName.slice(1);
   };
 
-  // Show loading state while fetching user data
-  if (userLoading || (loading && webinars.length === 0)) {
+  // Show loading state while fetching user data or rooms
+  if (userLoading || roomsLoading) {
     return <PageLoader />;
+  }
+
+  // Show error state if rooms fetch failed
+  if (roomsError) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Card className="w-full max-w-md">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <p className="text-destructive text-center mb-4">
+              Не удалось загрузить комнаты: {roomsError}
+            </p>
+            <Button onClick={refetchRooms} variant="outline">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Попробовать снова
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -236,7 +308,7 @@ export default function RoomsPage() {
             Добро пожаловать, {getUserDisplayName()}! 👋
           </h1>
           <p className="text-gray-400 text-lg">
-            Управляйте своими вебинарами и настройками
+            Управляйте своими комнатами и настройками
           </p>
           {userData?.email && (
             <p className="text-gray-500 text-sm mt-1">
@@ -249,7 +321,7 @@ export default function RoomsPage() {
           <div className="relative flex-1 sm:flex-initial">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
             <Input
-              placeholder="Поиск вебинаров..."
+              placeholder="Поиск комнат..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 bg-white/5 backdrop-blur-md border-white/10 text-white placeholder:text-gray-400 focus:bg-white/10 focus:border-white/20 transition-all"
@@ -286,34 +358,34 @@ export default function RoomsPage() {
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Main content */}
         <div className="flex-1">
-          {/* Webinars grid */}
+          {/* Rooms grid */}
           <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-            {filteredWebinars.map((webinar) => (
-              <WebinarCard
-                key={webinar.id}
-                webinar={webinar}
-                onView={() => handleOpen(webinar.id)}
-                onEdit={() => handleEdit(webinar.id)}
-                onDelete={() => handleDelete(webinar.id)}
-                onCopyLink={() => handleCopyLink(webinar.id)}
+            {filteredRooms.map((room) => (
+              <RoomCard
+                key={room.id}
+                room={room}
+                onView={() => handleOpenRoom(room.id)}
+                onEdit={() => handleEditRoom(room.id)}
+                onDelete={() => handleDeleteRoom(room.id)}
+                onCopyLink={() => handleCopyRoomLink(room.id)}
               />
             ))}
           </div>
 
-          {filteredWebinars.length === 0 && (
+          {filteredRooms.length === 0 && (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
-                <Video className="h-12 w-12 text-muted-foreground mb-4" />
+                <DoorOpen className="h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-medium mb-2">
-                  Вебинары не найдены
+                  Комнаты не найдены
                 </h3>
                 <p className="text-muted-foreground text-center mb-4">
                   {searchTerm
                     ? "Попробуйте изменить поисковый запрос"
-                    : "У вас пока нет вебинаров. Создайте свой первый вебинар!"}
+                    : "У вас пока нет комнат. Создайте свою первую комнату!"}
                 </p>
                 <CreateWebinarModal
-                  buttonText="Создать вебинар"
+                  buttonText="Создать комнату"
                   buttonClassName="gradient-primary hover:opacity-90 transition-opacity"
                   showIcon={true}
                 />
@@ -330,19 +402,29 @@ export default function RoomsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <StatsCard
-                title="Всего вебинаров"
-                value={stats.total}
-                icon={Video}
+                title="Всего комнат"
+                value={rooms.length}
+                icon={DoorOpen}
               />
-              <StatsCard title="Активных" value={stats.active} icon={Video} />
               <StatsCard
-                title="Запланированных"
-                value={stats.scheduled}
+                title="Активных"
+                value={rooms.length} // All rooms are considered active for now
+                icon={DoorOpen}
+              />
+              <StatsCard
+                title="Создано сегодня"
+                value={rooms.filter(room => {
+                  const today = new Date().toDateString();
+                  const roomDate = new Date(room.createdAt).toDateString();
+                  return today === roomDate;
+                }).length}
                 icon={Calendar}
               />
               <StatsCard
-                title="Черновиков"
-                value={stats.drafts}
+                title="Обновлено"
+                value={rooms.filter(room =>
+                  new Date(room.updatedAt).toDateString() === new Date().toDateString()
+                ).length}
                 icon={FileText}
               />
             </CardContent>
@@ -354,7 +436,7 @@ export default function RoomsPage() {
             </CardHeader>
             <CardContent className="space-y-2">
               <CreateWebinarModal
-                buttonText="Новый вебинар"
+                buttonText="Новая комната"
                 buttonSize="sm"
                 buttonClassName="w-full gradient-primary hover:opacity-90 transition-opacity"
                 showIcon={true}

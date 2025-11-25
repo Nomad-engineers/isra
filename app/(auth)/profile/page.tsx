@@ -221,7 +221,7 @@ export default function ProfilePage() {
         lastName: data.lastName,
         email: data.email,
         phone: data.phone || undefined,
-        avatar: (updateData as { avatar?: string }).avatar || data.avatar || profile.avatar,
+        avatar: (updateData as { avatar?: string }).avatar || profile.avatar,
       });
 
       toast.success("Данные успешно обновлены");

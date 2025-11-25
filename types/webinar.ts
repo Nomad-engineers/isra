@@ -1,8 +1,11 @@
 import { BaseEntity, StatusEntity } from './common'
 
+export type WebinarType = 'live' | 'auto'
+
 export interface Webinar extends BaseEntity, StatusEntity {
   title: string
   description?: string
+  type: WebinarType
   scheduledAt?: string
   startedAt?: string
   endedAt?: string
@@ -28,6 +31,7 @@ export interface Webinar extends BaseEntity, StatusEntity {
 export interface CreateWebinarData {
   title: string
   description?: string
+  type: WebinarType
   scheduledAt?: string
   maxParticipants?: number
   roomSettings?: Partial<Webinar['roomSettings']>

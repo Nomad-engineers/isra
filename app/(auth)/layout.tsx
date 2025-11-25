@@ -1,4 +1,4 @@
-import { AppLayout } from '@/components/layout/app-layout'
+import { AuthLayoutWrapper } from '@/components/layout/auth-layout-wrapper'
 import { Toaster } from '@/components/ui/toaster'
 
 export default function AuthLayout({
@@ -7,9 +7,9 @@ export default function AuthLayout({
   children: React.ReactNode
 }) {
   return (
-    <AppLayout userName="Иван Петров">
+    <AuthLayoutWrapper>
       {children}
       <Toaster />
-    </AppLayout>
+    </AuthLayoutWrapper>
   )
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,20 +23,91 @@ import {
   Video,
   Filter,
   Upload,
+  Loader2,
 } from "lucide-react";
 import { CreateWebinarModal } from "@/components/webinars/create-webinar-modal";
 import { EditWebinarModal } from "@/components/webinars/edit-webinar-modal";
 import { Webinar } from "@/types/webinar";
+import { toast } from "sonner";
+
+interface UserData {
+  id: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  name?: string;
+  phone?: string;
+  avatar?: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function RoomsPage() {
-  const { toast } = useToast();
+  const router = useRouter();
+  const { toast: shadcnToast } = useToast();
   const [webinars] = useState(mockWebinars);
   const [loading, setLoading] = useState(false);
+  const [userLoading, setUserLoading] = useState(true);
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearch = useDebounce(searchTerm, 300);
   const [editingWebinar, setEditingWebinar] = useState<Webinar | null>(null);
 
   const stats = getMockStats();
+
+  // Fetch user data on component mount
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        // Get token from localStorage
+        const token = localStorage.getItem('payload-token');
+
+        if (!token) {
+          toast.error("Требуется авторизация");
+          router.push('/auth/login');
+          return;
+        }
+
+        // Fetch user data using direct API call (same pattern as login and profile)
+        const response = await fetch('https://isracms.vercel.app/api/users/me', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `JWT ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.errors?.[0]?.message || 'Failed to fetch user data');
+        }
+
+        const result = await response.json();
+
+        if (result && result.user) {
+          setUserData(result.user as UserData);
+        } else {
+          throw new Error('No user data received');
+        }
+      } catch (error) {
+        console.error('User data fetch error:', error);
+
+        // Check if it's an authentication error
+        if (error instanceof Error &&
+            (error.message.includes('401') || error.message.includes('Unauthorized') ||
+             error.message.includes('token'))) {
+          toast.error("Срок действия токена истек");
+          router.push('/auth/login');
+        } else {
+          toast.error("Ошибка загрузки данных пользователя");
+        }
+      } finally {
+        setUserLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [router]);
 
   const filteredWebinars = webinars.filter(
     (webinar) =>
@@ -130,7 +202,28 @@ export default function RoomsPage() {
     return info;
   };
 
-  if (loading && webinars.length === 0) {
+  // Helper function to get user's display name
+  const getUserDisplayName = () => {
+    if (!userData) return "Пользователь";
+
+    // Try firstName first, then name, then fall back to email
+    if (userData.firstName) {
+      return userData.firstName;
+    }
+
+    if (userData.name) {
+      // If name is "First Last", use first name only
+      const nameParts = userData.name.split(' ');
+      return nameParts[0] || userData.name;
+    }
+
+    // Extract name from email if no name fields available
+    const emailName = userData.email.split('@')[0];
+    return emailName.charAt(0).toUpperCase() + emailName.slice(1);
+  };
+
+  // Show loading state while fetching user data
+  if (userLoading || (loading && webinars.length === 0)) {
     return <PageLoader />;
   }
 
@@ -140,11 +233,16 @@ export default function RoomsPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-4xl font-bold tracking-tight text-white">
-            Добро пожаловать, Иван! 👋
+            Добро пожаловать, {getUserDisplayName()}! 👋
           </h1>
           <p className="text-gray-400 text-lg">
             Управляйте своими вебинарами и настройками
           </p>
+          {userData?.email && (
+            <p className="text-gray-500 text-sm mt-1">
+              {userData.email}
+            </p>
+          )}
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">

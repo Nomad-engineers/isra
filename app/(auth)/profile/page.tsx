@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,22 +26,118 @@ import {
   BarChart3,
   Video,
   FileText,
-  Settings,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
+interface UserData {
+  id: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  name?: string;
+  phone?: string;
+  avatar?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function ProfilePage() {
+  const router = useRouter();
   const [profile, setProfile] = useState({
-    firstName: "Иван",
-    lastName: "Петров",
-    email: "ivan.petrov@example.com",
-    phone: "+7 (999) 123-45-67" as string | undefined,
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "" as string | undefined,
     avatar: "" as string | undefined,
   });
+  const [isLoading, setIsLoading] = useState(true);
 
   const updateProfileOperation = useAsyncOperation(profileApi.updateProfile);
   const changePasswordOperation = useAsyncOperation(profileApi.changePassword);
+
+  // Fetch user data on component mount
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        // Get token from localStorage
+        const token = localStorage.getItem('payload-token');
+
+        if (!token) {
+          toast.error("Требуется авторизация");
+          router.push('/auth/login');
+          return;
+        }
+
+        // Fetch user data using direct API call (same pattern as login)
+        const response = await fetch('https://isracms.vercel.app/api/users/me', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `JWT ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.errors?.[0]?.message || 'Failed to fetch user data');
+        }
+
+        const result = await response.json();
+
+        if (result && result.user) {
+          const userData = result.user as UserData;
+
+          // Extract first and last name from name field if available, or use dedicated fields
+          let firstName = userData.firstName || '';
+          let lastName = userData.lastName || '';
+
+          if (userData.name && !firstName && !lastName) {
+            // If name is provided as "First Last", split it
+            const nameParts = userData.name.split(' ');
+            firstName = nameParts[0] || '';
+            lastName = nameParts.slice(1).join(' ') || '';
+          }
+
+          setProfile({
+            firstName: firstName || 'Имя',
+            lastName: lastName || 'Фамилия',
+            email: userData.email || '',
+            phone: userData.phone,
+            avatar: userData.avatar,
+          });
+        } else if (result && result.message === "Account") {
+          // Handle mock token case - show mock data
+          setProfile({
+            firstName: 'Тестовый',
+            lastName: 'Пользователь',
+            email: 'test@example.com',
+            phone: '+7 (999) 123-45-67',
+            avatar: undefined,
+          });
+        } else {
+          throw new Error('No user data received');
+        }
+      } catch (error) {
+        console.error('Profile fetch error:', error);
+
+        // Check if it's an authentication error
+        if (error instanceof Error &&
+            (error.message.includes('401') || error.message.includes('Unauthorized') ||
+             error.message.includes('token'))) {
+          toast.error("Срок действия токена истек");
+          router.push('/auth/login');
+        } else {
+          toast.error("Ошибка загрузки профиля");
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [router]);
 
   const handleProfileUpdate = async (data: ProfileFormDataWithAvatar) => {
     try {
@@ -107,6 +204,18 @@ export default function ProfilePage() {
   const handlePasswordChange = async (data: any) => {
     await changePasswordOperation.execute(data);
   };
+
+  // Show loading state while fetching user data
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+          <p className="text-muted-foreground">Загрузка профиля...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">

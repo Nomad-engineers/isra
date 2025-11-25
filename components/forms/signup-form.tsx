@@ -18,7 +18,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { signUpSchema, SignUpFormData } from "@/lib/validations";
-import { PhoneInput } from "@/components/ui/phone-input";
 import { useToast } from "@/components/ui/use-toast";
 
 interface SignUpFormProps {
@@ -44,9 +43,8 @@ export function SignUpForm({
       email: "",
       password: "",
       confirmPassword: "",
-      name: "",
-      surname: "",
-      phone: "",
+      firstName: "",
+      lastName: "",
     },
   });
 
@@ -134,10 +132,10 @@ export function SignUpForm({
           <div className="grid grid-cols-2 gap-4">
             <FormField
               control={form.control}
-              name="name"
+              name="firstName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>First Name</FormLabel>
                   <div className="pt-0.3"> </div>
 
                   <FormControl>
@@ -157,10 +155,10 @@ export function SignUpForm({
 
             <FormField
               control={form.control}
-              name="surname"
+              name="lastName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Surname</FormLabel>
+                  <FormLabel>Last Name</FormLabel>
                   <div className="pt-0.3"> </div>
 
                   <FormControl>
@@ -195,30 +193,6 @@ export function SignUpForm({
                       className="pl-10"
                       {...field}
                       type="email"
-                    />
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="phone"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Phone (optional)</FormLabel>
-                <div className="pt-0.3"> </div>
-
-                <FormControl>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
-                    <PhoneInput
-                      placeholder="+7 (XXX) XXX-XX-XX"
-                      className="pl-10"
-                      value={field.value}
-                      onChange={field.onChange}
                     />
                   </div>
                 </FormControl>

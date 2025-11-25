@@ -14,17 +14,28 @@ export default function ForgotPasswordPage() {
     setIsLoading(true)
 
     try {
-      // TODO: Implement actual API call
-      console.log('Send password reset email to:', data.email)
+      // Direct API call instead of using SDK to avoid configuration issues
+      const response = await fetch('https://isracms.vercel.app/api/users/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: data.email,
+        }),
+      })
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.errors?.[0]?.message || 'Failed to send reset link')
+      }
 
-      // The form will show the success message, we don't need to redirect here
-      // The user can use the "Back to login" button when ready
+      // Show success message
+      toast.success('Инструкции по восстановлению отправлены на вашу почту')
 
     } catch (error) {
       console.error('Forgot password error:', error)
+      toast.error('Ошибка. Попробуйте снова.')
       throw error
     } finally {
       setIsLoading(false)

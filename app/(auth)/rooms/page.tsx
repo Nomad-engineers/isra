@@ -19,6 +19,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { CreateWebinarModal } from "@/components/webinars/create-webinar-modal";
+import { useTokenAuth } from "@/hooks/use-token-auth";
 import { EditWebinarModal } from "@/components/webinars/edit-webinar-modal";
 import { Webinar } from "@/types/webinar";
 
@@ -66,7 +67,11 @@ interface ApiWebinar {
 
 export default function RoomsPage() {
   const router = useRouter();
+
+  // Оба нужны — не удаляем!
   const { toast } = useToast();
+  const { getToken } = useTokenAuth();
+
   const [webinars, setWebinars] = useState<Webinar[]>([]);
   const [loading, setLoading] = useState(true);
   const [userLoading, setUserLoading] = useState(true);
@@ -127,7 +132,7 @@ export default function RoomsPage() {
   const fetchWebinars = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("payload-token");
+      const token = getToken();
 
       if (!token) {
         toast({
@@ -194,7 +199,7 @@ export default function RoomsPage() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const token = localStorage.getItem("payload-token");
+        const token = getToken();
 
         if (!token) {
           toast({
@@ -335,7 +340,7 @@ export default function RoomsPage() {
     }
 
     try {
-      const token = localStorage.getItem("payload-token");
+      const token = getToken();
 
       const response = await fetch(
         `https://isracms.vercel.app/api/rooms/${id}`,

@@ -8,7 +8,7 @@ export default function AuthLayout({
   children: React.ReactNode
 }) {
   return (
-    <EnhancedAuthGuard requireAuth={false}>
+    <EnhancedAuthGuard requireAuth={true}>
       <AuthLayoutWrapper>
         {children}
         <Toaster />

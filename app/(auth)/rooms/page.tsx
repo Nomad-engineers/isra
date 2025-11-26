@@ -8,19 +8,19 @@ import { WebinarCard } from "@/components/webinars/webinar-card";
 import { StatsCard } from "@/components/common/stats-card";
 import { PageLoader } from "@/components/ui/loaders";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/use-toast";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
   RefreshCw,
-    Search,
+  Search,
   Calendar,
-    FileText,
+  FileText,
   Video,
-      Loader2,
+  Loader2,
 } from "lucide-react";
 import { CreateWebinarModal } from "@/components/webinars/create-webinar-modal";
 import { EditWebinarModal } from "@/components/webinars/edit-webinar-modal";
 import { Webinar } from "@/types/webinar";
-import { toast } from "@/components/ui/use-toast";
 
 interface UserData {
   id: string;
@@ -30,6 +30,7 @@ interface UserData {
   name?: string;
   phone?: string;
   avatar?: string;
+  role: string; // "admin" or "client"
   createdAt: string;
   updatedAt: string;
 }
@@ -65,7 +66,8 @@ interface ApiWebinar {
 
 export default function RoomsPage() {
   const router = useRouter();
-    const [webinars, setWebinars] = useState<Webinar[]>([]);
+  const { toast } = useToast();
+  const [webinars, setWebinars] = useState<Webinar[]>([]);
   const [loading, setLoading] = useState(true);
   const [userLoading, setUserLoading] = useState(true);
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -73,9 +75,13 @@ export default function RoomsPage() {
   const debouncedSearch = useDebounce(searchTerm, 300);
   const [editingWebinar, setEditingWebinar] = useState<Webinar | null>(null);
 
+  // Check if user is admin
+  const isAdmin = userData?.role === "admin";
+
   // Convert API webinar to internal format
   const convertApiWebinar = (apiWebinar: ApiWebinar): Webinar => {
-    let status: "active" | "scheduled" | "ended" | "draft" = "scheduled";
+    let status: "active" | "scheduled" | "ended" | "draft" | "cancelled" =
+      "scheduled";
 
     if (apiWebinar.roomStarted && !apiWebinar.stoppedAt) {
       status = "active";
@@ -87,25 +93,33 @@ export default function RoomsPage() {
       status = "draft";
     }
 
+    // Определяем тип вебинара на основе API данных
+    const webinarType: "live" | "auto" =
+      apiWebinar.type === "auto" ? "auto" : "live";
+
     return {
       id: apiWebinar.id.toString(),
       title: apiWebinar.name,
       description: apiWebinar.description,
-      type: apiWebinar.type as 'live' | 'auto',
       status,
       scheduledAt: apiWebinar.scheduledDate,
-      startedAt: apiWebinar.startedAt || undefined,
-      endedAt: apiWebinar.stoppedAt || undefined,
       streamUrl: apiWebinar.videoUrl,
       thumbnail: apiWebinar.logo || undefined,
-      hostId: apiWebinar.speaker,
       hostName: apiWebinar.speaker,
       currentParticipants: 0,
       maxParticipants: 100,
       tags: [apiWebinar.type],
-      active: status === 'active',
       createdAt: apiWebinar.createdAt,
       updatedAt: apiWebinar.updatedAt,
+      type: webinarType,
+      hostId: apiWebinar.user.id.toString(),
+      active: apiWebinar.roomStarted,
+      startedAt: apiWebinar.startedAt || undefined,
+      endedAt: apiWebinar.stoppedAt || undefined,
+      // Add owner info for display
+      ownerEmail: apiWebinar.user.email,
+      ownerName:
+        `${apiWebinar.user.firstName} ${apiWebinar.user.lastName}`.trim(),
     };
   };
 
@@ -140,8 +154,29 @@ export default function RoomsPage() {
       const result = await response.json();
 
       if (result && result.docs) {
-        const convertedWebinars = result.docs.map(convertApiWebinar);
-        setWebinars(convertedWebinars);
+        const convertedWebinars: Webinar[] = result.docs.map(convertApiWebinar);
+
+        // Filter webinars based on user role
+        if (isAdmin) {
+          // Admin sees all webinars
+          setWebinars(convertedWebinars);
+        } else {
+          // Client sees only their own webinars
+          const userId = userData?.id?.toString();
+          console.log("Filtering webinars for user:", userId);
+
+          const userWebinars = convertedWebinars.filter((webinar: Webinar) => {
+            const webinarHostId = webinar.hostId?.toString();
+            const matches = webinarHostId === userId;
+            console.log(
+              `Webinar ${webinar.title}: hostId=${webinarHostId}, userId=${userId}, matches=${matches}`
+            );
+            return matches;
+          });
+
+          console.log("User webinars after filter:", userWebinars);
+          setWebinars(userWebinars);
+        }
       }
     } catch (error) {
       console.error("Webinars fetch error:", error);
@@ -224,7 +259,7 @@ export default function RoomsPage() {
     };
 
     fetchUserData();
-  }, [router]);
+  }, [router, toast]);
 
   // Fetch webinars after user data is loaded
   useEffect(() => {
@@ -242,9 +277,19 @@ export default function RoomsPage() {
   };
 
   const filteredWebinars = webinars.filter(
-    (webinar) =>
+    (webinar: Webinar) =>
       webinar.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-      webinar.description?.toLowerCase().includes(debouncedSearch.toLowerCase())
+      webinar.description
+        ?.toLowerCase()
+        .includes(debouncedSearch.toLowerCase()) ||
+      (isAdmin &&
+        webinar.ownerEmail
+          ?.toLowerCase()
+          .includes(debouncedSearch.toLowerCase())) ||
+      (isAdmin &&
+        webinar.ownerName
+          ?.toLowerCase()
+          .includes(debouncedSearch.toLowerCase()))
   );
 
   const handleRefresh = () => {
@@ -259,11 +304,36 @@ export default function RoomsPage() {
   const handleEdit = (id: string) => {
     const webinar = webinars.find((w) => w.id === id);
     if (webinar) {
+      // Check if user has permission to edit
+      const isOwner = webinar.hostId?.toString() === userData?.id?.toString();
+
+      if (!isAdmin && !isOwner) {
+        toast({
+          title: "Доступ запрещен",
+          description: "Вы можете редактировать только свои вебинары",
+          variant: "destructive",
+        });
+        return;
+      }
       setEditingWebinar(webinar);
     }
   };
 
   const handleDelete = async (id: string) => {
+    const webinar = webinars.find((w) => w.id === id);
+
+    // Check if user has permission to delete
+    const isOwner = webinar?.hostId?.toString() === userData?.id?.toString();
+
+    if (!isAdmin && !isOwner) {
+      toast({
+        title: "Доступ запрещен",
+        description: "Вы можете удалять только свои вебинары",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const token = localStorage.getItem("payload-token");
 
@@ -359,11 +429,15 @@ export default function RoomsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight text-white">
-            Добро пожаловать, {getUserDisplayName()}! 👋
-          </h1>
-          <p className="text-gray-400 text-lg">
-            Управляйте своими вебинарами и настройками
+          <div className="flex items-center gap-3">
+            <h1 className="text-4xl font-bold tracking-tight text-white">
+              Добро пожаловать, 👋 {getUserDisplayName()}!
+            </h1>
+          </div>
+          <p className="text-gray-400 text-lg mt-1">
+            {isAdmin
+              ? "Управляйте всеми вебинарами в системе"
+              : "Управляйте своими вебинарами и настройками"}
           </p>
           {userData?.email && (
             <p className="text-gray-500 text-sm mt-1">{userData.email}</p>
@@ -374,7 +448,11 @@ export default function RoomsPage() {
           <div className="relative flex-1 sm:flex-initial">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
             <Input
-              placeholder="Поиск вебинаров..."
+              placeholder={
+                isAdmin
+                  ? "Поиск по названию, владельцу..."
+                  : "Поиск вебинаров..."
+              }
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 bg-white/5 backdrop-blur-md border-white/10 text-white placeholder:text-gray-400 focus:bg-white/10 focus:border-white/20 transition-all"
@@ -395,13 +473,15 @@ export default function RoomsPage() {
             )}
             Обновить
           </Button>
-          <CreateWebinarModal
-            buttonText="Создать"
-            buttonSize="sm"
-            buttonClassName="gradient-primary hover:opacity-90 transition-opacity"
-            showIcon={true}
-            onSuccess={handleWebinarCreated}
-          />
+          {!isAdmin && (
+            <CreateWebinarModal
+              buttonText="Создать"
+              buttonSize="sm"
+              buttonClassName="gradient-primary hover:opacity-90 transition-opacity"
+              showIcon={true}
+              onSuccess={handleWebinarCreated}
+            />
+          )}
         </div>
       </div>
 
@@ -410,16 +490,33 @@ export default function RoomsPage() {
         <div className="flex-1">
           {/* Webinars grid */}
           <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-            {filteredWebinars.map((webinar) => (
-              <WebinarCard
-                key={webinar.id}
-                webinar={webinar}
-                onView={() => handleOpen(webinar.id)}
-                onEdit={() => handleEdit(webinar.id)}
-                onDelete={() => handleDelete(webinar.id)}
-                onCopyLink={() => handleCopyLink(webinar.id)}
-              />
-            ))}
+            {filteredWebinars.map((webinar) => {
+              // Check if current user is the owner of this webinar
+              const isOwner =
+                webinar.hostId?.toString() === userData?.id?.toString();
+              // User can edit/delete if they are admin OR owner
+              const canModify = isAdmin || isOwner;
+
+              return (
+                <div key={webinar.id} className="relative">
+                  <WebinarCard
+                    webinar={webinar}
+                    onView={() => handleOpen(webinar.id)}
+                    onEdit={
+                      canModify ? () => handleEdit(webinar.id) : undefined
+                    }
+                    onDelete={
+                      canModify ? () => handleDelete(webinar.id) : undefined
+                    }
+                    onCopyLink={() => handleCopyLink(webinar.id)}
+                  />
+                  {/* Owner badge for admin view */}
+                  {isAdmin && !isOwner && (
+                    <div className="absolute top-2 right-2 z-10"></div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {filteredWebinars.length === 0 && !loading && (
@@ -432,14 +529,18 @@ export default function RoomsPage() {
                 <p className="text-muted-foreground text-center mb-4">
                   {searchTerm
                     ? "Попробуйте изменить поисковый запрос"
-                    : "У вас пока нет вебинаров. Создайте свой первый вебинар!"}
+                    : isAdmin
+                      ? "В системе пока нет вебинаров"
+                      : "У вас пока нет вебинаров. Создайте свой первый вебинар!"}
                 </p>
-                <CreateWebinarModal
-                  buttonText="Создать вебинар"
-                  buttonClassName="gradient-primary hover:opacity-90 transition-opacity"
-                  showIcon={true}
-                  onSuccess={handleWebinarCreated}
-                />
+                {!isAdmin && (
+                  <CreateWebinarModal
+                    buttonText="Создать вебинар"
+                    buttonClassName="gradient-primary hover:opacity-90 transition-opacity"
+                    showIcon={true}
+                    onSuccess={handleWebinarCreated}
+                  />
+                )}
               </CardContent>
             </Card>
           )}
@@ -449,11 +550,13 @@ export default function RoomsPage() {
         <div className="w-full lg:w-80 space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Статистика</CardTitle>
+              <CardTitle>
+                {isAdmin ? "Статистика всех вебинаров" : "Статистика"}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <StatsCard
-                title="Всего вебинаров"
+                title={isAdmin ? "Всего в системе" : "Всего вебинаров"}
                 value={stats.total}
                 icon={Video}
               />
@@ -471,25 +574,27 @@ export default function RoomsPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Быстрые действия</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <CreateWebinarModal
-                buttonText="Новый вебинар"
-                buttonSize="sm"
-                buttonClassName="w-full gradient-primary hover:opacity-90 transition-opacity"
-                showIcon={true}
-                onSuccess={handleWebinarCreated}
-              />
+          {!isAdmin && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Быстрые действия</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <CreateWebinarModal
+                  buttonText="Новый вебинар"
+                  buttonSize="sm"
+                  buttonClassName="w-full gradient-primary hover:opacity-90 transition-opacity"
+                  showIcon={true}
+                  onSuccess={handleWebinarCreated}
+                />
 
-              <Button variant="outline" className="w-full" size="sm">
-                <FileText className="h-4 w-4 mr-2" />
-                Отчеты
-              </Button>
-            </CardContent>
-          </Card>
+                <Button variant="outline" className="w-full" size="sm">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Отчеты
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
 
@@ -501,9 +606,10 @@ export default function RoomsPage() {
           onOpenChange={(open) => {
             if (!open) {
               setEditingWebinar(null);
+              handleWebinarUpdated();
             }
           }}
-          />
+        />
       )}
     </div>
   );

@@ -109,6 +109,10 @@ export default function RoomsPage() {
       tags: [apiWebinar.type],
       createdAt: apiWebinar.createdAt,
       updatedAt: apiWebinar.updatedAt,
+      // Add missing required properties based on your Webinar type
+      type: apiWebinar.type as any, // Cast to any to match WebinarType
+      hostId: apiWebinar.user.id.toString(), // Added - using the user id from API
+      active: apiWebinar.roomStarted, // Added - using roomStarted as active status
     };
   };
 
@@ -504,9 +508,10 @@ export default function RoomsPage() {
           onOpenChange={(open) => {
             if (!open) {
               setEditingWebinar(null);
+              // Call handleWebinarUpdated when modal closes
+              handleWebinarUpdated();
             }
           }}
-          onSuccess={handleWebinarUpdated}
         />
       )}
     </div>

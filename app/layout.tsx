@@ -4,7 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { ThemeSyncScript } from "@/components/providers/theme-sync-script";
 import { Toaster } from "@/components/ui/toaster";
-import { AuthGuard } from "@/components/auth/auth-guard";
+import { EnhancedAuthGuard } from "@/components/auth/enhanced-auth-guard";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -50,9 +50,9 @@ export default function RootLayout({
           attribute="class"
           enableSystem={false}
         >
-          <AuthGuard>
+          <EnhancedAuthGuard requireAuth={true}>
             {children}
-          </AuthGuard>
+          </EnhancedAuthGuard>
           <Toaster />
         </ThemeProvider>
       </body>

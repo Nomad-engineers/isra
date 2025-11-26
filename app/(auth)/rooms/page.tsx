@@ -4,27 +4,20 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { WebinarCard } from "@/components/webinars/webinar-card";
 import { StatsCard } from "@/components/common/stats-card";
 import { PageLoader } from "@/components/ui/loaders";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
 import { useDebounce } from "@/hooks/use-debounce";
-import { formatDate } from "@/lib/utils";
 import {
   RefreshCw,
-  Plus,
   Search,
   Calendar,
-  Users,
   FileText,
   Video,
   Filter,
   Upload,
   Loader2,
-  Shield,
-  User,
 } from "lucide-react";
 import { CreateWebinarModal } from "@/components/webinars/create-webinar-modal";
 import { EditWebinarModal } from "@/components/webinars/edit-webinar-modal";
@@ -75,7 +68,6 @@ interface ApiWebinar {
 
 export default function RoomsPage() {
   const router = useRouter();
-  const { toast: shadcnToast } = useToast();
   const [webinars, setWebinars] = useState<Webinar[]>([]);
   const [loading, setLoading] = useState(true);
   const [userLoading, setUserLoading] = useState(true);
@@ -110,14 +102,19 @@ export default function RoomsPage() {
       id: apiWebinar.id.toString(),
       title: apiWebinar.name,
       description: apiWebinar.description,
+      type: apiWebinar.type as "live" | "auto",
       status,
       scheduledAt: apiWebinar.scheduledDate,
+      startedAt: apiWebinar.startedAt || undefined,
+      endedAt: apiWebinar.stoppedAt || undefined,
       streamUrl: apiWebinar.videoUrl,
       thumbnail: apiWebinar.logo || undefined,
+      hostId: apiWebinar.speaker,
       hostName: apiWebinar.speaker,
       currentParticipants: 0,
       maxParticipants: 100,
       tags: [apiWebinar.type],
+      active: status === "active",
       createdAt: apiWebinar.createdAt,
       updatedAt: apiWebinar.updatedAt,
       type: webinarType,
@@ -624,6 +621,7 @@ export default function RoomsPage() {
               handleWebinarUpdated();
             }
           }}
+          onSuccess={handleWebinarUpdated}
         />
       )}
     </div>

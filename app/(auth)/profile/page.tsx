@@ -105,8 +105,8 @@ export default function ProfilePage() {
           }
 
           setProfile({
-            firstName: firstName || 'Имя',
-            lastName: lastName || 'Фамилия',
+            firstName: firstName || '',
+            lastName: lastName || '',
             email: userData.email || '',
             phone: userData.phone || '',
             avatar: userData.avatar,

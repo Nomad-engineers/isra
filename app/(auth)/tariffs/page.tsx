@@ -1,33 +1,192 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { CreditCard, Clock } from 'lucide-react'
+import { PlanCard } from '@/components/pricing/PlanCard'
+import { ComparisonTable } from '@/components/pricing/ComparisonTable'
+
+const plans = [
+  {
+    id: 'basic',
+    name: 'BASIC',
+    price: '4 999 ₸',
+    period: '/мес',
+    description: 'Идеально для небольших компаний и стартапов',
+    features: [
+      'До 5 пользователей',
+      '10 ГБ хранилища',
+      'Базовая аналитика',
+      'Email поддержка',
+      'API доступ'
+    ],
+    badge: null,
+    isCurrent: false
+  },
+  {
+    id: 'favorite',
+    name: 'STARTER',
+    price: '8 990 ₸',
+    period: '/мес',
+    description: 'Самый популярный выбор для растущего бизнеса',
+    features: [
+      'До 15 пользователей',
+      '50 ГБ хранилища',
+      'Расширенная аналитика',
+      'Приоритетная поддержка',
+      'API доступ',
+      'Интеграции с CRM'
+    ],
+    badge: 'Текущий',
+    isCurrent: true
+  },
+  {
+    id: 'optimal',
+    name: 'PROFESSIONAL',
+    price: '24 990 ₸',
+    period: '/мес',
+    description: 'Максимальные возможности для вашей компании',
+    features: [
+      'До 50 пользователей',
+      '200 ГБ хранилища',
+      'Продвинутая аналитика',
+      '24/7 поддержка',
+      'API доступ',
+      'Все интеграции',
+      'Персональный менеджер'
+    ],
+    badge: 'Популярный',
+    isCurrent: false
+  },
+  {
+    id: 'business',
+    name: 'ENTERPRISE',
+    price: '79 990 ₸',
+    period: '/мес',
+    description: 'Enterprise-решение для крупных компаний',
+    features: [
+      'Неограничено пользователей',
+      '1 ТБ хранилища',
+      'Кастомная аналитика',
+      'Выделенная поддержка',
+      'API доступ',
+      'Все интеграции',
+      'Персональный менеджер',
+      'SLA гарантии'
+    ],
+    badge: null,
+    isCurrent: false
+  }
+]
 
 export default function TariffsPage() {
   return (
-    <div className='min-h-[60vh] flex items-center justify-center'>
-      <Card className='w-full max-w-md border-isra bg-isra-medium/80 backdrop-blur-sm'>
-        <CardHeader className='text-center'>
-          <CardTitle className='flex items-center justify-center gap-2 text-white'>
-            <CreditCard className='h-6 w-6 text-isra-cyan' />
-            В разработке
-          </CardTitle>
-        </CardHeader>
-        <CardContent className='text-center space-y-4'>
-          <div className='flex justify-center mb-4'>
-            <Clock className='h-12 w-12 text-isra-cyan' />
+    <div className="min-h-screen bg-black text-white">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        {/* Header Section */}
+        <div className="mb-16">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-1 h-8 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full"></div>
+            <h1 className="text-4xl font-bold text-white">Баланс и тариф</h1>
           </div>
-          <p className='text-gray-300 text-sm leading-relaxed'>
-            Страница управления тарифами находится в разработке.
-          </p>
-          <p className='text-gray-300 text-sm leading-relaxed'>
-            Скоро вы сможете легко изменять свой план, просматривать историю платежей и управлять подпиской.
-          </p>
-          <div className='pt-2'>
-            <p className='text-isra-cyan text-xs font-medium'>
-              Ожидайте обновлений в ближайшее время
+
+          <div className="bg-gradient-to-r from-gray-900 via-gray-900 to-gray-800 rounded-2xl p-8 border border-gray-700 shadow-2xl backdrop-blur-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+              <div className="space-y-3">
+                <div className="text-sm font-medium text-gray-400 uppercase tracking-wide">Текущий баланс</div>
+                <div className="flex items-baseline gap-3">
+                  <span className="text-5xl font-bold bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">0 ₸</span>
+                  <span className="text-lg text-gray-500">/ мес</span>
+                </div>
+                <div className="text-sm text-gray-400 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                  Не указан
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-xl font-semibold text-white transition-all duration-300 transform hover:scale-105 hover:shadow-lg shadow-blue-600/20">
+                  Пополнить
+                </button>
+                <button className="px-6 py-4 bg-gray-800 hover:bg-gray-700 rounded-xl font-medium text-gray-300 transition-all duration-300 border border-gray-600">
+                  История
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Pricing Cards */}
+        <div className="mb-20">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-white mb-4">Выберите подходящий тариф</h2>
+            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+              Гибкие тарифные планы для любых потребностей вашего бизнеса
             </p>
           </div>
-        </CardContent>
-      </Card>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+            {plans.map((plan) => (
+              <PlanCard key={plan.id} plan={plan} />
+            ))}
+          </div>
+        </div>
+
+        {/* Comparison Table */}
+        <div className="mb-20">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-white mb-4">Сравнение тарифов</h2>
+            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+              Детальное сравнение всех возможностей каждого тарифа
+            </p>
+          </div>
+          <ComparisonTable plans={plans} />
+        </div>
+
+        {/* FAQ Section */}
+        <div className="mb-20">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-white mb-4">Часто задаваемые вопросы</h2>
+            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+              Ответы на популярные вопросы о наших тарифах
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[
+              {
+                question: "Можно ли изменить тариф?",
+                answer: "Да, вы можете изменить тариф в любой момент. Разница в стоимости будет зачтена на следующий период."
+              },
+              {
+                question: "Какие способы оплаты доступны?",
+                answer: "Мы принимаем банковские карты, электронные кошельки и банковские переводы."
+              },
+              {
+                question: "Есть ли скидки для некоммерческих организаций?",
+                answer: "Да, мы предоставляем скидки 20% для образовательных и некоммерческих организаций."
+              },
+              {
+                question: "Как происходит выставление счетов?",
+                answer: "Счета выставляются автоматически в начале каждого расчетного периода и отправляются на email."
+              }
+            ].map((faq, index) => (
+              <div key={index} className="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600 transition-colors duration-300">
+                <h3 className="text-lg font-semibold text-white mb-3">{faq.question}</h3>
+                <p className="text-gray-400 leading-relaxed">{faq.answer}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* CTA Section */}
+        <div className="bg-gradient-to-r from-blue-900 to-purple-900 rounded-2xl p-12 text-center mb-16 border border-blue-700/50">
+          <h2 className="text-3xl font-bold text-white mb-4">Остались вопросы?</h2>
+          <p className="text-blue-200 text-lg mb-8 max-w-2xl mx-auto">
+            Наша команда поддержки всегда готова помочь вам выбрать подходящий тариф
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button className="px-8 py-4 bg-white text-blue-900 hover:bg-gray-100 rounded-xl font-bold transition-all duration-300 transform hover:scale-105">
+              Связаться с поддержкой
+            </button>
+            <button className="px-8 py-4 bg-transparent text-white hover:bg-white/10 border border-white/30 rounded-xl font-bold transition-all duration-300">
+              Запросить демо
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

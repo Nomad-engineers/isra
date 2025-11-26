@@ -15,9 +15,7 @@ export const profileFormSchema = z.object({
   email: z.string().email("Некорректный email"),
   phone: z
     .string()
-
-    .regex(/^\d{10,11}$/, "Введите корректный номер (только цифры)")
-
+    .regex(/^\+?\d{10,12}$/, "Введите корректный номер телефона")
     .optional()
     .or(z.literal("")),
 
@@ -102,7 +100,7 @@ export const signUpSchema = z
       ),
     phone: z
       .string()
-      .regex(/^\d{10,11}$/, "Введите корректный номер (только цифры)")
+      .regex(/^\+?\d{10,12}$/, "Введите корректный номер телефона")
       .optional()
       .or(z.literal("")),
 

@@ -31,6 +31,15 @@ import {
 import Link from "next/link";
 import { toast } from "sonner";
 
+interface PlanData {
+  id: string;
+  name: string;
+  price?: string;
+  participants?: number;
+  rooms?: number;
+  storage?: string;
+}
+
 interface UserData {
   id: string;
   email: string;
@@ -39,6 +48,13 @@ interface UserData {
   name?: string;
   phone?: string;
   avatar?: string;
+  role?: string;
+  plan?: PlanData | string;
+  planStatus?: 'active' | 'trialing' | 'paused' | 'canceled' | 'past_due' | 'overdue' | 'expired' | 'inactive' | 'active_until_period_end';
+  planBillingCycle?: 'month' | 'year';
+  planEndDate?: string;
+  planCanceledAt?: string;
+  isPhoneVerified?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -51,6 +67,13 @@ export default function ProfilePage() {
     email: "",
     phone: "" as string | undefined,
     avatar: "" as string | undefined,
+    role: "" as string | undefined,
+    plan: null as PlanData | null,
+    planStatus: "" as string | undefined,
+    planBillingCycle: "" as string | undefined,
+    planEndDate: "" as string | undefined,
+    planCanceledAt: "" as string | undefined,
+    isPhoneVerified: false,
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -104,12 +127,25 @@ export default function ProfilePage() {
             lastName = nameParts.slice(1).join(' ') || '';
           }
 
+          // Handle plan data - it could be an object (populated) or string (ID)
+          let planData = null;
+          if (userData.plan && typeof userData.plan === 'object') {
+            planData = userData.plan as PlanData;
+          }
+
           setProfile({
             firstName: firstName || '',
             lastName: lastName || '',
             email: userData.email || '',
             phone: userData.phone || '',
             avatar: userData.avatar,
+            role: userData.role,
+            plan: planData,
+            planStatus: userData.planStatus,
+            planBillingCycle: userData.planBillingCycle,
+            planEndDate: userData.planEndDate,
+            planCanceledAt: userData.planCanceledAt,
+            isPhoneVerified: userData.isPhoneVerified || false,
           });
         } else if (result && result.message === "Account") {
           // Handle mock token case - show mock data
@@ -119,6 +155,20 @@ export default function ProfilePage() {
             email: 'test@example.com',
             phone: '+79991234567',
             avatar: undefined,
+            role: 'client',
+            plan: {
+              id: 'professional',
+              name: 'PROFESSIONAL',
+              price: '24 990 ₸',
+              participants: 500,
+              rooms: 50,
+              storage: '50ГБ',
+            },
+            planStatus: 'active',
+            planBillingCycle: 'month',
+            planEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            planCanceledAt: undefined,
+            isPhoneVerified: true,
           });
         } else {
           throw new Error('No user data received');
@@ -216,13 +266,14 @@ export default function ProfilePage() {
       }
 
       // Update local state with new user data
-      setProfile({
+      setProfile(prev => ({
+        ...prev,
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email,
         phone: data.phone || undefined,
         avatar: (updateData as { avatar?: string }).avatar || profile.avatar,
-      });
+      }));
 
       toast.success("Данные успешно обновлены");
 
@@ -343,27 +394,76 @@ export default function ProfilePage() {
                     <CreditCard className="h-5 w-5" />
                     Текущий тариф
                   </div>
-                  <Badge variant="default">PRO</Badge>
+                  <Badge variant="default">
+                    {profile.plan?.name || 'Бесплатный'}
+                  </Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-gray-400">Статус</span>
-                    <span className="font-medium text-white">Активен</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Следующее списание</span>
                     <span className="font-medium text-white">
-                      15 декабря 2024
+                      {profile.planStatus === 'active' ? 'Активен' :
+                       profile.planStatus === 'trialing' ? 'На испытательном сроке' :
+                       profile.planStatus === 'paused' ? 'Приостановлен' :
+                       profile.planStatus === 'canceled' ? 'Отменен' :
+                       profile.planStatus === 'past_due' ? 'Просрочен' :
+                       profile.planStatus === 'expired' ? 'Истекший' :
+                       profile.planStatus === 'inactive' ? 'Неактивен' :
+                       profile.planStatus || 'Не указан'}
                     </span>
                   </div>
+                  {profile.planEndDate && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Следующее списание</span>
+                      <span className="font-medium text-white">
+                        {new Date(profile.planEndDate).toLocaleDateString('ru-RU', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric'
+                        })}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-gray-400">
                       Участников на вебинаре
                     </span>
-                    <span className="font-medium text-white">До 100</span>
+                    <span className="font-medium text-white">
+                      {profile.plan?.participants ? `До ${profile.plan.participants}` : 'Не ограничено'}
+                    </span>
                   </div>
+                  {profile.plan?.rooms && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">
+                        Комнат
+                      </span>
+                      <span className="font-medium text-white">
+                        До {profile.plan.rooms}
+                      </span>
+                    </div>
+                  )}
+                  {profile.plan?.storage && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">
+                        Хранилище
+                      </span>
+                      <span className="font-medium text-white">
+                        {profile.plan.storage}
+                      </span>
+                    </div>
+                  )}
+                  {profile.planBillingCycle && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">
+                        Период billing
+                      </span>
+                      <span className="font-medium text-white">
+                        {profile.planBillingCycle === 'month' ? 'Месячная' : 'Годовая'}
+                      </span>
+                    </div>
+                  )}
                   <div className="pt-4">
                     <Link href="/tariffs">
                       <Button variant="outline" className="w-full">

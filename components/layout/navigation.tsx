@@ -39,41 +39,30 @@ export function Navigation({ userName = 'Пользователь', userAvatar }
     setIsLoggingOut(true)
 
     try {
-        // Get token from localStorage
-        const token = localStorage.getItem('payload-token');
-
-      const res = await fetch(
-        'https://isracms.vercel.app/api/users/logout',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `JWT ${token}`,
-          },
-        }
-      )
-
-      if (!res.ok) {
-        throw new Error('Logout failed')
-      }
-
-      // Clear token from localStorage
+      // Clear local tokens first (most important for client-side)
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('token')
+        localStorage.removeItem('payload-token')
       }
 
-      // Clear token from cookies (will be handled by backend)
-      document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+      // Clear token from cookies
+      document.cookie = 'payload-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
 
-      // Redirect to login
+      // Show success message to user
+      toast({
+        title: 'Выход выполнен',
+        description: 'Вы успешно вышли из системы.',
+      })
+
+      // Redirect to login page
       router.push('/auth/login')
     } catch (error) {
       console.error('Logout error:', error)
+      // Even if there's an error, we should still try to redirect
       toast({
-        variant: 'destructive',
-        title: 'Ошибка выхода',
-        description: 'Попробуйте снова.',
+        title: 'Выход выполнен',
+        description: 'Вы вышли из системы.',
       })
+      router.push('/auth/login')
     } finally {
       setIsLoggingOut(false)
     }

@@ -8,6 +8,7 @@ import { WebinarCard } from "@/components/webinars/webinar-card";
 import { StatsCard } from "@/components/common/stats-card";
 import { PageLoader } from "@/components/ui/loaders";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/use-toast";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
   RefreshCw,
@@ -15,14 +16,11 @@ import {
   Calendar,
   FileText,
   Video,
-  Filter,
-  Upload,
   Loader2,
 } from "lucide-react";
 import { CreateWebinarModal } from "@/components/webinars/create-webinar-modal";
 import { EditWebinarModal } from "@/components/webinars/edit-webinar-modal";
 import { Webinar } from "@/types/webinar";
-import { toast } from "@/components/ui/use-toast";
 
 interface UserData {
   id: string;
@@ -68,6 +66,7 @@ interface ApiWebinar {
 
 export default function RoomsPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [webinars, setWebinars] = useState<Webinar[]>([]);
   const [loading, setLoading] = useState(true);
   const [userLoading, setUserLoading] = useState(true);
@@ -102,19 +101,14 @@ export default function RoomsPage() {
       id: apiWebinar.id.toString(),
       title: apiWebinar.name,
       description: apiWebinar.description,
-      type: apiWebinar.type as "live" | "auto",
       status,
       scheduledAt: apiWebinar.scheduledDate,
-      startedAt: apiWebinar.startedAt || undefined,
-      endedAt: apiWebinar.stoppedAt || undefined,
       streamUrl: apiWebinar.videoUrl,
       thumbnail: apiWebinar.logo || undefined,
-      hostId: apiWebinar.speaker,
       hostName: apiWebinar.speaker,
       currentParticipants: 0,
       maxParticipants: 100,
       tags: [apiWebinar.type],
-      active: status === "active",
       createdAt: apiWebinar.createdAt,
       updatedAt: apiWebinar.updatedAt,
       type: webinarType,
@@ -265,7 +259,7 @@ export default function RoomsPage() {
     };
 
     fetchUserData();
-  }, [router]);
+  }, [router, toast]);
 
   // Fetch webinars after user data is loaded
   useEffect(() => {
@@ -423,12 +417,6 @@ export default function RoomsPage() {
 
     const emailName = userData.email.split("@")[0];
     return emailName.charAt(0).toUpperCase() + emailName.slice(1);
-  };
-
-  // Helper function to get role display
-  const getRoleDisplay = () => {
-    if (!userData) return "";
-    return userData.role === "admin" ? "Администратор" : "Клиент";
   };
 
   // Show loading state while fetching user data
@@ -621,7 +609,6 @@ export default function RoomsPage() {
               handleWebinarUpdated();
             }
           }}
-          onSuccess={handleWebinarUpdated}
         />
       )}
     </div>

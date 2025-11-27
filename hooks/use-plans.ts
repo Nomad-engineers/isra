@@ -4,13 +4,12 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ui/use-toast'
 import { useTokenAuth } from '@/hooks/use-token-auth'
-import { Plan } from '@/types/plan'
+import { Plan, UserPlanData } from '@/types/plan'
 import {
   fetchPlansFromApi,
   fetchUserPlanData,
   markCurrentPlan,
-  getFallbackPlans,
-  UserPlanData
+  getFallbackPlans
 } from '@/lib/plans-service'
 
 export function usePlans() {
@@ -73,38 +72,36 @@ export function usePlans() {
     }
   }, [])
 
-  const retry = useCallback(() => {
+  const retry = useCallback(async () => {
     setRetryCount(prev => prev + 1)
-    // Execute fetchPlans directly instead of using callback
-    (async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        let fetchedPlans = await fetchPlansFromApi()
-        const token = getToken()
-        if (token) {
-          const userData = await fetchUserPlanData(token)
-          setUserPlanData(userData)
-          if (userData) {
-            fetchedPlans = markCurrentPlan(fetchedPlans, userData)
-          }
+
+    try {
+      setLoading(true)
+      setError(null)
+      let fetchedPlans = await fetchPlansFromApi()
+      const token = getToken()
+      if (token) {
+        const userData = await fetchUserPlanData(token)
+        setUserPlanData(userData)
+        if (userData) {
+          fetchedPlans = markCurrentPlan(fetchedPlans, userData)
         }
-        setPlans(fetchedPlans)
-      } catch (error) {
-        console.error('Retry error:', error)
-        const fallbackPlans = getFallbackPlans()
-        setPlans(fallbackPlans)
-      } finally {
-        setLoading(false)
       }
-    })()
+      setPlans(fetchedPlans)
+    } catch (error) {
+      console.error('Retry error:', error)
+      const fallbackPlans = getFallbackPlans()
+      setPlans(fallbackPlans)
+    } finally {
+      setLoading(false)
+    }
   }, [getToken])
 
   const useFallbackMode = useCallback(() => {
     setPlans(getFallbackPlans())
     setLoading(false)
     setError(null)
-  }, [])
+  }, [getFallbackPlans])
 
   // Initial fetch
   useEffect(() => {

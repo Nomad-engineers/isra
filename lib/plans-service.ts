@@ -13,9 +13,6 @@ export function transformApiPlanToPlan(apiPlan: ApiPlan): Plan {
   if (Array.isArray(apiPlan.features)) {
     features = apiPlan.features.map(feature => {
       if (typeof feature === 'string') return feature
-      if (typeof feature === 'object' && feature.feature) {
-        return feature.feature
-      }
       if (typeof feature === 'object' && feature.name) {
         return feature.included === false ? `❌ ${feature.name}` : feature.name
       }
@@ -23,9 +20,9 @@ export function transformApiPlanToPlan(apiPlan: ApiPlan): Plan {
     })
   }
 
-  // Format price with currency - handle both monthlyPrice and price fields
+  // Format price with currency
   let formattedPrice = 'Бесплатно'
-  const price = apiPlan.monthlyPrice || apiPlan.price
+  const price = apiPlan.price
 
   if (price) {
     const numPrice = typeof price === 'number' ? price : parseFloat(String(price))

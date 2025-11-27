@@ -155,10 +155,6 @@ export default function TariffsPage() {
               <PlanCard
                 key={plan.id}
                 plan={plan}
-                onSelect={() => {
-                  // TODO: Implement plan selection logic
-                  console.log('Selected plan:', plan.id)
-                }}
               />
             ))}
           </div>

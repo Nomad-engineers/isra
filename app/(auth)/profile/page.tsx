@@ -59,6 +59,42 @@ interface UserData {
   updatedAt: string;
 }
 
+interface ApiWebinar {
+  id: number;
+  name: string;
+  description: string;
+  speaker: string;
+  type: string;
+  videoUrl: string;
+  scheduledDate: string;
+  roomStarted: boolean;
+  startedAt: string | null;
+  stoppedAt: string | null;
+  showChat: boolean;
+  showBanner: boolean;
+  showBtn: boolean;
+  isVolumeOn: boolean;
+  bannerUrl: string | null;
+  btnUrl: string | null;
+  logo: string | null;
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: string;
+  };
+}
+
+interface WebinarStats {
+  total: number;
+  active: number;
+  scheduled: number;
+  totalParticipants: number;
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const [profile, setProfile] = useState({
@@ -82,6 +118,16 @@ export default function ProfilePage() {
   // State for managing current user data and authentication
   const [currentUserId, setCurrentUserId] = useState<string>('');
   const [isUpdating, setIsUpdating] = useState(false);
+
+  // State for webinars and statistics
+  const [webinars, setWebinars] = useState<ApiWebinar[]>([]);
+  const [webinarStats, setWebinarStats] = useState<WebinarStats>({
+    total: 0,
+    active: 0,
+    scheduled: 0,
+    totalParticipants: 0,
+  });
+  const [isLoadingWebinars, setIsLoadingWebinars] = useState(false);
 
   // Fetch user data on component mount
   useEffect(() => {
@@ -192,6 +238,79 @@ export default function ProfilePage() {
 
     fetchUserData();
   }, [router]);
+
+  // Fetch webinars for statistics
+  const fetchWebinars = async () => {
+    try {
+      setIsLoadingWebinars(true);
+      const token = localStorage.getItem('payload-token');
+
+      if (!token) {
+        console.log('No token found, skipping webinar fetch');
+        return;
+      }
+
+      const response = await fetch("https://isracms.vercel.app/api/rooms", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `JWT ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        console.log('Failed to fetch webinars for statistics');
+        return;
+      }
+
+      const result = await response.json();
+
+      if (result && result.docs) {
+        // Filter webinars based on user role
+        let userWebinars: ApiWebinar[] = [];
+        if (profile.role === 'admin') {
+          // Admin sees all webinars
+          userWebinars = result.docs;
+        } else {
+          // Client sees only their own webinars
+          const userId = currentUserId;
+          userWebinars = result.docs.filter((webinar: ApiWebinar) =>
+            webinar.user.id.toString() === userId
+          );
+        }
+
+        setWebinars(userWebinars);
+
+        // Calculate statistics
+        const now = new Date();
+        const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+        const stats: WebinarStats = {
+          total: userWebinars.length,
+          active: userWebinars.filter(w => w.roomStarted && !w.stoppedAt).length,
+          scheduled: userWebinars.filter(w => {
+            if (!w.scheduledDate) return false;
+            const scheduledTime = new Date(w.scheduledDate);
+            return scheduledTime > now && scheduledTime <= weekFromNow;
+          }).length,
+          totalParticipants: 1234, // This would need to be calculated from actual participant data if available
+        };
+
+        setWebinarStats(stats);
+      }
+    } catch (error) {
+      console.error('Error fetching webinars for statistics:', error);
+    } finally {
+      setIsLoadingWebinars(false);
+    }
+  };
+
+  // Fetch webinars after user data is loaded
+  useEffect(() => {
+    if (currentUserId && profile.role) {
+      fetchWebinars();
+    }
+  }, [currentUserId, profile.role]);
 
   const handleProfileUpdate = async (data: ProfileFormDataWithAvatar) => {
     setIsUpdating(true);
@@ -458,25 +577,25 @@ export default function ProfilePage() {
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatsCard
                   title="Всего вебинаров"
-                  value="24"
+                  value={isLoadingWebinars ? "..." : webinarStats.total.toString()}
                   description="За все время"
                   icon={Video}
                 />
                 <StatsCard
                   title="Активных"
-                  value="3"
+                  value={isLoadingWebinars ? "..." : webinarStats.active.toString()}
                   description="Сейчас идут"
                   icon={Video}
                 />
                 <StatsCard
                   title="Запланированных"
-                  value="5"
+                  value={isLoadingWebinars ? "..." : webinarStats.scheduled.toString()}
                   description="На этой неделе"
                   icon={Video}
                 />
                 <StatsCard
                   title="Участников"
-                  value="1,234"
+                  value={isLoadingWebinars ? "..." : webinarStats.totalParticipants.toLocaleString()}
                   description="Всего участников"
                   icon={User}
                 />

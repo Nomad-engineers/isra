@@ -73,10 +73,13 @@ export function AuthGuard({ children }: AuthGuardProps) {
     const interceptedFetch = async (...args: Parameters<typeof fetch>): Promise<Response> => {
       const [url, options = {}] = args
 
-      // Skip intercepting ONLY for local Next.js API routes, not external CMS URLs
+      // Skip intercepting for local Next.js API routes that don't need auth
       const isInternalRoute =
-        typeof url === 'string' &&
-        url.startsWith(window.location.origin + '/api/users/')
+        typeof url === 'string' && (
+          url.startsWith(window.location.origin + '/api/users/') ||
+          url.startsWith('/api/upload/') ||
+          (url.startsWith('/api/') && !url.includes('/users/me'))
+        )
 
       if (isInternalRoute) {
         return await originalFetch(url, options)

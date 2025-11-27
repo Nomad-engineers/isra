@@ -15,6 +15,7 @@ interface PhoneInputProps {
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
+  name?: string;
 }
 
 export function PhoneInput({
@@ -22,6 +23,7 @@ export function PhoneInput({
   onChange,
   placeholder = "+77022421618",
   className,
+  name,
 }: PhoneInputProps) {
   const formatPhoneNumber = useCallback((input: string): string => {
     const digits = input.replace(/\D/g, "");
@@ -67,6 +69,7 @@ export function PhoneInput({
 
   return (
     <Input
+      name={name}
       value={value}
       onChange={handleInputChange}
       placeholder={placeholder}
@@ -101,6 +104,7 @@ export function FormPhoneInput({
           <FormLabel>{label}</FormLabel>
           <FormControl>
             <PhoneInput
+              name={field.name}
               value={field.value || ""}
               onChange={field.onChange}
               placeholder={placeholder}

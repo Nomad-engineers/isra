@@ -43,9 +43,9 @@ export class TokenAuthentication {
    */
   static extractToken(request: NextRequest): string | null {
     const tokens: Array<{ source: string; token: string | null }> = [
-      { source: 'cookie', token: request.cookies.get(this.TOKEN_KEY)?.value },
-      { source: 'authorization', token: request.headers.get('authorization')?.replace('Bearer ', '') },
-      { source: 'custom-header', token: request.headers.get('x-local-storage-token') }
+      { source: 'cookie', token: request.cookies.get(this.TOKEN_KEY)?.value ?? null },
+      { source: 'authorization', token: request.headers.get('authorization')?.replace('Bearer ', '') ?? null },
+      { source: 'custom-header', token: request.headers.get('x-local-storage-token') ?? null }
     ]
 
     // Return the first valid token from any source

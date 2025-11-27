@@ -42,7 +42,7 @@ export function getToken(): string | null {
     }
 
     // Fallback to cookies if localStorage is empty
-    const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+    const cookies = document.cookie.split(';').reduce((acc: Record<string, string>, cookie) => {
       const [key, value] = cookie.trim().split('=');
       if (key && value) {
         acc[key] = value;

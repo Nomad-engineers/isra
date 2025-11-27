@@ -8,7 +8,7 @@ import { isValidToken, getToken, setToken, clearAuth } from './auth-utils'
 export class TokenAuthentication {
   private static readonly TOKEN_KEY = 'payload-token'
   private static readonly AUTH_PATHS = ['/auth/login', '/auth/signup', '/auth/forgot-password']
-  private static readonly PROTECTED_PATHS = ['/']
+  private static readonly PROTECTED_PATHS = ['/', '/rooms', '/profile', '/tariffs']
   private static readonly PUBLIC_PATHS = ['/api']
 
   /**
@@ -29,7 +29,13 @@ export class TokenAuthentication {
    * Check if a path is protected
    */
   private static isProtectedPath(pathname: string): boolean {
-    return this.PROTECTED_PATHS.some(path => pathname.startsWith(path))
+    // Check explicit protected paths
+    const explicitProtected = this.PROTECTED_PATHS.some(path => pathname.startsWith(path))
+    if (explicitProtected) return true
+
+    // Check if path starts with common protected prefixes
+    const protectedPrefixes = ['/rooms', '/profile', '/tariffs']
+    return protectedPrefixes.some(prefix => pathname.startsWith(prefix))
   }
 
   /**
@@ -80,7 +86,12 @@ export class TokenAuthentication {
       return null
     }
 
-    // Authenticated users on auth pages should be redirected to rooms
+    // Skip auth paths - they should be accessible without auth redirects
+    if (this.isAuthPath(pathname)) {
+      return null
+    }
+
+    // Authenticated users on auth pages should be redirected to rooms (this shouldn't happen due to above, but kept for safety)
     if (isAuthenticated && this.isAuthPath(pathname)) {
       return '/rooms'
     }

@@ -81,7 +81,7 @@ export function AuthLayoutWrapper({ children }: AuthLayoutWrapperProps) {
             (error.message.includes('401') || error.message.includes('Unauthorized') ||
              error.message.includes('token'))) {
           toast.error("Срок действия токена истек")
-          router.push('/auth/login')
+          // Don't redirect here - let the middleware handle it
         } else {
           // For layout errors, we just log and continue without showing user data
           console.error("Layout user data fetch failed:", error)

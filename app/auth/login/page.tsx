@@ -61,9 +61,15 @@ export default function LoginPage() {
 
       const result = await response.json()
 
-      // Save token and user data using existing auth utilities
+      // Save token and user data using our auth utilities
       if (result.token && isValidToken(result.token)) {
+        // Save to localStorage
         setToken(result.token, result.user)
+
+        // Also set server-side cookie with proper expiration
+        const expires = new Date()
+        expires.setTime(expires.getTime() + (2 * 60 * 60 * 1000)) // 2 hours
+        document.cookie = `payload-token=${result.token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`
       }
 
       // On successful login, redirect to rooms
@@ -103,7 +109,13 @@ export default function LoginPage() {
 
       // Save token and user data using our auth utilities
       if (result.token && isValidToken(result.token)) {
+        // Save to localStorage
         setToken(result.token, result.user)
+
+        // Also set server-side cookie with proper expiration
+        const expires = new Date()
+        expires.setTime(expires.getTime() + (2 * 60 * 60 * 1000)) // 2 hours
+        document.cookie = `payload-token=${result.token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`
       }
 
       // On successful login, redirect to rooms

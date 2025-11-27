@@ -42,25 +42,17 @@ export class TokenAuthentication {
    * Extract token from various sources (cookies, headers, localStorage)
    */
   static extractToken(request: NextRequest): string | null {
-    // Priority 1: Cookie (server-side)
-    const cookieToken = request.cookies.get(this.TOKEN_KEY)?.value
-    if (cookieToken && isValidToken(cookieToken)) {
-      return cookieToken
-    }
+    const tokens: Array<{ source: string; token: string | null }> = [
+      { source: 'cookie', token: request.cookies.get(this.TOKEN_KEY)?.value ?? null },
+      { source: 'authorization', token: request.headers.get('authorization')?.replace('Bearer ', '') ?? null },
+      { source: 'custom-header', token: request.headers.get('x-local-storage-token') ?? null }
+    ]
 
-    // Priority 2: Authorization header
-    const authHeader = request.headers.get('authorization')
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.substring(7)
-      if (isValidToken(token)) {
+    // Return the first valid token from any source
+    for (const { source, token } of tokens) {
+      if (token && isValidToken(token)) {
         return token
       }
-    }
-
-    // Priority 3: Custom header (for localStorage fallback)
-    const customHeader = request.headers.get('x-local-storage-token')
-    if (customHeader && isValidToken(customHeader)) {
-      return customHeader
     }
 
     return null
@@ -86,14 +78,14 @@ export class TokenAuthentication {
       return null
     }
 
-    // Skip auth paths - they should be accessible without auth redirects
-    if (this.isAuthPath(pathname)) {
-      return null
-    }
-
-    // Authenticated users on auth pages should be redirected to rooms (this shouldn't happen due to above, but kept for safety)
+    // Authenticated users on auth pages should be redirected to rooms
     if (isAuthenticated && this.isAuthPath(pathname)) {
       return '/rooms'
+    }
+
+    // Skip auth paths for unauthenticated users - they should be accessible
+    if (this.isAuthPath(pathname)) {
+      return null
     }
 
     // Unauthenticated users on protected paths should be redirected to login

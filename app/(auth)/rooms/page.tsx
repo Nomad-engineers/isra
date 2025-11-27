@@ -70,7 +70,7 @@ export default function RoomsPage() {
 
   // Оба нужны — не удаляем!
   const { toast } = useToast();
-  const { getToken } = useTokenAuth();
+  const { getToken, checkAuth } = useTokenAuth();
 
   const [webinars, setWebinars] = useState<Webinar[]>([]);
   const [loading, setLoading] = useState(true);
@@ -132,7 +132,12 @@ export default function RoomsPage() {
   const fetchWebinars = async () => {
     try {
       setLoading(true);
-      const token = getToken();
+      // First try to get token from useTokenAuth hook, fallback to localStorage
+      let token = getToken();
+
+      if (!token) {
+        token = localStorage.getItem('payload-token');
+      }
 
       if (!token) {
         toast({
@@ -153,7 +158,7 @@ export default function RoomsPage() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch webinars");
+        throw new Error(`Failed to fetch webinars: ${response.status}`);
       }
 
       const result = await response.json();
@@ -168,18 +173,12 @@ export default function RoomsPage() {
         } else {
           // Client sees only their own webinars
           const userId = userData?.id?.toString();
-          console.log("Filtering webinars for user:", userId);
 
           const userWebinars = convertedWebinars.filter((webinar: Webinar) => {
             const webinarHostId = webinar.hostId?.toString();
-            const matches = webinarHostId === userId;
-            console.log(
-              `Webinar ${webinar.title}: hostId=${webinarHostId}, userId=${userId}, matches=${matches}`
-            );
-            return matches;
+            return webinarHostId === userId;
           });
 
-          console.log("User webinars after filter:", userWebinars);
           setWebinars(userWebinars);
         }
       }
@@ -199,7 +198,12 @@ export default function RoomsPage() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const token = getToken();
+        // First try to get token from useTokenAuth hook, fallback to localStorage
+        let token = getToken();
+
+        if (!token) {
+          token = localStorage.getItem('payload-token');
+        }
 
         if (!token) {
           toast({

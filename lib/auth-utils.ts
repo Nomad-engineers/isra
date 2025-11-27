@@ -35,8 +35,22 @@ export function setToken(token: string, userData?: any) {
  */
 export function getToken(): string | null {
   if (typeof window !== 'undefined') {
-    // Client-side: localStorage
-    return localStorage.getItem(TOKEN_KEY)
+    // Client-side: try localStorage first, then cookies as fallback
+    const localStorageToken = localStorage.getItem(TOKEN_KEY)
+    if (localStorageToken) {
+      return localStorageToken
+    }
+
+    // Fallback to cookies if localStorage is empty
+    const cookies = document.cookie.split(';').reduce((acc: Record<string, string>, cookie) => {
+      const [key, value] = cookie.trim().split('=');
+      if (key && value) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
+
+    return cookies[TOKEN_KEY] || null
   }
 
   // Server-side: cookies (handled by middleware)

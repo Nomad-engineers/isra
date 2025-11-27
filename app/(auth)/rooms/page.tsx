@@ -70,7 +70,7 @@ export default function RoomsPage() {
 
   // Оба нужны — не удаляем!
   const { toast } = useToast();
-  const { getToken } = useTokenAuth();
+  const { getToken, checkAuth } = useTokenAuth();
 
   const [webinars, setWebinars] = useState<Webinar[]>([]);
   const [loading, setLoading] = useState(true);

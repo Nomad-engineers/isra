@@ -1,72 +1,72 @@
-import { PlanCard } from '@/components/pricing/PlanCard'
-import { ComparisonTable } from '@/components/pricing/ComparisonTable'
+import { PlanCard } from "@/components/pricing/PlanCard";
+import { ComparisonTable } from "@/components/pricing/ComparisonTable";
 
 const plans = [
   {
-    id: 'basic',
-    name: 'BASIC',
-    price: 'Бесплатно',
-    period: '',
-    description: 'Для малого бизнеса и блогеров',
+    id: "basic",
+    name: "BASIC",
+    price: "Бесплатно",
+    period: "",
+    description: "Для малого бизнеса и блогеров",
     features: [
-      'По балансу (20₸/участник)',
-      '2 комнат',
-      '1ГБ хранилище',
-      '20.00₸ за автовебинар'
+      "По балансу (20₸/участник)",
+      "2 комнат",
+      "1ГБ хранилище",
+      "20.00₸ за автовебинар",
     ],
     badge: null,
-    isCurrent: false
+    isCurrent: false,
   },
   {
-    id: 'starter',
-    name: 'STARTER',
-    price: '8 990 ₸',
-    period: '/мес',
-    description: 'Для малого бизнеса и блогеров',
+    id: "starter",
+    name: "STARTER",
+    price: "8 990 ₸",
+    period: "/мес",
+    description: "Для малого бизнеса и блогеров",
     features: [
-      '100 участников',
-      '10 комнат',
-      '10ГБ хранилище',
-      '15.00₸ за автовебинар'
+      "100 участников",
+      "10 комнат",
+      "10ГБ хранилище",
+      "15.00₸ за автовебинар",
     ],
     badge: null,
-    isCurrent: false
+    isCurrent: false,
   },
   {
-    id: 'professional',
-    name: 'PROFESSIONAL',
-    price: '24 990 ₸',
-    period: '/мес',
-    description: 'Для профессионального использования',
+    id: "professional",
+    name: "PROFESSIONAL",
+    price: "24 990 ₸",
+    period: "/мес",
+    description: "Для профессионального использования",
     features: [
-      '500 участников',
-      '50 комнат',
-      '50ГБ хранилище',
-      '12.00₸ за автовебинар'
+      "500 участников",
+      "50 комнат",
+      "50ГБ хранилище",
+      "12.00₸ за автовебинар",
     ],
     badge: null,
-    isCurrent: false
+    isCurrent: false,
   },
   {
-    id: 'enterprise',
-    name: 'ENTERPRISE',
-    price: 'Безлимит',
-    period: '',
-    description: 'Корпоративные решения без ограничений',
+    id: "enterprise",
+    name: "ENTERPRISE",
+    price: "Безлимит",
+    period: "",
+    description: "Корпоративные решения без ограничений",
     features: [
-      'Безлимит участников',
-      'Безлимит комнат',
-      '100ГБ хранилище',
-      '10.00₸ за автовебинар'
+      "Безлимит участников",
+      "Безлимит комнат",
+      "100ГБ хранилище",
+      "10.00₸ за автовебинар",
     ],
     badge: null,
-    isCurrent: false
-  }
-]
+    isCurrent: false,
+  },
+];
 
 export default function TariffsPage() {
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className=" text-white">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header Section */}
         <div className="mb-16">
@@ -78,9 +78,13 @@ export default function TariffsPage() {
           <div className="bg-gradient-to-r from-gray-900 via-gray-900 to-gray-800 rounded-2xl p-8 border border-gray-700 shadow-2xl backdrop-blur-sm">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
               <div className="space-y-3">
-                <div className="text-sm font-medium text-gray-400 uppercase tracking-wide">Текущий баланс</div>
+                <div className="text-sm font-medium text-gray-400 uppercase tracking-wide">
+                  Текущий баланс
+                </div>
                 <div className="flex items-baseline gap-3">
-                  <span className="text-5xl font-bold bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">0 ₸</span>
+                  <span className="text-5xl font-bold bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">
+                    0 ₸
+                  </span>
                   <span className="text-lg text-gray-500">/ мес</span>
                 </div>
                 <div className="text-sm text-gray-400 flex items-center gap-2">
@@ -103,7 +107,9 @@ export default function TariffsPage() {
         {/* Pricing Cards */}
         <div className="mb-20">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">Выберите подходящий тариф</h2>
+            <h2 className="text-3xl font-bold text-white mb-4">
+              Выберите подходящий тариф
+            </h2>
             <p className="text-gray-400 text-lg max-w-2xl mx-auto">
               Гибкие тарифные планы для любых потребностей вашего бизнеса
             </p>
@@ -118,7 +124,9 @@ export default function TariffsPage() {
         {/* Comparison Table */}
         <div className="mb-20">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">Сравнение тарифов</h2>
+            <h2 className="text-3xl font-bold text-white mb-4">
+              Сравнение тарифов
+            </h2>
             <p className="text-gray-400 text-lg max-w-2xl mx-auto">
               Детальное сравнение всех возможностей каждого тарифа
             </p>
@@ -129,7 +137,9 @@ export default function TariffsPage() {
         {/* FAQ Section */}
         <div className="mb-20">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">Часто задаваемые вопросы</h2>
+            <h2 className="text-3xl font-bold text-white mb-4">
+              Часто задаваемые вопросы
+            </h2>
             <p className="text-gray-400 text-lg max-w-2xl mx-auto">
               Ответы на популярные вопросы о наших тарифах
             </p>
@@ -138,23 +148,32 @@ export default function TariffsPage() {
             {[
               {
                 question: "Можно ли изменить тариф?",
-                answer: "Да, вы можете изменить тариф в любой момент. Разница в стоимости будет зачтена на следующий период."
+                answer:
+                  "Да, вы можете изменить тариф в любой момент. Разница в стоимости будет зачтена на следующий период.",
               },
               {
                 question: "Какие способы оплаты доступны?",
-                answer: "Мы принимаем банковские карты, электронные кошельки и банковские переводы."
+                answer:
+                  "Мы принимаем банковские карты, электронные кошельки и банковские переводы.",
               },
               {
                 question: "Есть ли скидки для некоммерческих организаций?",
-                answer: "Да, мы предоставляем скидки 20% для образовательных и некоммерческих организаций."
+                answer:
+                  "Да, мы предоставляем скидки 20% для образовательных и некоммерческих организаций.",
               },
               {
                 question: "Как происходит выставление счетов?",
-                answer: "Счета выставляются автоматически в начале каждого расчетного периода и отправляются на email."
-              }
+                answer:
+                  "Счета выставляются автоматически в начале каждого расчетного периода и отправляются на email.",
+              },
             ].map((faq, index) => (
-              <div key={index} className="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600 transition-colors duration-300">
-                <h3 className="text-lg font-semibold text-white mb-3">{faq.question}</h3>
+              <div
+                key={index}
+                className="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600 transition-colors duration-300"
+              >
+                <h3 className="text-lg font-semibold text-white mb-3">
+                  {faq.question}
+                </h3>
                 <p className="text-gray-400 leading-relaxed">{faq.answer}</p>
               </div>
             ))}
@@ -163,9 +182,12 @@ export default function TariffsPage() {
 
         {/* CTA Section */}
         <div className="bg-gradient-to-r from-blue-900 to-purple-900 rounded-2xl p-12 text-center mb-16 border border-blue-700/50">
-          <h2 className="text-3xl font-bold text-white mb-4">Остались вопросы?</h2>
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Остались вопросы?
+          </h2>
           <p className="text-blue-200 text-lg mb-8 max-w-2xl mx-auto">
-            Наша команда поддержки всегда готова помочь вам выбрать подходящий тариф
+            Наша команда поддержки всегда готова помочь вам выбрать подходящий
+            тариф
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button className="px-8 py-4 bg-white text-blue-900 hover:bg-gray-100 rounded-xl font-bold transition-all duration-300 transform hover:scale-105">
@@ -178,5 +200,5 @@ export default function TariffsPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

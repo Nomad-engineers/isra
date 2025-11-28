@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -28,12 +28,28 @@ interface ProfileFormProps {
   loading?: boolean;
 }
 
+// ДОБАВЛЕН ЭКСПОРТ!
 export function ProfileForm({
   initialData,
   onSubmit,
   loading = false,
 }: ProfileFormProps) {
   const [selectedAvatar, setSelectedAvatar] = useState<File | null>(null);
+
+  // Extract avatar URL if it's an object
+  const avatarUrl = useMemo(() => {
+    if (!initialData?.avatar) return undefined;
+
+    if (typeof initialData.avatar === "string") {
+      return initialData.avatar;
+    }
+
+    if (typeof initialData.avatar === "object" && "url" in initialData.avatar) {
+      return (initialData.avatar as any).url;
+    }
+
+    return undefined;
+  }, [initialData?.avatar]);
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileFormSchema),
@@ -46,19 +62,43 @@ export function ProfileForm({
     },
   });
 
+  // Update form values when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      console.log("=== PROFILE FORM: Updating form values ===");
+      console.log("New initialData:", initialData);
+
+      form.reset({
+        firstName: initialData.firstName || "",
+        lastName: initialData.lastName || "",
+        email: initialData.email || "",
+        phone: initialData.phone || "",
+        avatar: null,
+      });
+    }
+  }, [initialData, form]);
+
   const handleSubmit = async (data: ProfileFormData) => {
     const formDataWithAvatar: ProfileFormDataWithAvatar = {
       ...data,
       avatar: selectedAvatar,
     };
     await onSubmit(formDataWithAvatar);
+
+    // Clear selected avatar after successful submission
+    setSelectedAvatar(null);
   };
+
+  console.log("=== PROFILE FORM: Rendering ===");
+  console.log("Current avatar from initialData:", initialData?.avatar);
+  console.log("Extracted avatar URL:", avatarUrl);
+  console.log("Selected new avatar file:", selectedAvatar);
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <ImagePicker
-          currentAvatar={initialData?.avatar}
+          currentAvatar={avatarUrl}
           firstName={initialData?.firstName}
           lastName={initialData?.lastName}
           onImageSelect={setSelectedAvatar}

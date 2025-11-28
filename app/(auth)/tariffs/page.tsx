@@ -106,7 +106,7 @@ export default function TariffsPage() {
             <h1 className='text-4xl font-bold text-white'>Баланс и тариф</h1>
           </div>
 
-          <div className='bg-gradient-to-r from-gray-900 via-gray-900 to-gray-800 rounded-2xl p-8 border border-gray-700 shadow-2xl backdrop-blur-sm'>
+        <div className='bg-gradient-to-r from-gray-900 via-gray-900 to-gray-800 rounded-2xl p-8 border border-gray-700 shadow-2xl backdrop-blur-sm'>
             <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6'>
               <div className='space-y-3'>
                 <div className='text-sm font-medium text-gray-400 uppercase tracking-wide'>Текущий баланс</div>

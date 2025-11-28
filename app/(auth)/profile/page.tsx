@@ -50,13 +50,58 @@ interface UserData {
   avatar?: string;
   role?: string;
   plan?: PlanData | string;
-  planStatus?: 'active' | 'trialing' | 'paused' | 'canceled' | 'past_due' | 'overdue' | 'expired' | 'inactive' | 'active_until_period_end';
-  planBillingCycle?: 'month' | 'year';
+  planStatus?:
+    | "active"
+    | "trialing"
+    | "paused"
+    | "canceled"
+    | "past_due"
+    | "overdue"
+    | "expired"
+    | "inactive"
+    | "active_until_period_end";
+  planBillingCycle?: "month" | "year";
   planEndDate?: string;
   planCanceledAt?: string;
   isPhoneVerified?: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+interface ApiWebinar {
+  id: number;
+  name: string;
+  description: string;
+  speaker: string;
+  type: string;
+  videoUrl: string;
+  scheduledDate: string;
+  roomStarted: boolean;
+  startedAt: string | null;
+  stoppedAt: string | null;
+  showChat: boolean;
+  showBanner: boolean;
+  showBtn: boolean;
+  isVolumeOn: boolean;
+  bannerUrl: string | null;
+  btnUrl: string | null;
+  logo: string | null;
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: string;
+  };
+}
+
+interface WebinarStats {
+  total: number;
+  active: number;
+  scheduled: number;
+  totalParticipants: number;
 }
 
 export default function ProfilePage() {
@@ -79,65 +124,72 @@ export default function ProfilePage() {
 
   const changePasswordOperation = useAsyncOperation(profileApi.changePassword);
 
-  // State for managing current user data and authentication
-  const [currentUserId, setCurrentUserId] = useState<string>('');
+  const [currentUserId, setCurrentUserId] = useState<string>("");
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Fetch user data on component mount
+  const [webinars, setWebinars] = useState<ApiWebinar[]>([]);
+  const [webinarStats, setWebinarStats] = useState<WebinarStats>({
+    total: 0,
+    active: 0,
+    scheduled: 0,
+    totalParticipants: 0,
+  });
+  const [isLoadingWebinars, setIsLoadingWebinars] = useState(false);
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        // Get token from localStorage
-        const token = localStorage.getItem('payload-token');
+        const token = localStorage.getItem("payload-token");
 
         if (!token) {
           toast.error("Требуется авторизация");
-          router.push('/auth/login');
+          router.push("/auth/login");
           return;
         }
 
-        // Fetch user data using direct API call (same pattern as login)
-        const response = await fetch('https://isracms.vercel.app/api/users/me', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `JWT ${token}`,
-          },
-        });
+        const response = await fetch(
+          "https://isracms.vercel.app/api/users/me",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `JWT ${token}`,
+            },
+          }
+        );
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.errors?.[0]?.message || 'Failed to fetch user data');
+          throw new Error(
+            errorData.errors?.[0]?.message || "Failed to fetch user data"
+          );
         }
 
         const result = await response.json();
 
         if (result && result.user) {
           const userData = result.user as UserData;
-          setCurrentUserId(userData.id); // Store user ID for updates
+          setCurrentUserId(userData.id);
 
-          // Extract first and last name from name field if available, or use dedicated fields
-          let firstName = userData.firstName || '';
-          let lastName = userData.lastName || '';
+          let firstName = userData.firstName || "";
+          let lastName = userData.lastName || "";
 
           if (userData.name && !firstName && !lastName) {
-            // If name is provided as "First Last", split it
-            const nameParts = userData.name.split(' ');
-            firstName = nameParts[0] || '';
-            lastName = nameParts.slice(1).join(' ') || '';
+            const nameParts = userData.name.split(" ");
+            firstName = nameParts[0] || "";
+            lastName = nameParts.slice(1).join(" ") || "";
           }
 
-          // Handle plan data - it could be an object (populated) or string (ID)
           let planData = null;
-          if (userData.plan && typeof userData.plan === 'object') {
+          if (userData.plan && typeof userData.plan === "object") {
             planData = userData.plan as PlanData;
           }
 
           setProfile({
-            firstName: firstName || '',
-            lastName: lastName || '',
-            email: userData.email || '',
-            phone: userData.phone || '',
+            firstName: firstName || "",
+            lastName: lastName || "",
+            email: userData.email || "",
+            phone: userData.phone || "",
             avatar: userData.avatar,
             role: userData.role,
             plan: planData,
@@ -148,40 +200,43 @@ export default function ProfilePage() {
             isPhoneVerified: userData.isPhoneVerified || false,
           });
         } else if (result && result.message === "Account") {
-          // Handle mock token case - show mock data
           setProfile({
-            firstName: 'Тестовый',
-            lastName: 'Пользователь',
-            email: 'test@example.com',
-            phone: '+79991234567',
+            firstName: "Тестовый",
+            lastName: "Пользователь",
+            email: "test@example.com",
+            phone: "+79991234567",
             avatar: undefined,
-            role: 'client',
+            role: "client",
             plan: {
-              id: 'professional',
-              name: 'PROFESSIONAL',
-              price: '24 990 ₸',
+              id: "professional",
+              name: "PROFESSIONAL",
+              price: "24 990 ₸",
               participants: 500,
               rooms: 50,
-              storage: '50ГБ',
+              storage: "50ГБ",
             },
-            planStatus: 'active',
-            planBillingCycle: 'month',
-            planEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            planStatus: "active",
+            planBillingCycle: "month",
+            planEndDate: new Date(
+              Date.now() + 30 * 24 * 60 * 60 * 1000
+            ).toISOString(),
             planCanceledAt: undefined,
             isPhoneVerified: true,
           });
         } else {
-          throw new Error('No user data received');
+          throw new Error("No user data received");
         }
       } catch (error) {
-        console.error('Profile fetch error:', error);
+        console.error("Profile fetch error:", error);
 
-        // Check if it's an authentication error
-        if (error instanceof Error &&
-            (error.message.includes('401') || error.message.includes('Unauthorized') ||
-             error.message.includes('token'))) {
+        if (
+          error instanceof Error &&
+          (error.message.includes("401") ||
+            error.message.includes("Unauthorized") ||
+            error.message.includes("token"))
+        ) {
           toast.error("Срок действия токена истек");
-          router.push('/auth/login');
+          router.push("/auth/login");
         } else {
           toast.error("Ошибка загрузки профиля");
         }
@@ -193,15 +248,83 @@ export default function ProfilePage() {
     fetchUserData();
   }, [router]);
 
+  const fetchWebinars = async () => {
+    try {
+      setIsLoadingWebinars(true);
+      const token = localStorage.getItem("payload-token");
+
+      if (!token) {
+        console.log("No token found, skipping webinar fetch");
+        return;
+      }
+
+      const response = await fetch("https://isracms.vercel.app/api/rooms", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `JWT ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        console.log("Failed to fetch webinars for statistics");
+        return;
+      }
+
+      const result = await response.json();
+
+      if (result && result.docs) {
+        let userWebinars: ApiWebinar[] = [];
+        if (profile.role === "admin") {
+          userWebinars = result.docs;
+        } else {
+          const userId = currentUserId;
+          userWebinars = result.docs.filter(
+            (webinar: ApiWebinar) => webinar.user.id.toString() === userId
+          );
+        }
+
+        setWebinars(userWebinars);
+
+        const now = new Date();
+        const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+        const stats: WebinarStats = {
+          total: userWebinars.length,
+          active: userWebinars.filter((w) => w.roomStarted && !w.stoppedAt)
+            .length,
+          scheduled: userWebinars.filter((w) => {
+            if (!w.scheduledDate) return false;
+            const scheduledTime = new Date(w.scheduledDate);
+            return scheduledTime > now && scheduledTime <= weekFromNow;
+          }).length,
+          totalParticipants: 1234,
+        };
+
+        setWebinarStats(stats);
+      }
+    } catch (error) {
+      console.error("Error fetching webinars for statistics:", error);
+    } finally {
+      setIsLoadingWebinars(false);
+    }
+  };
+
+  useEffect(() => {
+    if (currentUserId && profile.role) {
+      fetchWebinars();
+    }
+  }, [currentUserId, profile.role]);
+
   const handleProfileUpdate = async (data: ProfileFormDataWithAvatar) => {
     setIsUpdating(true);
 
     try {
-      const token = localStorage.getItem('payload-token');
+      const token = localStorage.getItem("payload-token");
 
       if (!token) {
         toast.error("Требуется авторизация");
-        router.push('/auth/login');
+        router.push("/auth/login");
         return;
       }
 
@@ -210,185 +333,220 @@ export default function ProfilePage() {
         return;
       }
 
-      // Prepare update data
-      const updateData = {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        phone: data.phone ? data.phone.replace(/\D/g, '') : data.phone,
-      };
-
-      // Handle avatar upload if present
+      // Handle avatar upload using mentor's approach
+      // Handle avatar upload using mentor's approach
       if (data.avatar) {
-        // Create FormData for file upload using the example format
-        const formData = new FormData();
-        formData.append("file", data.avatar);
+        try {
+          const formData = new FormData();
+          formData.append("file", data.avatar);
 
-        console.log('=== CLIENT UPLOAD START ===');
-        console.log('Avatar file:', {
-          name: data.avatar.name,
-          type: data.avatar.type,
-          size: data.avatar.size,
-          lastModified: data.avatar.lastModified
-        });
-        console.log('FormData entries before sending:', formData.entries.length);
-        formData.append(
-          '_payload',
-          JSON.stringify({
-            title: 'User Avatar',
-            description: `Avatar for ${data.firstName} ${data.lastName}`,
-            firstName: data.firstName,
-            lastName: data.lastName,
-            email: data.email,
-            phone: data.phone ? data.phone.replace(/\D/g, '') : undefined,
-          }),
-        );
-
-        // Upload avatar first
-        const avatarResponse = await fetch('/api/upload/user-avatar', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (avatarResponse.ok) {
-          const avatarResult = await avatarResponse.json();
-          if (avatarResult.success && avatarResult.url) {
-            (updateData as { avatar?: string }).avatar = avatarResult.url;
-            console.log("Avatar uploaded successfully:", avatarResult.url);
-          } else {
-            console.warn("Avatar upload response invalid:", avatarResult);
-          }
-        } else {
-          // If avatar upload fails, get error details and continue without it
-          const errorData = await avatarResponse.json().catch(() => ({}));
-          console.error("Avatar upload failed:", {
-            status: avatarResponse.status,
-            statusText: avatarResponse.statusText,
-            error: errorData.error || 'Unknown error'
+          console.log("=== AVATAR UPLOAD (MENTOR'S WAY) ===");
+          console.log("File:", {
+            name: data.avatar.name,
+            type: data.avatar.type,
+            size: data.avatar.size,
           });
-          toast.error(`Ошибка загрузки аватара: ${errorData.error || 'Неизвестная ошибка'}`);
+
+          // Upload avatar using special endpoint (as mentor suggested)
+          const avatarResponse = await fetch(
+            "https://isracms.vercel.app/api/user-avatar",
+            {
+              method: "POST",
+              headers: {
+                Authorization: `JWT ${token}`,
+                // Do NOT set Content-Type - browser handles it with boundary
+              },
+              body: formData,
+            }
+          );
+
+          console.log("Avatar upload response status:", avatarResponse.status);
+
+          if (!avatarResponse.ok) {
+            const errorText = await avatarResponse.text();
+            console.error("Avatar upload failed:", errorText);
+            toast.error("Не удалось загрузить аватар");
+            return;
+          }
+
+          const avatarResult = await avatarResponse.json();
+          console.log("Avatar upload result:", avatarResult);
+
+          // Extract the uploaded avatar ID
+          const uploadedAvatarId = avatarResult.doc?.id;
+          console.log("Uploaded avatar ID:", uploadedAvatarId);
+
+          if (!uploadedAvatarId) {
+            toast.error("Не удалось получить ID загруженного аватара");
+            return;
+          }
+
+          // Now link the avatar to the user profile
+          const linkResponse = await fetch(
+            `https://isracms.vercel.app/api/users/${currentUserId}`,
+            {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `JWT ${token}`,
+              },
+              body: JSON.stringify({
+                avatar: uploadedAvatarId,
+              }),
+            }
+          );
+
+          console.log("Avatar link response status:", linkResponse.status);
+
+          if (!linkResponse.ok) {
+            const errorText = await linkResponse.text();
+            console.error("Failed to link avatar to user:", errorText);
+            toast.error("Не удалось связать аватар с профилем");
+            return;
+          }
+
+          const linkResult = await linkResponse.json();
+          console.log("Avatar link result:", linkResult);
+
+          // Refetch user data to get the updated avatar
+          const userResponse = await fetch(
+            "https://isracms.vercel.app/api/users/me",
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `JWT ${token}`,
+              },
+            }
+          );
+
+          if (userResponse.ok) {
+            const userResult = await userResponse.json();
+            console.log("Refetched user data:", userResult);
+
+            // Extract avatar URL from refetched data
+            let avatarUrl = profile.avatar;
+            if (userResult.user && userResult.user.avatar) {
+              const avatarData = userResult.user.avatar;
+              if (typeof avatarData === "object" && avatarData.url) {
+                avatarUrl = avatarData.url;
+              } else if (typeof avatarData === "string") {
+                avatarUrl = avatarData;
+              }
+            }
+
+            console.log("New avatar URL extracted:", avatarUrl);
+
+            // Update profile state with new avatar
+            setProfile((prev) => {
+              const updated = {
+                ...prev,
+                avatar: avatarUrl,
+              };
+              console.log("Updating profile state with new avatar:", updated);
+              return updated;
+            });
+
+            console.log("Avatar updated successfully, new URL:", avatarUrl);
+            toast.success("Аватар успешно обновлен");
+          }
+        } catch (uploadError) {
+          console.error("Avatar upload error:", uploadError);
+          toast.error("Не удалось загрузить аватар");
+          return;
         }
       }
 
-      // Make PATCH request to update user
-      let response;
-      try {
-        console.log('=== PROFILE UPDATE REQUEST ===');
-        console.log('URL:', `https://isracms.vercel.app/api/users/${currentUserId}`);
-        console.log('Token exists:', !!token);
-        console.log('Token preview:', token ? token.substring(0, 20) + '...' : 'none');
-        console.log('Update payload:', JSON.stringify(updateData, null, 2));
+      // Check if other profile fields actually changed
+      const hasProfileChanges =
+        data.firstName.trim() !== profile.firstName ||
+        data.lastName.trim() !== profile.lastName ||
+        data.email.trim() !== profile.email ||
+        (data.phone?.replace(/\D/g, "") || "") !==
+          (profile.phone?.replace(/\D/g, "") || "");
 
-        response = await fetch(`https://isracms.vercel.app/api/users/${currentUserId}`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `JWT ${token}`,
-          },
-          body: JSON.stringify(updateData),
-        });
+      // Only update profile fields if they actually changed
+      if (hasProfileChanges) {
+        const updateData: Record<string, any> = {
+          firstName: data.firstName.trim(),
+          lastName: data.lastName.trim(),
+          email: data.email.trim(),
+        };
 
-        console.log('Response status:', response.status);
-        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-      } catch (fetchError) {
-        console.error('Network error during profile update:', fetchError);
-        // For demo purposes, simulate a successful update and update local state
-        setProfile(prev => ({
+        if (data.phone) {
+          updateData.phone = data.phone.replace(/\D/g, "");
+        }
+
+        console.log("=== PROFILE UPDATE REQUEST ===");
+        console.log("Update payload:", updateData);
+
+        // Make PATCH request to update user profile data
+        const response = await fetch(
+          `https://isracms.vercel.app/api/users/${currentUserId}`,
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `JWT ${token}`,
+            },
+            body: JSON.stringify(updateData),
+          }
+        );
+
+        console.log("Profile update response status:", response.status);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Profile update error response:", errorText);
+
+          try {
+            const errorData = JSON.parse(errorText);
+            const errorMessage =
+              errorData.errors?.[0]?.message ||
+              errorData.message ||
+              "Ошибка обновления профиля";
+            throw new Error(errorMessage);
+          } catch (parseError) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+        }
+
+        const result = await response.json();
+        console.log("Profile update result:", result);
+
+        // Update local state with new user data
+        setProfile((prev) => ({
           ...prev,
           firstName: data.firstName,
           lastName: data.lastName,
           email: data.email,
           phone: data.phone || undefined,
-          avatar: (updateData as { avatar?: string }).avatar || profile.avatar,
         }));
-        toast.success("Данные обновлены (офлайн-режим)");
-        return;
+      } else {
+        console.log(
+          "No profile field changes detected, skipping profile update"
+        );
       }
 
-      if (!response.ok) {
-        let errorData = {};
-        let responseText = '';
-
-        try {
-          responseText = await response.text();
-          console.log('Error response body:', responseText);
-
-          try {
-            errorData = JSON.parse(responseText);
-          } catch (parseError) {
-            console.log('Response is not JSON, treating as plain text');
-            errorData = { message: responseText };
-          }
-
-          console.log('Parsed error data:', errorData);
-
-          // For demo purposes, allow local updates even when API fails
-          console.log('API update failed, falling back to local update mode');
-          setProfile(prev => ({
-            ...prev,
-            firstName: data.firstName,
-            lastName: data.lastName,
-            email: data.email,
-            phone: data.phone || undefined,
-            avatar: (updateData as { avatar?: string }).avatar || profile.avatar,
-          }));
-
-          // Show user-friendly message
-          toast.warning("Данные сохранены локально (API недоступен)");
-          return;
-
-          // Original error handling (commented out for demo mode)
-          // const errorMessage = errorData.errors?.[0]?.message ||
-          //                     errorData.message ||
-          //                     errorData.error ||
-          //                     `HTTP ${response.status}: ${response.statusText}`;
-          // throw new Error(errorMessage);
-        } catch (jsonError) {
-          console.error('Failed to parse error response:', jsonError);
-
-          // For demo purposes, allow local updates even when parsing fails
-          console.log('Failed to parse API error, falling back to local update mode');
-          setProfile(prev => ({
-            ...prev,
-            firstName: data.firstName,
-            lastName: data.lastName,
-            email: data.email,
-            phone: data.phone || undefined,
-            avatar: (updateData as { avatar?: string }).avatar || profile.avatar,
-          }));
-
-          toast.warning("Данные сохранены локально (ошибка API)");
-          return;
-
-          // throw new Error(`HTTP ${response.status}: ${response.statusText} - ${responseText.substring(0, 100)}`);
-        }
-      }
-
-      // Update local state with new user data
-      setProfile(prev => ({
-        ...prev,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        phone: data.phone || undefined,
-        avatar: (updateData as { avatar?: string }).avatar || profile.avatar,
-      }));
-
-      toast.success("Данные успешно обновлены");
-
+      toast.success("Профиль успешно обновлен");
     } catch (error) {
       console.error("Profile update error:", error);
-      toast.error("Ошибка обновления данных");
+      toast.error(
+        error instanceof Error ? error.message : "Ошибка обновления данных"
+      );
     } finally {
       setIsUpdating(false);
     }
   };
 
-  const handlePasswordChange = async (data: { currentPassword: string; newPassword: string; confirmPassword: string }) => {
+  const handlePasswordChange = async (data: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+  }) => {
     await changePasswordOperation.execute(data);
   };
 
-  // Show loading state while fetching user data
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -402,7 +560,6 @@ export default function ProfilePage() {
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
-      {/* Основной контент с табами */}
       <div className="flex-1">
         <div className="mb-6">
           <h1 className="text-3xl font-bold tracking-tight text-white">
@@ -429,7 +586,6 @@ export default function ProfilePage() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Таб: Профиль */}
           <TabsContent value="profile" className="space-y-6">
             <Card>
               <CardHeader>
@@ -448,7 +604,6 @@ export default function ProfilePage() {
             </Card>
           </TabsContent>
 
-          {/* Таб: Статистика */}
           <TabsContent value="statistics" className="space-y-6">
             <div>
               <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-white">
@@ -458,25 +613,37 @@ export default function ProfilePage() {
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatsCard
                   title="Всего вебинаров"
-                  value="24"
+                  value={
+                    isLoadingWebinars ? "..." : webinarStats.total.toString()
+                  }
                   description="За все время"
                   icon={Video}
                 />
                 <StatsCard
                   title="Активных"
-                  value="3"
+                  value={
+                    isLoadingWebinars ? "..." : webinarStats.active.toString()
+                  }
                   description="Сейчас идут"
                   icon={Video}
                 />
                 <StatsCard
                   title="Запланированных"
-                  value="5"
+                  value={
+                    isLoadingWebinars
+                      ? "..."
+                      : webinarStats.scheduled.toString()
+                  }
                   description="На этой неделе"
                   icon={Video}
                 />
                 <StatsCard
                   title="Участников"
-                  value="1,234"
+                  value={
+                    isLoadingWebinars
+                      ? "..."
+                      : webinarStats.totalParticipants.toLocaleString()
+                  }
                   description="Всего участников"
                   icon={User}
                 />
@@ -484,7 +651,6 @@ export default function ProfilePage() {
             </div>
           </TabsContent>
 
-          {/* Таб: Тариф */}
           <TabsContent value="tariff" className="space-y-6">
             <Card>
               <CardHeader>
@@ -494,7 +660,7 @@ export default function ProfilePage() {
                     Текущий тариф
                   </div>
                   <Badge variant="default">
-                    {profile.plan?.name || 'Бесплатный'}
+                    {profile.plan?.name || "Бесплатный"}
                   </Badge>
                 </CardTitle>
               </CardHeader>
@@ -503,25 +669,35 @@ export default function ProfilePage() {
                   <div className="flex justify-between">
                     <span className="text-gray-400">Статус</span>
                     <span className="font-medium text-white">
-                      {profile.planStatus === 'active' ? 'Активен' :
-                       profile.planStatus === 'trialing' ? 'На испытательном сроке' :
-                       profile.planStatus === 'paused' ? 'Приостановлен' :
-                       profile.planStatus === 'canceled' ? 'Отменен' :
-                       profile.planStatus === 'past_due' ? 'Просрочен' :
-                       profile.planStatus === 'expired' ? 'Истекший' :
-                       profile.planStatus === 'inactive' ? 'Неактивен' :
-                       profile.planStatus || 'Не указан'}
+                      {profile.planStatus === "active"
+                        ? "Активен"
+                        : profile.planStatus === "trialing"
+                          ? "На испытательном сроке"
+                          : profile.planStatus === "paused"
+                            ? "Приостановлен"
+                            : profile.planStatus === "canceled"
+                              ? "Отменен"
+                              : profile.planStatus === "past_due"
+                                ? "Просрочен"
+                                : profile.planStatus === "expired"
+                                  ? "Истекший"
+                                  : profile.planStatus === "inactive"
+                                    ? "Неактивен"
+                                    : profile.planStatus || "Не указан"}
                     </span>
                   </div>
                   {profile.planEndDate && (
                     <div className="flex justify-between">
                       <span className="text-gray-400">Следующее списание</span>
                       <span className="font-medium text-white">
-                        {new Date(profile.planEndDate).toLocaleDateString('ru-RU', {
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric'
-                        })}
+                        {new Date(profile.planEndDate).toLocaleDateString(
+                          "ru-RU",
+                          {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                          }
+                        )}
                       </span>
                     </div>
                   )}
@@ -530,14 +706,14 @@ export default function ProfilePage() {
                       Участников на вебинаре
                     </span>
                     <span className="font-medium text-white">
-                      {profile.plan?.participants ? `До ${profile.plan.participants}` : 'Не ограничено'}
+                      {profile.plan?.participants
+                        ? `До ${profile.plan.participants}`
+                        : "Не ограничено"}
                     </span>
                   </div>
                   {profile.plan?.rooms && (
                     <div className="flex justify-between">
-                      <span className="text-gray-400">
-                        Комнат
-                      </span>
+                      <span className="text-gray-400">Комнат</span>
                       <span className="font-medium text-white">
                         До {profile.plan.rooms}
                       </span>
@@ -545,9 +721,7 @@ export default function ProfilePage() {
                   )}
                   {profile.plan?.storage && (
                     <div className="flex justify-between">
-                      <span className="text-gray-400">
-                        Хранилище
-                      </span>
+                      <span className="text-gray-400">Хранилище</span>
                       <span className="font-medium text-white">
                         {profile.plan.storage}
                       </span>
@@ -555,11 +729,11 @@ export default function ProfilePage() {
                   )}
                   {profile.planBillingCycle && (
                     <div className="flex justify-between">
-                      <span className="text-gray-400">
-                        Период billing
-                      </span>
+                      <span className="text-gray-400">Период billing</span>
                       <span className="font-medium text-white">
-                        {profile.planBillingCycle === 'month' ? 'Месячная' : 'Годовая'}
+                        {profile.planBillingCycle === "month"
+                          ? "Месячная"
+                          : "Годовая"}
                       </span>
                     </div>
                   )}
@@ -577,10 +751,8 @@ export default function ProfilePage() {
         </Tabs>
       </div>
 
-      {/* Правый сайдбар с быстрыми действиями и настройками */}
       <div className="lg:w-80">
         <div className="space-y-6">
-          {/* Быстрые действия */}
           <Card>
             <CardHeader>
               <CardTitle className="text-white">Быстрые действия</CardTitle>
@@ -617,7 +789,6 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
 
-          {/* Управление аккаунтом */}
           <Card>
             <CardHeader>
               <CardTitle className="text-white">Управление аккаунтом</CardTitle>

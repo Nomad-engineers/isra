@@ -32,7 +32,7 @@ export function EnhancedAuthGuard({
 
         // Simple token check in localStorage
         const token = localStorage.getItem('payload-token')
-        const isAuth = token && token.length > 0
+        const isAuth = Boolean(token && token.length > 0)
         setIsAuthenticated(isAuth)
 
         // If authentication is required and user is not authenticated
@@ -110,9 +110,13 @@ export function EnhancedAuthGuard({
  * Hook for checking authentication status
  */
 export function useAuthStatus() {
-  const [authStatus, setAuthStatus] = useState(() => {
+  const [authStatus, setAuthStatus] = useState<{
+    isAuthenticated: boolean
+    token: string | null
+    error: string | null
+  }>(() => {
     const token = localStorage.getItem('payload-token')
-    const isAuthenticated = token && token.length > 0
+    const isAuthenticated = Boolean(token && token.length > 0)
     return {
       isAuthenticated,
       token,
@@ -125,7 +129,7 @@ export function useAuthStatus() {
     setIsLoading(true)
     try {
       const token = localStorage.getItem('payload-token')
-      const isAuthenticated = token && token.length > 0
+      const isAuthenticated = Boolean(token && token.length > 0)
       setAuthStatus({
         isAuthenticated,
         token,

@@ -15,7 +15,7 @@ export function useTokenAuth() {
     const updateAuthStatus = () => {
       try {
         const storedToken = localStorage.getItem('payload-token')
-        const isValid = storedToken && storedToken.length > 0
+        const isValid = Boolean(storedToken && storedToken.length > 0)
 
         setToken(storedToken)
         setIsAuthenticated(isValid)

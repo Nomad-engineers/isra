@@ -89,10 +89,12 @@ export function CreateWebinarModal({
       const payload = {
         name: data.title,
         speaker: data.speaker,
-        type: data.type as 'live' | 'auto',
+        type: data.type as "live" | "auto",
         videoUrl: data.streamUrl || undefined,
         description: data.description || undefined,
-        scheduledDate: data.datetime ? new Date(data.datetime).toISOString() : undefined,
+        scheduledDate: data.datetime
+          ? new Date(data.datetime).toISOString()
+          : undefined,
       };
 
       const result = await createWebinar(payload);
@@ -196,7 +198,10 @@ export function CreateWebinarModal({
                             className="w-4 h-4 text-primary border-gray-300 focus:ring-primary focus:ring-2"
                           />
                           <div className="grid gap-1">
-                            <Label htmlFor="live" className="font-normal cursor-pointer">
+                            <Label
+                              htmlFor="live"
+                              className="font-normal cursor-pointer"
+                            >
                               Прямой эфир (Live)
                             </Label>
                             <p className="text-sm text-muted-foreground">
@@ -215,7 +220,10 @@ export function CreateWebinarModal({
                             className="w-4 h-4 text-primary border-gray-300 focus:ring-primary focus:ring-2"
                           />
                           <div className="grid gap-1">
-                            <Label htmlFor="auto" className="font-normal cursor-pointer">
+                            <Label
+                              htmlFor="auto"
+                              className="font-normal cursor-pointer"
+                            >
                               Автоматический (Auto)
                             </Label>
                             <p className="text-sm text-muted-foreground">

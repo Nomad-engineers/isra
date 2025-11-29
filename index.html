@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISRA Chat Platform - Test Client</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+
+        h2 {
+            color: #666;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 5px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .response {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab.active {
+            border-bottom-color: #007bff;
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .chat-messages {
+            height: 300px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 10px;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+        }
+
+        .chat-message {
+            margin-bottom: 10px;
+            padding: 5px;
+            border-radius: 3px;
+            background-color: white;
+            border-left: 3px solid #007bff;
+        }
+
+        .chat-username {
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        .chat-timestamp {
+            font-size: 0.8em;
+            color: #666;
+            float: right;
+        }
+
+        .connection-status {
+            padding: 5px 10px;
+            border-radius: 3px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .connected {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+<h1>🎯 ISRA Chat Platform - Test Client</h1>
+
+<div class="container">
+    <h2>⚙️ Configuration</h2>
+    <div class="form-group">
+        <label for="baseUrl">🌐 Server URL:</label>
+        <input type="text" id="baseUrl" value="http://localhost:8080">
+        <small style="color: #666; display: block;">URL your Spring Boot server</small>
+    </div>
+    <div class="form-group">
+        <label for="email">📧 Email:</label>
+        <input type="email" id="email" value="test@example.com">
+        <small style="color: #666; display: block;">Email for participant identification</small>
+    </div>
+    <div class="form-group">
+        <label for="username">👤 Username:</label>
+        <input type="text" id="username" value="testuser">
+        <small style="color: #666; display: block;">Display name for chat messages</small>
+    </div>
+</div>
+
+<div class="tabs">
+    <button class="tab active" onclick="showTab('webinars')">🎥 Webinars</button>
+    <button class="tab" onclick="showTab('chat')">💬 Chat</button>
+</div>
+
+<!-- Webinars Tab -->
+<div id="webinars-tab" class="tab-content active">
+    <div class="container">
+        <h2>🎥 Webinar Management</h2>
+        <p style="color: #666; margin-bottom: 20px;">
+            Here you can get webinar information and tokens for chat access.
+        </p>
+
+        <h3>🔧 Webinar Operations</h3>
+        <div class="form-group">
+            <label for="webinarIdInput">🆔 Webinar ID:</label>
+            <input type="text" id="webinarIdInput" placeholder="Enter webinar UUID">
+            <small style="color: #666; display: block;">UUID of the webinar you want to access</small>
+        </div>
+        <div class="form-group">
+            <button onclick="getWebinarById()">👁️ Get Webinar Info</button>
+            <button onclick="getWebinarToken()">🎫 Get Chat Token</button>
+        </div>
+
+        <div id="webinarsResponse" class="response"></div>
+    </div>
+</div>
+
+<!-- Chat Tab -->
+<div id="chat-tab" class="tab-content">
+    <div class="container">
+        <h2>💬 Chat Testing</h2>
+        <p style="color: #666; margin-bottom: 20px;">
+            Here you can test real-time chat. First get webinar tokens, then connect to chat.
+        </p>
+
+        <h3>🔗 Connection Settings</h3>
+        <div class="form-group">
+            <label for="centrifugoUrl">🌐 Centrifugo WebSocket URL:</label>
+            <input type="text" id="centrifugoUrl" value="ws://localhost:8000/connection/websocket"
+                   placeholder="ws://localhost:8000/connection/websocket">
+            <small style="color: #666; display: block;">WebSocket URL for Centrifugo server</small>
+        </div>
+
+        <h3>👤 Chat Parameters</h3>
+        <div class="form-group">
+            <label for="chatWebinarId">🎥 Webinar ID:</label>
+            <input type="text" id="chatWebinarId" placeholder="Enter webinar UUID">
+            <small style="color: #666; display: block;">UUID of webinar to join chat</small>
+        </div>
+
+        <div class="form-group">
+            <button onclick="connectToChat()">🔗 Connect to Chat</button>
+            <button onclick="disconnectFromChat()" style="background-color: #dc3545;">🔌 Disconnect</button>
+            <button onclick="getChatMessages()">📜 Load Chat History</button>
+        </div>
+
+        <div id="connectionStatus" class="connection-status disconnected">
+            Status: Disconnected
+        </div>
+
+        <h3>💬 Chat Window</h3>
+        <div class="chat-messages" id="chatMessages">
+            <div style="text-align: center; color: #999; padding: 20px;">
+                Chat messages will appear here...<br>
+                Connect to chat and send your first message!
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="chatMessage">✍️ New Message:</label>
+            <input type="text" id="chatMessage" placeholder="Enter your message..."
+                   onkeypress="handleChatKeyPress(event)">
+        </div>
+
+        <div class="form-group">
+            <button onclick="sendChatMessage()">📤 Send Message</button>
+        </div>
+
+        <div id="chatResponse" class="response"></div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/centrifuge/5.4.0/centrifuge.js"
+        integrity="sha512-XVjLrsjV0IwWD/kYFAl9WXAkrWWSaTLvRcTR6FtBImSMZ+o9iEktFuwHCL2ivxunXb/2bX/p+uFjolZZ0zUsKQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+    function showTab(tabName) {
+        // Hide all tab contents
+        const tabContents = document.querySelectorAll('.tab-content');
+        tabContents.forEach(content => content.classList.remove('active'));
+
+        // Remove active class from all tabs
+        const tabs = document.querySelectorAll('.tab');
+        tabs.forEach(tab => tab.classList.remove('active'));
+
+        // Show selected tab content
+        document.getElementById(tabName + '-tab').classList.add('active');
+
+        // Add active class to clicked tab
+        event.target.classList.add('active');
+    }
+
+    function getBaseUrl() {
+        return document.getElementById('baseUrl').value;
+    }
+
+    function getEmail() {
+        return document.getElementById('email').value;
+    }
+
+    function getUsername() {
+        return document.getElementById('username').value;
+    }
+
+    function displayResponse(elementId, data, isError = false) {
+        const element = document.getElementById(elementId);
+        element.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+        element.className = isError ? 'response error' : 'response success';
+    }
+
+    // Webinar API functions
+    async function getWebinarById() {
+        const webinarId = document.getElementById('webinarIdInput').value;
+        if (!webinarId.trim()) {
+            alert('Please enter a webinar ID');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${getBaseUrl()}/webinars/${webinarId}`);
+            const data = await response.json();
+            displayResponse('webinarsResponse', data, !response.ok);
+        } catch (error) {
+            displayResponse('webinarsResponse', `Error: ${error.message}`, true);
+        }
+    }
+
+    async function getWebinarToken() {
+        const webinarId = document.getElementById('webinarIdInput').value;
+        const email = getEmail();
+
+        if (!webinarId.trim() || !email.trim()) {
+            alert('Please enter webinar ID and email');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${getBaseUrl()}/webinars/${webinarId}/token?email=${encodeURIComponent(email)}`);
+            const data = await response.json();
+
+            if (response.ok) {
+                connectionToken = data.connectionToken;
+                subscriptionToken = data.subscriptionToken;
+                displayResponse('webinarsResponse', `Tokens received:\nConnection: ${connectionToken.substring(0, 30)}...\nSubscription: ${subscriptionToken.substring(0, 30)}...`);
+            } else {
+                displayResponse('webinarsResponse', data, true);
+            }
+        } catch (error) {
+            displayResponse('webinarsResponse', `Error getting token: ${error.message}`, true);
+        }
+    }
+
+    // Chat variables
+    let centrifuge = null;
+    let chatSubscription = null;
+    let connectionToken = null;
+    let subscriptionToken = null;
+
+    // Chat API functions
+    async function connectToChat() {
+        const webinarId = document.getElementById('chatWebinarId').value;
+        const centrifugoUrl = document.getElementById('centrifugoUrl').value;
+
+        if (!webinarId.trim()) {
+            alert('Please enter webinar ID');
+            return;
+        }
+
+        if (!connectionToken || !subscriptionToken) {
+            // Set the webinar ID and get token
+            document.getElementById('webinarIdInput').value = webinarId;
+            await getWebinarToken();
+            if (!connectionToken || !subscriptionToken) {
+                alert('Failed to get chat tokens');
+                return;
+            }
+        }
+
+        try {
+            // Disconnect if already connected
+            if (centrifuge) {
+                centrifuge.disconnect();
+            }
+
+            centrifuge = new Centrifuge(centrifugoUrl, {
+                token: connectionToken
+            });
+
+            centrifuge.on('connecting', function (ctx) {
+                console.log('Connecting to Centrifugo...', ctx);
+                updateConnectionStatus('Connecting...');
+            });
+
+            centrifuge.on('connected', function (ctx) {
+                console.log('Connected to Centrifugo', ctx);
+                updateConnectionStatus('Connected', true);
+            });
+
+            centrifuge.on('disconnected', function (ctx) {
+                console.log('Disconnected from Centrifugo', ctx);
+                updateConnectionStatus('Disconnected', false);
+            });
+
+            // Subscribe to chat channel
+            const channel = `webinar:${webinarId}:chat`;
+            chatSubscription = centrifuge.newSubscription(channel, {
+                token: subscriptionToken
+            });
+
+            chatSubscription.on('publication', function (ctx) {
+                console.log('Chat message received:', ctx.data);
+                displayChatMessage(ctx.data);
+            });
+
+            chatSubscription.on('subscribed', function (ctx) {
+                console.log('Subscribed to chat channel', ctx);
+                displayResponse('chatResponse', `Subscribed to channel: ${channel}`);
+            });
+
+            chatSubscription.on('error', function (ctx) {
+                console.error('Subscription error:', ctx);
+                displayResponse('chatResponse', `Subscription error: ${ctx.error}`, true);
+            });
+
+            chatSubscription.subscribe();
+            centrifuge.connect();
+
+        } catch (error) {
+            console.error('Connection error:', error);
+            displayResponse('chatResponse', `Connection error: ${error.message}`, true);
+            updateConnectionStatus('Connection failed', false);
+        }
+    }
+
+    function disconnectFromChat() {
+        if (centrifuge) {
+            centrifuge.disconnect();
+            centrifuge = null;
+            chatSubscription = null;
+        }
+        updateConnectionStatus('Disconnected', false);
+        displayResponse('chatResponse', 'Disconnected from chat');
+    }
+
+    function updateConnectionStatus(status, connected = null) {
+        const statusElement = document.getElementById('connectionStatus');
+        const statusMessages = {
+            'Connecting...': '🔄 Connecting...',
+            'Connected': '✅ Connected to chat',
+            'Disconnected': '❌ Disconnected from chat',
+            'Connection failed': '⚠️ Connection failed'
+        };
+
+        statusElement.textContent = `Status: ${statusMessages[status] || status}`;
+
+        if (connected !== null) {
+            statusElement.className = connected ? 'connection-status connected' : 'connection-status disconnected';
+        }
+    }
+
+    function displayChatMessage(messageData) {
+        const messagesContainer = document.getElementById('chatMessages');
+        
+        // Handle special message types
+        if (messageData.type === 'newMessage') {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'chat-message';
+
+            const timestamp = new Date().toLocaleTimeString();
+            messageDiv.innerHTML = `
+                <div class="chat-timestamp">${timestamp}</div>
+                <div class="chat-username">${messageData.username}:</div>
+                <div>${messageData.message}</div>
+            `;
+
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    }
+
+    async function sendChatMessage() {
+        const webinarId = document.getElementById('chatWebinarId').value;
+        const email = getEmail();
+        const username = getUsername();
+        const message = document.getElementById('chatMessage').value;
+
+        if (!webinarId.trim() || !email.trim() || !username.trim() || !message.trim()) {
+            alert('Please fill in webinar ID, email, username, and message');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${getBaseUrl()}/chat/${webinarId}/messages`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: email.trim(),
+                    username: username.trim(),
+                    message: message.trim()
+                })
+            });
+
+            if (response.ok) {
+                document.getElementById('chatMessage').value = '';
+                const data = await response.json();
+                displayResponse('chatResponse', `Message sent: ${JSON.stringify(data)}`);
+            } else {
+                const data = await response.json();
+                displayResponse('chatResponse', data, true);
+            }
+        } catch (error) {
+            displayResponse('chatResponse', `Error: ${error.message}`, true);
+        }
+    }
+
+    async function getChatMessages() {
+        const webinarId = document.getElementById('chatWebinarId').value;
+
+        if (!webinarId.trim()) {
+            alert('Please enter webinar ID');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${getBaseUrl()}/chat/${webinarId}/messages`);
+            const data = await response.json();
+
+            if (response.ok) {
+                const messagesContainer = document.getElementById('chatMessages');
+                messagesContainer.innerHTML = '';
+
+                // Display messages in chronological order
+                data.forEach(msg => {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = 'chat-message';
+
+                    const timestamp = new Date(msg.createdAt).toLocaleTimeString();
+                    messageDiv.innerHTML = `
+                        <div class="chat-timestamp">${timestamp}</div>
+                        <div class="chat-username">${msg.username}:</div>
+                        <div>${msg.message}</div>
+                    `;
+
+                    messagesContainer.appendChild(messageDiv);
+                });
+
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                displayResponse('chatResponse', `Loaded ${data.length} messages`);
+            } else {
+                displayResponse('chatResponse', data, true);
+            }
+        } catch (error) {
+            displayResponse('chatResponse', `Error: ${error.message}`, true);
+        }
+    }
+
+    function handleChatKeyPress(event) {
+        if (event.key === 'Enter') {
+            sendChatMessage();
+        }
+    }
+</script>
+</body>
+</html>

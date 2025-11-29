@@ -1,11 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { TokenAuthentication } from '@/lib/token-authentication'
 
 /**
  * Hook for accessing authentication token and status
- * Replaces direct localStorage.getItem("payload-token") calls
+ * Works directly with localStorage for simplicity
  */
 export function useTokenAuth() {
   const [token, setToken] = useState<string | null>(null)
@@ -15,9 +14,11 @@ export function useTokenAuth() {
   useEffect(() => {
     const updateAuthStatus = () => {
       try {
-        const authStatus = TokenAuthentication.getClientAuthStatus()
-        setToken(authStatus.token)
-        setIsAuthenticated(authStatus.isAuthenticated)
+        const storedToken = localStorage.getItem('payload-token')
+        const isValid = storedToken && storedToken.length > 0
+
+        setToken(storedToken)
+        setIsAuthenticated(isValid)
       } catch (error) {
         console.error('Error updating auth status:', error)
         setToken(null)
@@ -59,7 +60,10 @@ export function useTokenAuth() {
    */
   const login = (authToken: string, userData?: any) => {
     try {
-      TokenAuthentication.handleLogin(authToken, userData)
+      localStorage.setItem('payload-token', authToken)
+      if (userData) {
+        localStorage.setItem('user-data', JSON.stringify(userData))
+      }
       setToken(authToken)
       setIsAuthenticated(true)
     } catch (error) {
@@ -73,7 +77,8 @@ export function useTokenAuth() {
    */
   const logout = () => {
     try {
-      TokenAuthentication.handleLogout()
+      localStorage.removeItem('payload-token')
+      localStorage.removeItem('user-data')
       setToken(null)
       setIsAuthenticated(false)
     } catch (error) {

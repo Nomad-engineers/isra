@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { TokenAuthentication } from '@/lib/token-authentication'
 
 interface EnhancedAuthGuardProps {
   children: React.ReactNode
@@ -11,8 +10,8 @@ interface EnhancedAuthGuardProps {
 }
 
 /**
- * Enhanced AuthGuard component using TokenAuthentication class
- * Provides centralized authentication logic for both client and server-side
+ * Simplified AuthGuard component working directly with localStorage
+ * Provides basic authentication logic without complex middleware
  */
 export function EnhancedAuthGuard({
   children,
@@ -31,11 +30,13 @@ export function EnhancedAuthGuard({
         setIsLoading(true)
         setError(null)
 
-        const authStatus = TokenAuthentication.getClientAuthStatus()
-        setIsAuthenticated(authStatus.isAuthenticated)
+        // Simple token check in localStorage
+        const token = localStorage.getItem('payload-token')
+        const isAuth = token && token.length > 0
+        setIsAuthenticated(isAuth)
 
         // If authentication is required and user is not authenticated
-        if (requireAuth && !authStatus.isAuthenticated) {
+        if (requireAuth && !isAuth) {
           const redirectPath = redirectTo || '/auth/login'
           if (pathname !== redirectPath) {
             router.push(redirectPath)
@@ -44,7 +45,7 @@ export function EnhancedAuthGuard({
         }
 
         // If user is authenticated but on an auth page, redirect to rooms
-        if (authStatus.isAuthenticated && pathname.startsWith('/auth/')) {
+        if (isAuth && pathname.startsWith('/auth/')) {
           router.push('/rooms')
           return
         }
@@ -109,18 +110,33 @@ export function EnhancedAuthGuard({
  * Hook for checking authentication status
  */
 export function useAuthStatus() {
-  const [authStatus, setAuthStatus] = useState(() =>
-    TokenAuthentication.getClientAuthStatus()
-  )
+  const [authStatus, setAuthStatus] = useState(() => {
+    const token = localStorage.getItem('payload-token')
+    const isAuthenticated = token && token.length > 0
+    return {
+      isAuthenticated,
+      token,
+      error: null
+    }
+  })
   const [isLoading, setIsLoading] = useState(false)
 
   const refreshAuthStatus = async () => {
     setIsLoading(true)
     try {
-      const status = TokenAuthentication.getClientAuthStatus()
-      setAuthStatus(status)
+      const token = localStorage.getItem('payload-token')
+      const isAuthenticated = token && token.length > 0
+      setAuthStatus({
+        isAuthenticated,
+        token,
+        error: null
+      })
     } catch (error) {
       console.error('Error refreshing auth status:', error)
+      setAuthStatus(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }))
     } finally {
       setIsLoading(false)
     }

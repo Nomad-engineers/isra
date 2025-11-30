@@ -141,11 +141,11 @@ export class ChatWebSocketManager {
         this.handleMessage(ctx.data)
       })
 
-      this.subscription.on('subscribed', (ctx) => {
+      this.subscription.on('subscribed', (ctx: any) => {
         console.log('Subscribed to chat channel', ctx)
       })
 
-      this.subscription.on('error', (ctx) => {
+      this.subscription.on('error', (ctx: any) => {
         console.error('Subscription error:', ctx)
         this.notifyError(new Error('Subscription error'))
         this.notifyStatusChange('error')

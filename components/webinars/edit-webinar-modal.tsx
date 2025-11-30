@@ -84,7 +84,7 @@ export function EditWebinarModal({
       hostName: webinar.hostName || "",
       scheduledAt: formatDateTimeLocal(webinar.scheduledAt),
       description: webinar.description || "",
-      link: webinar.link || "",
+      link: webinar.streamUrl || "",
     },
   });
 

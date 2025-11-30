@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect, use, useRef } from 'react'
+import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
-import { Centrifuge } from 'centrifuge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/components/ui/use-toast'
+import { useChatWebSocket } from '@/hooks/use-chat-websocket'
 import {
   ArrowLeft,
   Send,
@@ -35,89 +35,6 @@ interface WebinarData {
   createdAt: string
 }
 
-interface ChatTokens {
-  connectionToken: string
-  subscriptionToken: string
-}
-
-interface ChatMessage {
-  id: string
-  username: string
-  message: string
-  createdAt: string
-  webinarId: string
-  userId?: string
-}
-
-// Функция для получения токенов чата
-async function getChatTokens(roomId: string, userIdentifier: string): Promise<ChatTokens> {
-  const chatApiUrl = process.env.NEXT_PUBLIC_CHAT_API_URL || 'http://144.76.109.45:8089'
-
-  // Determine if userIdentifier is phone or email
-  let emailToSend: string
-  if (userIdentifier.includes('@')) {
-    // It's already an email (authenticated user)
-    emailToSend = userIdentifier
-  } else {
-    // It's a phone number (localStorage auth)
-    emailToSend = `${userIdentifier}@chat.local`
-  }
-
-  const response = await fetch(`${chatApiUrl}/webinars/${roomId}/token?email=${encodeURIComponent(emailToSend)}`)
-
-  if (!response.ok) {
-    throw new Error(`Failed to get chat tokens: ${response.status}`)
-  }
-
-  return response.json()
-}
-
-// Функция для отправки сообщения через API
-async function sendMessageToChat(
-  roomId: string,
-  userIdentifier: string,
-  userName: string,
-  message: string
-): Promise<ChatMessage> {
-  const chatApiUrl = process.env.NEXT_PUBLIC_CHAT_API_URL || 'http://144.76.109.45:8089'
-  const token = localStorage.getItem('payload-token')
-
-  // Prepare headers
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  }
-
-  // Add Authorization header if user is authenticated in system
-  if (token) {
-    headers['Authorization'] = `JWT ${token}`
-  }
-
-  // Determine if userIdentifier is phone or email
-  let emailToSend: string
-  if (userIdentifier.includes('@')) {
-    // It's already an email (authenticated user)
-    emailToSend = userIdentifier
-  } else {
-    // It's a phone number (localStorage auth)
-    emailToSend = `${userIdentifier}@chat.local`
-  }
-
-  const response = await fetch(`${chatApiUrl}/chat/${roomId}/messages`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({
-      email: emailToSend,
-      username: userName,
-      message: message,
-    }),
-  })
-
-  if (!response.ok) {
-    throw new Error(`Failed to send message: ${response.status}`)
-  }
-
-  return response.json()
-}
 
 export default function WebinarRoomPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
@@ -134,145 +51,30 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
   const [viewerCount, setViewerCount] = useState(0)
   const [duration, setDuration] = useState('00:00:00')
 
-  // Chat states
-  const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [isConnected, setIsConnected] = useState(false)
-  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>(
-    'disconnected'
-  )
+  // Chat WebSocket hook
+  const {
+    messages,
+    connectionStatus,
+    isConnected,
+    sendMessage,
+    error: chatError,
+  } = useChatWebSocket({
+    roomId,
+    userIdentifier: userPhone,
+    userName,
+    autoConnect: !!userPhone && !!userName,
+  })
 
-  // WebSocket refs
-  const centrifugeRef = useRef<any>(null)
-  const subscriptionRef = useRef<any>(null)
-  const connectionAttemptRef = useRef(false)
-
-  // WebSocket connection effect
+  // Show chat errors in toast
   useEffect(() => {
-    const connectToChat = async () => {
-      // Check if we have required data
-      if (!roomId || !userPhone || connectionAttemptRef.current) {
-        console.log('Cannot connect to chat:', {
-          roomId: !!roomId,
-          userPhone: !!userPhone,
-          connectionAttempt: connectionAttemptRef.current,
-        })
-        return
-      }
-
-      if (connectionStatus === 'connecting' || connectionStatus === 'connected') {
-        console.log('Already connected or connecting')
-        return
-      }
-
-      try {
-        console.log('Starting chat connection...', { roomId, userPhone })
-        connectionAttemptRef.current = true
-        setConnectionStatus('connecting')
-
-        // Get chat tokens
-        const tokens = await getChatTokens(roomId, userPhone)
-        console.log('Chat tokens received:', {
-          hasConnectionToken: !!tokens.connectionToken,
-          hasSubscriptionToken: !!tokens.subscriptionToken,
-        })
-
-        // Initialize Centrifuge client
-        const centrifugoUrl =
-          process.env.NEXT_PUBLIC_CENTRIFUGO_WS_URL || 'ws://144.76.109.45:8001/connection/websocket'
-        centrifugeRef.current = new Centrifuge(centrifugoUrl, {
-          token: tokens.connectionToken,
-        })
-
-        // Centrifuge event handlers
-        centrifugeRef.current.on('connecting', function (ctx: any) {
-          console.log('Connecting to Centrifugo...', ctx)
-          setConnectionStatus('connecting')
-        })
-
-        centrifugeRef.current.on('connected', function (ctx: any) {
-          console.log('Connected to Centrifugo', ctx)
-          setConnectionStatus('connected')
-          setIsConnected(true)
-        })
-
-        centrifugeRef.current.on('disconnected', function (ctx: any) {
-          console.log('Disconnected from Centrifugo', ctx)
-          setConnectionStatus('disconnected')
-          setIsConnected(false)
-          connectionAttemptRef.current = false // Allow reconnection
-        })
-
-        centrifugeRef.current.on('error', function (ctx: any) {
-          console.error('Centrifuge error:', ctx)
-          setConnectionStatus('error')
-          setIsConnected(false)
-          connectionAttemptRef.current = false
-        })
-
-        // Create subscription to chat channel
-        const channel = `webinar:${roomId}:chat`
-        subscriptionRef.current = centrifugeRef.current.newSubscription(channel, {
-          token: tokens.subscriptionToken,
-        })
-
-        // Subscription event handlers
-        subscriptionRef.current.on('publication', function (ctx: any) {
-          console.log('Chat message received:', ctx.data)
-
-          // Handle new Java message format: Map.of("type", "newMessage", "data", Map.of("id", ..., "webinarId", ..., "participantId", ..., "username", ..., "message", ..., "createdAt", ...))
-          const messageWrapper = ctx.data
-
-          // Check if this is a newMessage type
-          if (messageWrapper.type === 'newMessage') {
-            const messageData = messageWrapper.data
-            const newMessage: ChatMessage = {
-              id: messageData.id,
-              username: messageData.username,
-              message: messageData.message,
-              createdAt: messageData.createdAt || new Date().toISOString(),
-              webinarId: messageData.webinarId || roomId,
-              userId: messageData.participantId,
-            }
-
-            setMessages((prev) => [...prev, newMessage])
-          }
-        })
-
-        subscriptionRef.current.on('subscribed', function (ctx: any) {
-          console.log('Subscribed to chat channel', ctx)
-        })
-
-        subscriptionRef.current.on('error', function (ctx: any) {
-          console.error('Subscription error:', ctx)
-          setConnectionStatus('error')
-        })
-
-        // Start connection
-        subscriptionRef.current.subscribe()
-        centrifugeRef.current.connect()
-      } catch (error) {
-        console.error('Failed to connect to chat:', error)
-        setConnectionStatus('error')
-        setIsConnected(false)
-        connectionAttemptRef.current = false
-      }
+    if (chatError) {
+      toast({
+        title: 'Ошибка чата',
+        description: chatError.message,
+        variant: 'destructive',
+      })
     }
-
-    connectToChat()
-
-    // Cleanup function
-    return () => {
-      if (subscriptionRef.current) {
-        subscriptionRef.current.unsubscribe()
-        subscriptionRef.current = null
-      }
-      if (centrifugeRef.current) {
-        centrifugeRef.current.disconnect()
-        centrifugeRef.current = null
-      }
-      connectionAttemptRef.current = false
-    }
-  }, [roomId, userPhone])
+  }, [chatError, toast])
 
   // Check auth and load user data
   useEffect(() => {
@@ -434,8 +236,8 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
     if (!messageText.trim() || !webinar?.showChat || !isConnected) return
 
     try {
-      // Send message through API
-      await sendMessageToChat(roomId, userPhone, userName, messageText)
+      // Send message through WebSocket hook
+      await sendMessage(messageText)
 
       // Clear input after successful send
       setMessageText('')

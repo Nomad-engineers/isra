@@ -18,12 +18,12 @@ import {
   MessageSquare,
   Eye,
   Settings,
-  Maximize2,
   Wifi,
   WifiOff,
   Play,
   Zap,
 } from 'lucide-react'
+import { VidstackPlayer } from '@/components/video/vidstack-player'
 
 interface WebinarUser {
   id: number
@@ -579,32 +579,15 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
             className={`card-glass flex flex-col lg:order-2 ${webinar.showChat ? 'lg:col-span-2' : 'lg:col-span-3'}`}
           >
             <CardContent className='p-0 flex-1 relative'>
-              <div className='absolute inset-0 bg-black rounded-lg overflow-hidden'>
-                {webinar.videoUrl ? (
-                  <iframe
-                    src={webinar.videoUrl}
-                    className='w-full h-full'
-                    allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
-                    allowFullScreen
-                  />
-                ) : (
-                  <iframe
-                    src='https://www.youtube.com/embed/gIVbICtADU4?autoplay=1'
-                    className='w-full h-full'
-                    allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
-                    allowFullScreen
-                    title='Webinar Video'
-                  />
-                )}
-
-                {/* Fullscreen Button */}
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  className='absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white z-10'
-                >
-                  <Maximize2 className='h-4 w-4' />
-                </Button>
+              <div className='w-full h-full bg-black rounded-lg overflow-hidden'>
+                <VidstackPlayer
+                  src={webinar.videoUrl || 'https://www.youtube.com/watch?v=6fty5yB7bFo'}
+                  title={webinar.name}
+                  autoPlay={true}
+                  muted={true}
+                  controls={true}
+                  aspectRatio="16/9"
+                />
               </div>
             </CardContent>
 

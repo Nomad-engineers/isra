@@ -31,13 +31,24 @@ export interface ChatWebSocketConfig {
   chatApiUrl?: string
   onMessage?: (message: WebSocketMessage['data']) => void
   onStatusChange?: (status: ConnectionStatus) => void
+  onEvent?: (event: SendEventRequest) => void
 }
+
+// Запрос на отправку ивента
+export interface SendEventRequest {
+  type: string
+  data: Record<string, any>
+}
+
+// Ответ от сервера при отправке ивента
+export interface SendEventResponse extends SendEventRequest {}
 
 // События WebSocket
 export interface ChatWebSocketEvents {
   message: (message: WebSocketMessage['data']) => void
   statusChange: (status: ConnectionStatus) => void
   error: (error: Error) => void
+  event: (event: SendEventRequest) => void
 }
 
 export class ChatWebSocketManager {
@@ -61,15 +72,8 @@ export class ChatWebSocketManager {
   private async getTokens(): Promise<ChatTokens> {
     const { chatApiUrl, roomId, userIdentifier } = this.config
 
-    // Определяем email для отправки
-    let emailToSend: string
-    if (userIdentifier.includes('@')) {
-      emailToSend = userIdentifier
-    } else {
-      emailToSend = `${userIdentifier}@chat.local`
-    }
-
-    const response = await fetch(`${chatApiUrl}/webinars/${roomId}/token?email=${encodeURIComponent(emailToSend)}`)
+    // Send phone number directly as email field
+    const response = await fetch(`${chatApiUrl}/webinars/${roomId}/token?email=${encodeURIComponent(userIdentifier)}`)
 
     if (!response.ok) {
       throw new Error(`Failed to get chat tokens: ${response.status}`)
@@ -141,11 +145,11 @@ export class ChatWebSocketManager {
         this.handleMessage(ctx.data)
       })
 
-      this.subscription.on('subscribed', (ctx) => {
+      this.subscription.on('subscribed', (ctx: any) => {
         console.log('Subscribed to chat channel', ctx)
       })
 
-      this.subscription.on('error', (ctx) => {
+      this.subscription.on('error', (ctx: any) => {
         console.error('Subscription error:', ctx)
         this.notifyError(new Error('Subscription error'))
         this.notifyStatusChange('error')
@@ -166,7 +170,7 @@ export class ChatWebSocketManager {
   // Обработка входящего сообщения
   private handleMessage(data: any): void {
     try {
-      console.log('Chat message received:', data)
+      console.log('Chat data received:', data)
 
       // Проверяем, что это сообщение типа newMessage
       if (data.type === 'newMessage' && data.data) {
@@ -174,6 +178,10 @@ export class ChatWebSocketManager {
         if (this.config.onMessage) {
           this.config.onMessage(message)
         }
+      }
+      // Обрабатываем кастомные ивенты
+      else if (this.config.onEvent) {
+        this.config.onEvent(data)
       }
     } catch (error) {
       console.error('Error handling message:', error)
@@ -217,7 +225,7 @@ export class ChatWebSocketManager {
 
   // Проверка статуса соединения
   isConnected(): boolean {
-    return this.centrifuge !== null && this.config.userIdentifier.length > 0
+    return this.centrifuge !== null && !!this.config.userIdentifier
   }
 
   // Получение текущего статуса
@@ -228,6 +236,71 @@ export class ChatWebSocketManager {
     // Centrifuge не предоставляет прямой метод получения статуса,
     // поэтому возвращаем статус на основе внутренних состояний
     return this.isConnected() ? 'connected' : 'disconnected'
+  }
+
+  // Отправка сообщения в чат
+  async sendMessage(message: string): Promise<any> {
+    if (!message.trim()) {
+      throw new Error('Message cannot be empty')
+    }
+
+    const { chatApiUrl, roomId, userIdentifier, userName } = this.config
+    const token = localStorage.getItem('payload-token')
+
+    // Подготовка заголовков
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    }
+
+    // Добавление заголовка авторизации если пользователь авторизован в системе
+    if (token) {
+      headers['Authorization'] = `JWT ${token}`
+    }
+
+    // Send phone number directly as email field
+    const response = await fetch(`${chatApiUrl}/chat/${roomId}/messages`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        email: userIdentifier,
+        username: userName,
+        message: message.trim(),
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to send message: ${response.status}`)
+    }
+
+    return response.json()
+  }
+
+  // Отправка кастомного ивента
+  async sendEvent(event: SendEventRequest): Promise<SendEventResponse> {
+    const { chatApiUrl, roomId } = this.config
+    const token = localStorage.getItem('payload-token')
+
+    // Подготовка заголовков
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    }
+
+    // Добавление заголовка авторизации если пользователь авторизован в системе
+    if (token) {
+      headers['Authorization'] = `JWT ${token}`
+    }
+
+    const response = await fetch(`${chatApiUrl}/webinars/${roomId}/events`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(event),
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to send event: ${response.status}`)
+    }
+
+    return response.json()
   }
 
   // Обновление конфигурации

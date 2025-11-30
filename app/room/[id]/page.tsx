@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/components/ui/use-toast'
 import { useChatWebSocket } from '@/hooks/use-chat-websocket'
+import { SendEventRequest } from '@/lib/chat-websocket'
 import {
   ArrowLeft,
   Send,
@@ -20,7 +21,18 @@ import {
   Maximize2,
   Wifi,
   WifiOff,
+  Play,
+  Zap,
 } from 'lucide-react'
+
+interface WebinarUser {
+  id: number
+  email: string
+  firstName: string
+  lastName: string
+  phone: string
+  role: string
+}
 
 interface WebinarData {
   id: string
@@ -33,6 +45,7 @@ interface WebinarData {
   roomStarted: boolean
   showChat: boolean
   createdAt: string
+  user?: WebinarUser // Owner of the room
 }
 
 
@@ -48,15 +61,18 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
   const [messageText, setMessageText] = useState('')
   const [userName, setUserName] = useState('Гость')
   const [userPhone, setUserPhone] = useState('')
+  const [isOwner, setIsOwner] = useState(false)
   const [viewerCount, setViewerCount] = useState(0)
   const [duration, setDuration] = useState('00:00:00')
 
   // Chat WebSocket hook
   const {
     messages,
+    events,
     connectionStatus,
     isConnected,
     sendMessage,
+    sendEvent,
     error: chatError,
   } = useChatWebSocket({
     roomId,
@@ -76,82 +92,31 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
     }
   }, [chatError, toast])
 
-  // Check auth and load user data
+// Log events for debugging (can be removed in production)
   useEffect(() => {
-    // First, check if user is authenticated in the system (has JWT token)
-    const token = localStorage.getItem('payload-token')
-    const storedName = localStorage.getItem('user_name')
-    const storedPhone = localStorage.getItem('user_phone')
-
-    if (token) {
-      // User is authenticated in the system, get user data
-      const fetchUserData = async () => {
-        try {
-          const userResponse = await fetch('https://isracms.vercel.app/api/users/me', {
-            headers: {
-              Authorization: `JWT ${token}`,
-            },
-          })
-
-          if (userResponse.ok) {
-            const userData = await userResponse.json()
-            const displayName = userData.user.firstName || userData.user.name || userData.user.email.split('@')[0]
-            setUserName(displayName)
-
-            // Use email as phone for chat (or you can extract phone from user data if available)
-            setUserPhone(userData.user.email)
-
-            // Also store in localStorage for consistency
-            localStorage.setItem('user_name', displayName)
-            localStorage.setItem('user_phone', userData.user.email)
-          } else {
-            // Token is invalid, clear it and check localStorage
-            localStorage.removeItem('payload-token')
-            checkLocalStorageAuth()
-          }
-        } catch (error) {
-          console.error('Error fetching user data:', error)
-          // On error, fallback to localStorage auth
-          checkLocalStorageAuth()
-        }
-      }
-
-      fetchUserData()
-    } else {
-      // No system token, check localStorage auth
-      checkLocalStorageAuth()
+    if (events.length > 0) {
+      console.log('Received events:', events)
+      events.forEach((event) => {
+        toast({
+          title: `Получен ивент: ${event.type}`,
+          description: JSON.stringify(event.data, null, 2),
+          variant: 'default',
+        })
+      })
     }
+  }, [events, toast])
 
-    function checkLocalStorageAuth() {
-      if (!storedName || !storedPhone) {
-        // User is not authenticated anywhere, redirect to auth page
-        router.push(`/room/${roomId}/auth`)
-        return
-      }
-
-      // Set user data from localStorage
-      setUserName(storedName)
-      setUserPhone(storedPhone)
-    }
-  }, [roomId, router])
-
-  // Fetch webinar data
+  
+  // Fetch webinar data with owner validation
   useEffect(() => {
-    const fetchWebinar = async () => {
-      // Don't fetch if user is not authenticated
-      const storedName = localStorage.getItem('user_name')
-      const storedPhone = localStorage.getItem('user_phone')
-
-      if (!storedName || !storedPhone) {
-        return
-      }
+    const fetchWebinarAndValidate = async () => {
+      const token = localStorage.getItem('payload-token')
 
       try {
-        // Try to get webinar data (without auth for now)
-        const response = await fetch(`https://isracms.vercel.app/api/rooms/${roomId}`)
+        // Get webinar data
+        const webinarResponse = await fetch(`https://isracms.vercel.app/api/rooms/${roomId}`)
 
-        if (!response.ok) {
-          // If API fails, create mock data for testing
+        if (!webinarResponse.ok) {
           console.warn('Failed to fetch webinar, using mock data')
           const mockData: WebinarData = {
             id: roomId,
@@ -166,39 +131,100 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
             createdAt: new Date().toISOString(),
           }
           setWebinar(mockData)
+          setIsOwner(false)
+          setLoading(false)
+          return
+        }
+
+        const webinarData = await webinarResponse.json()
+        setWebinar(webinarData)
+
+        // If user has token, validate ownership
+        if (token && webinarData.user) {
+          try {
+            // Get current user data
+            const userResponse = await fetch('https://isracms.vercel.app/api/users/me', {
+              headers: {
+                Authorization: `JWT ${token}`,
+              },
+            })
+
+            if (userResponse.ok) {
+              const userData = await userResponse.json()
+              const isUserOwner = userData.user.id === webinarData.user.id
+
+              if (isUserOwner) {
+                // User is the owner - use their actual data
+                const displayName = userData.user.firstName || userData.user.name || userData.user.email.split('@')[0]
+                setUserName(displayName)
+
+                const userPhone = userData.user.phone
+                if (userPhone) {
+                  setUserPhone(userPhone)
+                  localStorage.setItem('user_name', displayName)
+                  localStorage.setItem('user_phone', userPhone)
+                } else {
+                  throw new Error('Owner phone is required')
+                }
+
+                setIsOwner(true)
+                setLoading(false)
+
+                toast({
+                  title: 'Доступ владельца',
+                  description: 'Вы вошли как владелец вебинара',
+                  variant: 'default',
+                })
+              } else {
+                // User is authenticated but not owner - use guest auth
+                setIsOwner(false)
+                await handleGuestAuth()
+              }
+            } else {
+              // Invalid token - use guest auth
+              setIsOwner(false)
+              await handleGuestAuth()
+            }
+          } catch (error) {
+            console.error('Error validating ownership:', error)
+            setIsOwner(false)
+            await handleGuestAuth()
+          }
         } else {
-          const data = await response.json()
-          setWebinar(data)
+          // No token or no owner data - use guest auth
+          setIsOwner(false)
+          await handleGuestAuth()
         }
       } catch (error) {
         console.error('Error fetching webinar:', error)
-        // Create mock data on error
-        const mockData: WebinarData = {
-          id: roomId,
-          name: 'Тестовый вебинар',
-          description: 'Это тестовый вебинар для демонстрации чата',
-          speaker: 'Спикер',
-          type: 'webinar',
-          videoUrl: '',
-          scheduledDate: new Date().toISOString(),
-          roomStarted: true,
-          showChat: true,
-          createdAt: new Date().toISOString(),
-        }
-        setWebinar(mockData)
+        setLoading(false)
 
         toast({
-          title: 'Используются тестовые данные',
-          description: 'Не удалось загрузить данные вебинара, используется демо-версия',
-          variant: 'default',
+          title: 'Ошибка загрузки',
+          description: 'Не удалось загрузить данные вебинара',
+          variant: 'destructive',
         })
-      } finally {
-        setLoading(false)
       }
     }
 
-    fetchWebinar()
-  }, [roomId, toast])
+    const handleGuestAuth = async () => {
+      const storedName = localStorage.getItem('user_name')
+      const storedPhone = localStorage.getItem('user_phone')
+
+      if (!storedName || !storedPhone) {
+        // Redirect to auth page
+        router.push(`/room/${roomId}/auth`)
+        return
+      }
+
+      // Use existing guest data
+      setUserName(storedName)
+      setUserPhone(storedPhone)
+      setLoading(false)
+    }
+
+    fetchWebinarAndValidate()
+  }, [roomId, router, toast])
 
   // Timer for duration
   useEffect(() => {
@@ -255,6 +281,65 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSendMessage()
+    }
+  }
+
+  // Функция для отправки тестовых ивентов (для модераторов)
+  const handleSendTestEvent = async () => {
+    try {
+      const testEvent: SendEventRequest = {
+        type: 'moderator_action',
+        data: {
+          action: 'mute_user',
+          userId: 'test-user-id',
+          timestamp: new Date().toISOString(),
+          moderator: userName,
+        },
+      }
+
+      await sendEvent(testEvent)
+
+      toast({
+        title: 'Тестовый ивент отправлен',
+        description: `Тип: ${testEvent.type}`,
+        variant: 'default',
+      })
+    } catch (error) {
+      console.error('Failed to send test event:', error)
+      toast({
+        title: 'Ошибка отправки ивента',
+        description: 'Не удалось отправить тестовый ивент',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  // Функция для отправки ивента начала вебинара
+  const handleStartWebinar = async () => {
+    try {
+      const startEvent: SendEventRequest = {
+        type: 'webinar_status',
+        data: {
+          status: 'started',
+          timestamp: new Date().toISOString(),
+          startedBy: userName,
+        },
+      }
+
+      await sendEvent(startEvent)
+
+      toast({
+        title: 'Вебинар запущен',
+        description: 'Отправлен ивент о начале вебинара',
+        variant: 'default',
+      })
+    } catch (error) {
+      console.error('Failed to send start webinar event:', error)
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось отправить ивент о начале вебинара',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -323,10 +408,44 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
                 </>
               )}
 
+              {/* Owner badge */}
+              {isOwner && (
+                <Badge className='bg-purple-500/20 text-purple-400 border-purple-500/50'>
+                  👑 Владелец
+                </Badge>
+              )}
+
               <div className='flex items-center gap-2 text-white'>
                 <Eye className='h-4 w-4' />
                 <span>{viewerCount}</span>
               </div>
+
+              {/* Owner controls */}
+              {isOwner && (
+                <>
+                  <Button
+                    variant='ghost'
+                    size='sm'
+                    className='text-white'
+                    onClick={handleStartWebinar}
+                    disabled={!isConnected}
+                    title='Запустить вебинар'
+                  >
+                    <Play className='h-4 w-4' />
+                  </Button>
+
+                  <Button
+                    variant='ghost'
+                    size='sm'
+                    className='text-white'
+                    onClick={handleSendTestEvent}
+                    disabled={!isConnected}
+                    title='Отправить тестовый ивент'
+                  >
+                    <Zap className='h-4 w-4' />
+                  </Button>
+                </>
+              )}
 
               <Button variant='ghost' size='sm' className='text-white'>
                 <Settings className='h-4 w-4' />
@@ -370,14 +489,28 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
 
               {/* Messages */}
               <div className='flex-1 overflow-y-auto p-4 space-y-3'>
-                {messages.length === 0 ? (
+                {/* Owner info */}
+                {isOwner && (
+                  <div className='bg-purple-500/10 border border-purple-500/30 rounded-lg p-3 mb-4'>
+                    <div className='flex items-center gap-2 text-purple-300 text-sm'>
+                      <span className='font-semibold'>👑 Вы владелец вебинара</span>
+                    </div>
+                    <p className='text-purple-200 text-xs mt-1'>
+                      У вас есть доступ к управлению вебинаром и отправке ивентов
+                    </p>
+                  </div>
+                )}
+
+                {messages.length === 0 && events.length === 0 ? (
                   <div className='text-center text-gray-400 py-8'>
                     <MessageSquare className='h-12 w-12 mx-auto mb-3 opacity-50' />
                     <p>Пока нет сообщений</p>
                     <p className='text-sm'>Будьте первым, кто напишет!</p>
                   </div>
                 ) : (
-                  messages.map((msg) => (
+                  <>
+                  {/* Messages */}
+                  {messages.map((msg) => (
                     <div key={msg.id} className='space-y-1'>
                       <div className='flex items-baseline gap-2'>
                         <span className='font-semibold text-isra-cyan text-sm'>{msg.username}</span>
@@ -390,8 +523,27 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
                       </div>
                       <p className='text-white text-sm bg-white/5 rounded-lg px-3 py-2'>{msg.message}</p>
                     </div>
-                  ))
-                )}
+                  ))}
+
+                {/* Display events */}
+                {events.map((event, index) => (
+                  <div key={`event-${index}`} className='space-y-1'>
+                    <div className='flex items-baseline gap-2'>
+                      <span className='font-semibold text-yellow-400 text-sm'>📡 Event: {event.type}</span>
+                      <span className='text-xs text-gray-500'>
+                        {new Date().toLocaleTimeString('ru-RU', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                    </div>
+                    <p className='text-yellow-200 text-xs bg-yellow-500/10 rounded-lg px-3 py-2 font-mono'>
+                      {JSON.stringify(event.data, null, 2)}
+                    </p>
+                  </div>
+                ))}
+                </>
+              )}
               </div>
 
               {/* Message Input */}

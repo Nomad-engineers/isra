@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { ChatWebSocketManager, ChatWebSocketConfig, ConnectionStatus, WebSocketMessage } from '@/lib/chat-websocket'
+import { ChatWebSocketManager, ChatWebSocketConfig, ConnectionStatus, WebSocketMessage, SendEventRequest, SendEventResponse } from '@/lib/chat-websocket'
 
 export interface UseChatWebSocketOptions {
   roomId: string
@@ -11,12 +11,15 @@ export interface UseChatWebSocketOptions {
 
 export interface UseChatWebSocketReturn {
   messages: WebSocketMessage['data'][]
+  events: SendEventRequest[]
   connectionStatus: ConnectionStatus
   isConnected: boolean
   connect: () => Promise<void>
   disconnect: () => void
   sendMessage: (message: string) => Promise<void>
+  sendEvent: (event: SendEventRequest) => Promise<SendEventResponse>
   clearMessages: () => void
+  clearEvents: () => void
   error: Error | null
 }
 
@@ -28,6 +31,7 @@ export function useChatWebSocket({
   reconnectOnReconnect = true,
 }: UseChatWebSocketOptions): UseChatWebSocketReturn {
   const [messages, setMessages] = useState<WebSocketMessage['data'][]>([])
+  const [events, setEvents] = useState<SendEventRequest[]>([])
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected')
   const [error, setError] = useState<Error | null>(null)
 
@@ -50,6 +54,9 @@ export function useChatWebSocket({
       userName,
       onMessage: (message) => {
         setMessages((prev) => [...prev, message])
+      },
+      onEvent: (event) => {
+        setEvents((prev) => [...prev, event])
       },
       onStatusChange: (status) => {
         setConnectionStatus(status)
@@ -82,55 +89,42 @@ export function useChatWebSocket({
 
   // Отправка сообщения
   const sendMessage = useCallback(async (message: string) => {
-    if (!message.trim()) return
-
-    const chatApiUrl = process.env.NEXT_PUBLIC_CHAT_API_URL || 'http://144.76.109.45:8089'
-    const token = localStorage.getItem('payload-token')
-
-    // Подготовка заголовков
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    }
-
-    // Добавление заголовка авторизации если пользователь авторизован в системе
-    if (token) {
-      headers['Authorization'] = `JWT ${token}`
-    }
-
-    // Определяем email для отправки
-    let emailToSend: string
-    if (userIdentifier.includes('@')) {
-      emailToSend = userIdentifier
-    } else {
-      emailToSend = `${userIdentifier}@chat.local`
+    if (!managerRef.current) {
+      throw new Error('WebSocket manager not initialized')
     }
 
     try {
-      const response = await fetch(`${chatApiUrl}/chat/${roomId}/messages`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          email: emailToSend,
-          username: userName,
-          message: message.trim(),
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error(`Failed to send message: ${response.status}`)
-      }
-
-      return response.json()
+      await managerRef.current.sendMessage(message)
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to send message')
       setError(error)
       throw error
     }
-  }, [roomId, userIdentifier, userName])
+  }, [])
+
+  // Отправка ивента
+  const sendEvent = useCallback(async (event: SendEventRequest): Promise<SendEventResponse> => {
+    if (!managerRef.current) {
+      throw new Error('WebSocket manager not initialized')
+    }
+
+    try {
+      return await managerRef.current.sendEvent(event)
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to send event')
+      setError(error)
+      throw error
+    }
+  }, [])
 
   // Очистка сообщений
   const clearMessages = useCallback(() => {
     setMessages([])
+  }, [])
+
+  // Очистка ивентов
+  const clearEvents = useCallback(() => {
+    setEvents([])
   }, [])
 
   // Проверка, изменилась ли конфигурация
@@ -206,12 +200,15 @@ export function useChatWebSocket({
 
   return {
     messages,
+    events,
     connectionStatus,
     isConnected: connectionStatus === 'connected',
     connect,
     disconnect,
     sendMessage,
+    sendEvent,
     clearMessages,
+    clearEvents,
     error,
   }
 }

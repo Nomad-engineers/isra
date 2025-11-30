@@ -70,7 +70,7 @@ export default function RoomsPage() {
 
   // Оба нужны — не удаляем!
   const { toast } = useToast();
-  const { getToken, checkAuth } = useTokenAuth();
+  const { getToken, checkAuth, refreshToken: refreshAuthToken } = useTokenAuth();
 
   const [webinars, setWebinars] = useState<Webinar[]>([]);
   const [loading, setLoading] = useState(true);
@@ -129,7 +129,7 @@ export default function RoomsPage() {
   };
 
   // Fetch webinars from API
-  const fetchWebinars = async () => {
+  const fetchWebinars = async (retryCount = 0) => {
     try {
       setLoading(true);
       // First try to get token from useTokenAuth hook, fallback to localStorage
@@ -156,6 +156,35 @@ export default function RoomsPage() {
           Authorization: `JWT ${token}`,
         },
       });
+
+      // If token is expired, try to refresh it (only once)
+      if (!response.ok && response.status === 401 && retryCount === 0) {
+        try {
+          const refreshResponse = await fetch(
+            'http://localhost:3000/api/users/refresh-token',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                refreshToken: localStorage.getItem('refresh-token')
+              }),
+            },
+          );
+
+          if (refreshResponse.ok) {
+            const refreshData = await refreshResponse.json();
+            if (refreshData.token) {
+              localStorage.setItem('payload-token', refreshData.token);
+              // Retry the original request with the new token
+              return fetchWebinars(retryCount + 1);
+            }
+          }
+        } catch (refreshError) {
+          console.error("Token refresh failed:", refreshError);
+        }
+      }
 
       if (!response.ok) {
         throw new Error(`Failed to fetch webinars: ${response.status}`);
@@ -196,7 +225,7 @@ export default function RoomsPage() {
 
   // Fetch user data on component mount
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchUserData = async (retryCount = 0) => {
       try {
         // First try to get token from useTokenAuth hook, fallback to localStorage
         let token = getToken();
@@ -226,10 +255,39 @@ export default function RoomsPage() {
           }
         );
 
+        // If token is expired, try to refresh it (only once)
+        if (!response.ok && response.status === 401 && retryCount === 0) {
+          try {
+            const refreshResponse = await fetch(
+              'http://localhost:3000/api/users/refresh-token',
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  refreshToken: localStorage.getItem('refresh-token')
+                }),
+              },
+            );
+
+            if (refreshResponse.ok) {
+              const refreshData = await refreshResponse.json();
+              if (refreshData.token) {
+                localStorage.setItem('payload-token', refreshData.token);
+                // Retry the original request with the new token
+                return fetchUserData(retryCount + 1);
+              }
+            }
+          } catch (refreshError) {
+            console.error("Token refresh failed:", refreshError);
+          }
+        }
+
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(
-            errorData.errors?.[0]?.message || "Failed to fetch user data"
+            errorData.errors?.[0]?.message || `Failed to fetch user data: ${response.status}`
           );
         }
 
@@ -247,7 +305,8 @@ export default function RoomsPage() {
           error instanceof Error &&
           (error.message.includes("401") ||
             error.message.includes("Unauthorized") ||
-            error.message.includes("token"))
+            error.message.includes("token") ||
+            error.message.includes("No user data received"))
         ) {
           toast({
             title: "Срок действия токена истек",

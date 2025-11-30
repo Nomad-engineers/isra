@@ -581,7 +581,7 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
             <CardContent className='p-0 flex-1 relative'>
               <div className='w-full h-full bg-black rounded-lg overflow-hidden'>
                 <VidstackPlayer
-                  src={'https://www.youtube.com/watch?v=6fty5yB7bFo'}
+                  src={webinar.videoUrl || 'https://www.youtube.com/watch?v=6fty5yB7bFo'}
                   title={webinar.name}
                   autoPlay={true}
                   muted={true}

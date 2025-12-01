@@ -43,15 +43,14 @@ interface WebinarData {
   scheduledDate: string
   roomStarted: boolean
   showChat?: boolean
+  isVolumeOn?: boolean
+  bannerUrl?: string
+  showBanner?: boolean
+  btnUrl?: string
+  showBtn?: boolean
   startedAt?: string
   createdAt: string
   user?: WebinarUser // Owner of the room
-  bannerSettings?: {
-    show: boolean
-    text: string
-    button: string
-    buttonUrl: string
-  }
 }
 
 
@@ -74,7 +73,7 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [webinarSettings, setWebinarSettings] = useState({
     showChat: true,
-    isMuted: false,
+    isVolumeOn: true,
     bannerSettings: {
       show: false,
       text: '',
@@ -136,16 +135,40 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
               setWebinarSettings((prev) => ({ ...prev, showChat: event.data.showChat }))
               console.log('Chat visibility updated:', event.data.showChat)
             }
-            if (event.data.muted !== undefined) {
-              setWebinarSettings((prev) => ({ ...prev, isMuted: event.data.muted }))
-              console.log('Audio mute updated:', event.data.muted)
+            if (event.data.isVolumeOn !== undefined) {
+              setWebinarSettings((prev) => ({ ...prev, isVolumeOn: event.data.isVolumeOn }))
+              console.log('Audio volume updated:', event.data.isVolumeOn)
             }
+            if (event.data.muted !== undefined) {
+              setWebinarSettings((prev) => ({ ...prev, isVolumeOn: !event.data.muted }))
+              console.log('Audio mute updated (legacy):', event.data.muted)
+            }
+            if (event.data.bannerUrl !== undefined) {
+              setWebinarSettings((prev) => ({ ...prev, bannerUrl: event.data.bannerUrl }))
+              console.log('Banner URL updated:', event.data.bannerUrl)
+            }
+            if (event.data.showBanner !== undefined) {
+              setWebinarSettings((prev) => ({ ...prev, showBanner: event.data.showBanner }))
+              console.log('Banner show updated:', event.data.showBanner)
+            }
+            if (event.data.btnUrl !== undefined) {
+              setWebinarSettings((prev) => ({ ...prev, btnUrl: event.data.btnUrl }))
+              console.log('Banner button URL updated:', event.data.btnUrl)
+            }
+            if (event.data.showBtn !== undefined) {
+              setWebinarSettings((prev) => ({ ...prev, showBtn: event.data.showBtn }))
+              console.log('Banner button show updated:', event.data.showBtn)
+            }
+            // Legacy support for old bannerSettings
             if (event.data.bannerSettings) {
               setWebinarSettings((prev) => ({
                 ...prev,
-                bannerSettings: { ...prev.bannerSettings, ...event.data.bannerSettings }
+                bannerUrl: event.data.bannerSettings.text || '',
+                showBanner: event.data.bannerSettings.show,
+                btnUrl: event.data.bannerSettings.button,
+                showBtn: !!event.data.bannerSettings.button,
               }))
-              console.log('Banner settings updated:', event.data.bannerSettings)
+              console.log('Banner settings updated (legacy):', event.data.bannerSettings)
             }
             if (event.data.roomStarted !== undefined) {
               setWebinar((prev) => prev ? { ...prev, roomStarted: event.data.roomStarted } : null)
@@ -500,24 +523,6 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
                       <p className='text-white text-sm bg-white/5 rounded-lg px-3 py-2'>{msg.message}</p>
                     </div>
                   ))}
-
-                {/* Display events */}
-                {events.map((event, index) => (
-                  <div key={`event-${index}`} className='space-y-1'>
-                    <div className='flex items-baseline gap-2'>
-                      <span className='font-semibold text-yellow-400 text-sm'>📡 Event: {event.type}</span>
-                      <span className='text-xs text-gray-500'>
-                        {new Date().toLocaleTimeString('ru-RU', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </span>
-                    </div>
-                    <p className='text-yellow-200 text-xs bg-yellow-500/10 rounded-lg px-3 py-2 font-mono'>
-                      {JSON.stringify(event.data, null, 2)}
-                    </p>
-                  </div>
-                ))}
                 </>
               )}
 

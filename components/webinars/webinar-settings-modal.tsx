@@ -8,8 +8,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
-import { MessageSquare, MessageSquareOff, Square, Volume2 } from "lucide-react";
+import { MessageSquare, MessageSquareOff, Square, Volume2, VolumeX } from "lucide-react";
 
 interface WebinarData {
   id: string
@@ -21,14 +24,13 @@ interface WebinarData {
   scheduledDate: string
   roomStarted: boolean
   showChat?: boolean
+  isVolumeOn?: boolean
+  bannerUrl?: string
+  showBanner?: boolean
+  btnUrl?: string
+  showBtn?: boolean
   startedAt?: string
   createdAt: string
-  bannerSettings?: {
-    show: boolean
-    text: string
-    button: string
-    buttonUrl: string
-  }
   user?: {
     id: number
     email: string
@@ -55,6 +57,11 @@ export function WebinarSettingsModal({
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showChat, setShowChat] = useState(webinar.showChat ?? true);
+  const [isVolumeOn, setIsVolumeOn] = useState(true);
+  const [showBanner, setShowBanner] = useState(false);
+  const [bannerUrl, setBannerUrl] = useState("");
+  const [bannerButton, setBannerButton] = useState("");
+  const [showBtn, setShowBtn] = useState(false);
 
   
   // Update settings in database and send event to Centrifugo
@@ -72,8 +79,10 @@ export function WebinarSettingsModal({
         return;
       }
 
+      const apiUrl = process.env.NEXT_PUBLIC_PAYLOAD_API_URL || 'https://isracms.vercel.app';
+
       // Update in database
-      const response = await fetch(`https://isracms.vercel.app/api/rooms/${webinar.id}`, {
+      const response = await fetch(`${apiUrl}/api/rooms/${webinar.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -110,6 +119,28 @@ export function WebinarSettingsModal({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Handle audio volume toggle
+  const handleToggleAudio = async () => {
+    const newVolumeState = !isVolumeOn;
+    setIsVolumeOn(newVolumeState);
+
+    // Update database only (no chat API events for now)
+    await updateSettings({
+      isVolumeOn: newVolumeState,
+    });
+  };
+
+  // Handle banner settings
+  const handleUpdateBanner = async () => {
+    // Update database only (no chat API events for now)
+    await updateSettings({
+      bannerUrl: bannerUrl.trim() || null,
+      showBanner: showBanner,
+      btnUrl: bannerButton.trim() || null,
+      showBtn: showBtn,
+    });
   };
 
   // Handle stop webinar
@@ -247,19 +278,77 @@ export function WebinarSettingsModal({
 
               <Button
                 variant="outline"
+                onClick={handleToggleAudio}
                 disabled={isSubmitting}
                 className="flex items-center justify-center gap-2 min-h-[3rem]"
               >
-                <Volume2 className="h-4 w-4" />
-                Управление звуком
+                {isVolumeOn ? (
+                  <Volume2 className="h-4 w-4" />
+                ) : (
+                  <VolumeX className="h-4 w-4" />
+                )}
+                {isVolumeOn ? "Выключить звук" : "Включить звук"}
               </Button>
 
+              </div>
+          </div>
+
+          {/* Banner Settings */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Настройки баннера</h3>
+            <div className="space-y-4 p-4 border rounded-lg">
+              {/* Banner URL */}
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <Label htmlFor="bannerUrl">URL баннера</Label>
+                  <Input
+                    id="bannerUrl"
+                    placeholder="https://example.com"
+                    value={bannerUrl}
+                    onChange={(e) => setBannerUrl(e.target.value)}
+                    disabled={isSubmitting}
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="showBanner">Показать</Label>
+                  <Switch
+                    id="showBanner"
+                    checked={showBanner}
+                    onCheckedChange={setShowBanner}
+                    disabled={isSubmitting}
+                  />
+                </div>
+              </div>
+
+              {/* Button */}
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <Label htmlFor="bannerButton">URL кнопки</Label>
+                  <Input
+                    id="bannerButton"
+                    placeholder="https://example.com"
+                    value={bannerButton}
+                    onChange={(e) => setBannerButton(e.target.value)}
+                    disabled={isSubmitting}
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="showBtn">Показать</Label>
+                  <Switch
+                    id="showBtn"
+                    checked={showBtn}
+                    onCheckedChange={setShowBtn}
+                    disabled={isSubmitting}
+                  />
+                </div>
+              </div>
+
               <Button
-                variant="outline"
+                onClick={handleUpdateBanner}
                 disabled={isSubmitting}
-                className="flex items-center justify-center gap-2 min-h-[3rem]"
+                className="w-full"
               >
-                Настройки баннера
+                Применить баннер
               </Button>
             </div>
           </div>

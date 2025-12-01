@@ -22,7 +22,6 @@ import {
   WifiOff,
   Play,
   Square,
-  Zap,
 } from 'lucide-react'
 import { VidstackPlayer, VidstackPlayerRef } from '@/components/video/vidstack-player'
 
@@ -497,7 +496,6 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
                     disabled={!isConnected}
                     title='Отправить тестовый ивент'
                   >
-                    <Zap className='h-4 w-4' />
                   </Button>
                 </>
               )}

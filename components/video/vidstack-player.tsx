@@ -238,6 +238,32 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(({
             opacity: 0 !important;
             visibility: hidden !important;
           }
+
+          /* Hide YouTube's "More videos" and end screen suggestions more aggressively */
+          .ytp-pause-overlay,
+          .ytp-related-videos,
+          .ytp-suggested-video,
+          .ytp-more-videos,
+          .ytp-video-wall,
+          .ytp-watch-later,
+          .ytp-share-options,
+          .html5-endscreen,
+          .html5-endscreen-content,
+          .ytp-endscreen-showcase,
+          .ytp-endscreen-takeover,
+          .videowall-endscreen,
+          .ytp-cards-button,
+          .ytp-cards-teaser {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            position: absolute !important;
+            left: -9999px !important;
+            top: -9999px !important;
+            width: 0 !important;
+            height: 0 !important;
+            overflow: hidden !important;
+          }
         `}</style>
         <iframe
           ref={iframeRef}
@@ -274,10 +300,51 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(({
                   }
                 };
 
+                // Monitor for any YouTube suggestion elements that might appear in the parent
+                const monitorSuggestions = () => {
+                  // Common YouTube suggestion class names
+                  const suggestionSelectors = [
+                    '.ytp-pause-overlay',
+                    '.ytp-related-videos',
+                    '.ytp-suggested-video',
+                    '.ytp-more-videos',
+                    '.ytp-video-wall',
+                    '.html5-endscreen',
+                    '.ytp-endscreen-showcase',
+                    '.videowall-endscreen',
+                    '[class*="endscreen"]',
+                    '[class*="suggestion"]',
+                    '[class*="related"]'
+                  ];
+
+                  // This monitors for any elements that might be injected by YouTube
+                  suggestionSelectors.forEach(selector => {
+                    try {
+                      const elements = document.querySelectorAll(selector);
+                      elements.forEach(el => {
+                        if (el && el.style.display !== 'none') {
+                          el.style.display = 'none';
+                          el.style.opacity = '0';
+                          el.style.visibility = 'hidden';
+                          el.style.position = 'absolute';
+                          el.style.left = '-9999px';
+                          el.style.top = '-9999px';
+                        }
+                      });
+                    } catch (e) {
+                      // Ignore errors
+                    }
+                  });
+                };
+
                 // Try hiding overlays periodically
                 setTimeout(hideOverlays, 1000);
                 setTimeout(hideOverlays, 3000);
                 setTimeout(hideOverlays, 5000);
+
+                // Monitor for suggestions more frequently
+                setTimeout(monitorSuggestions, 2000);
+                setInterval(monitorSuggestions, 5000);
               };
             }
           }}
@@ -290,10 +357,19 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(({
 
         {/* Bottom overlay to hide suggestions and recommendations */}
         <div
-          className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black via-black/90 to-transparent z-20 pointer-events-none"
+          className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/90 to-transparent z-20 pointer-events-none"
           style={{
-            height: '25%',
-            display: showCustomControls ? 'none' : 'block'
+            height: showCustomControls ? '60px' : '25%', // Smaller height when showing custom controls to avoid interference
+            display: 'block' // Always show to hide YouTube suggestions
+          }}
+        />
+
+        {/* Additional overlay specifically for "More videos" text area */}
+        <div
+          className="absolute bottom-0 left-0 right-0 bg-black z-25 pointer-events-none"
+          style={{
+            height: showCustomControls ? '24px' : '40px', // Target specific area for "More videos" text
+            display: 'block'
           }}
         />
 

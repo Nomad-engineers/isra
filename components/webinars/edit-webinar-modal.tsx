@@ -25,12 +25,13 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
 import { Webinar } from "@/types/webinar";
+import { DateTimePicker } from "@/components/ui/datetime-picker";
 
 // Form schema with validation
 const webinarFormSchema = z.object({
   title: z.string().min(1, "Название вебинара обязательно"),
   hostName: z.string().min(1, "Имя ведущего обязательно"),
-  scheduledAt: z.string().optional(),
+  datetime: z.string().optional(),
   description: z.string().optional(),
   link: z
     .string()
@@ -65,14 +66,14 @@ export function EditWebinarModal({
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Format datetime-local value from scheduledAt if it exists
-  const formatDateTimeLocal = (dateString?: string) => {
-    if (!dateString) return "";
+  // Parse date for DateTimePicker from scheduledAt if it exists
+  const parseDate = (dateString?: string) => {
+    if (!dateString) return null;
     try {
       const date = new Date(dateString);
-      return date.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:mm
+      return isNaN(date.getTime()) ? null : date;
     } catch {
-      return "";
+      return null;
     }
   };
 
@@ -82,7 +83,7 @@ export function EditWebinarModal({
     defaultValues: {
       title: webinar.title,
       hostName: webinar.hostName || "",
-      scheduledAt: formatDateTimeLocal(webinar.scheduledAt),
+      datetime: webinar.scheduledAt || "",
       description: webinar.description || "",
       link: webinar.streamUrl || "",
     },
@@ -110,7 +111,7 @@ export function EditWebinarModal({
         speaker: data.hostName,
         description: data.description || "",
         videoUrl: data.link || "",
-        scheduledDate: data.scheduledAt || null,
+        scheduledDate: data.datetime ? new Date(data.datetime).toISOString() : null,
       };
 
       console.log("Updating webinar:", webinar.id, updatePayload);
@@ -220,18 +221,19 @@ export function EditWebinarModal({
             {/* Scheduled time field - optional */}
             <FormField
               control={form.control}
-              name="scheduledAt"
+              name="datetime"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Время проведения</FormLabel>
-                  <div className="pt-0.5"> </div>
-                  <FormControl>
-                    <Input
-                      type="datetime-local"
-                      disabled={isSubmitting}
-                      {...field}
-                    />
-                  </FormControl>
+                  <div className="pt-0.5" />
+
+                  <DateTimePicker
+                    value={field.value ? new Date(field.value) : null}
+                    onChange={(date) =>
+                      field.onChange(date?.toISOString() || "")
+                    }
+                  />
+
                   <FormMessage />
                 </FormItem>
               )}

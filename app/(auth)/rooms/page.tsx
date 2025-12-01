@@ -414,6 +414,90 @@ export default function RoomsPage() {
     }
   }
 
+  const handleStartWebinar = async (id: string) => {
+    const webinar = webinars.find((w) => w.id === id)
+
+    // Check if user has permission to start
+    const isOwner = webinar?.hostId?.toString() === userData?.id?.toString()
+
+    if (!isAdmin && !isOwner) {
+      toast({
+        title: 'Доступ запрещен',
+        description: 'Вы можете запускать только свои вебинары',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    if (webinar?.roomStarted) {
+      toast({
+        title: 'Вебинар уже запущен',
+        description: 'Этот вебинар уже запущен',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    try {
+      const token = getToken() || localStorage.getItem('payload-token')
+
+      if (!token) {
+        toast({
+          title: 'Требуется авторизация',
+          description: 'Авторизуйтесь, чтобы продолжить',
+          variant: 'destructive',
+        })
+        return
+      }
+
+      const response = await fetch(`https://isracms.vercel.app/api/rooms/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `JWT ${token}`,
+        },
+        body: JSON.stringify({
+          roomStarted: true,
+          startedAt: new Date().toISOString(),
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(
+          errorData.errors?.[0]?.message || 'Failed to start webinar'
+        )
+      }
+
+      const result = await response.json()
+      console.log('Webinar started successfully:', result)
+
+      toast({
+        title: 'Вебинар запущен',
+        description: 'Вебинар успешно запущен. Перенаправление...',
+      })
+
+      // Refresh webinars list
+      fetchWebinars()
+
+      // Redirect to webinar room after a short delay
+      setTimeout(() => {
+        router.push(`/room/${id}`)
+      }, 1000)
+
+    } catch (error) {
+      console.error('Start webinar error:', error)
+      toast({
+        title: 'Ошибка запуска',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Не удалось запустить вебинар',
+        variant: 'destructive',
+      })
+    }
+  }
+
   const handleWebinarCreated = () => {
     // Refresh webinars list when a new one is created
     fetchWebinars()
@@ -513,6 +597,7 @@ export default function RoomsPage() {
                     onEdit={canModify ? () => handleEdit(webinar.id) : undefined}
                     onDelete={canModify ? () => handleDelete(webinar.id) : undefined}
                     onCopyLink={() => handleCopyLink(webinar.id)}
+                    onStartWebinar={canModify ? () => handleStartWebinar(webinar.id) : undefined}
                   />
                   {/* Owner badge for admin view */}
                   {isAdmin && !isOwner && <div className='absolute top-2 right-2 z-10'></div>}

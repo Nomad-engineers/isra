@@ -18,6 +18,7 @@ export interface UseChatWebSocketReturn {
   disconnect: () => void
   sendMessage: (message: string) => Promise<void>
   sendEvent: (event: SendEventRequest) => Promise<SendEventResponse>
+  loadMessages: () => Promise<void>
   clearMessages: () => void
   clearEvents: () => void
   error: Error | null
@@ -60,6 +61,7 @@ export function useChatWebSocket({
       },
       onStatusChange: (status) => {
         setConnectionStatus(status)
+        // Only set error for non-connection issues
         if (status === 'error') {
           setError(new Error('WebSocket connection error'))
         } else {
@@ -125,6 +127,22 @@ export function useChatWebSocket({
   // Очистка ивентов
   const clearEvents = useCallback(() => {
     setEvents([])
+  }, [])
+
+  // Загрузка истории сообщений
+  const loadMessages = useCallback(async () => {
+    if (!managerRef.current) {
+      throw new Error('WebSocket manager not initialized')
+    }
+
+    try {
+      const historyMessages = await managerRef.current.getChatHistory()
+      setMessages(historyMessages)
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to load messages')
+      setError(error)
+      throw error
+    }
   }, [])
 
   // Проверка, изменилась ли конфигурация
@@ -207,6 +225,7 @@ export function useChatWebSocket({
     disconnect,
     sendMessage,
     sendEvent,
+    loadMessages,
     clearMessages,
     clearEvents,
     error,

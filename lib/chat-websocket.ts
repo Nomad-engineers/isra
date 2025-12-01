@@ -303,6 +303,42 @@ export class ChatWebSocketManager {
     return response.json()
   }
 
+  // Получение истории сообщений
+  async getChatHistory(): Promise<WebSocketMessage['data'][]> {
+    const { chatApiUrl, roomId } = this.config
+    const token = localStorage.getItem('payload-token')
+
+    // Подготовка заголовков
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    }
+
+    // Добавление заголовка авторизации если пользователь авторизован в системе
+    if (token) {
+      headers['Authorization'] = `JWT ${token}`
+    }
+
+    const response = await fetch(`${chatApiUrl}/chat/${roomId}/messages`, {
+      method: 'GET',
+      headers,
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to load chat history: ${response.status}`)
+    }
+
+    const messages = await response.json()
+
+    // Возвращаем сообщения в формате, совместимом с WebSocket сообщениями
+    return messages.map((msg: any) => ({
+      id: msg.id,
+      username: msg.username,
+      message: msg.message,
+      createdAt: msg.createdAt,
+      updatedAt: msg.updatedAt || msg.createdAt,
+    }))
+  }
+
   // Обновление конфигурации
   updateConfig(newConfig: Partial<ChatWebSocketConfig>): void {
     this.config = { ...this.config, ...newConfig }

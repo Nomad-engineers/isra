@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect, use, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -13,17 +13,16 @@ import {
   ArrowLeft,
   Send,
   Users,
-  Clock,
   Loader2,
   MessageSquare,
-  Eye,
   Settings,
   Wifi,
   WifiOff,
-  Play,
-  Zap,
+  Clock,
 } from 'lucide-react'
 import { VidstackPlayer } from '@/components/video/vidstack-player'
+import { WebinarSettingsModal } from '@/components/webinars/webinar-settings-modal'
+import { WebinarBanner } from '@/components/webinars/webinar-banner'
 
 interface WebinarUser {
   id: number
@@ -43,15 +42,23 @@ interface WebinarData {
   videoUrl: string
   scheduledDate: string
   roomStarted: boolean
-  showChat: boolean
+  showChat?: boolean
+  startedAt?: string
   createdAt: string
   user?: WebinarUser // Owner of the room
+  bannerSettings?: {
+    show: boolean
+    text: string
+    button: string
+    buttonUrl: string
+  }
 }
 
 
 export default function WebinarRoomPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const { toast } = useToast()
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Unwrap params Promise
   const { id: roomId } = use(params)
@@ -61,18 +68,29 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
   const [messageText, setMessageText] = useState('')
   const [userName, setUserName] = useState('Гость')
   const [userPhone, setUserPhone] = useState('')
-  const [isOwner, setIsOwner] = useState(false)
   const [viewerCount, setViewerCount] = useState(0)
   const [duration, setDuration] = useState('00:00:00')
+  const [loadingHistory, setLoadingHistory] = useState(true)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [webinarSettings, setWebinarSettings] = useState({
+    showChat: true,
+    isMuted: false,
+    bannerSettings: {
+      show: false,
+      text: '',
+      button: '',
+      buttonUrl: '',
+    }
+  })
 
   // Chat WebSocket hook
   const {
     messages,
     events,
-    connectionStatus,
     isConnected,
     sendMessage,
     sendEvent,
+    loadMessages,
     error: chatError,
   } = useChatWebSocket({
     roomId,
@@ -81,32 +99,73 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
     autoConnect: !!userPhone && !!userName,
   })
 
-  // Show chat errors in toast
+  // Load chat history immediately when user data is available
+  useEffect(() => {
+    if (userPhone && userName) {
+      setLoadingHistory(true)
+      loadMessages()
+        .then(() => {
+          console.log('Chat history loaded successfully')
+        })
+        .catch((error) => {
+          console.error('Failed to load chat history:', error)
+        })
+        .finally(() => {
+          setLoadingHistory(false)
+        })
+    }
+  }, [userPhone, userName, loadMessages])
+
+  // Log chat errors to console only (no user-facing errors for connection issues)
   useEffect(() => {
     if (chatError) {
-      toast({
-        title: 'Ошибка чата',
-        description: chatError.message,
-        variant: 'destructive',
-      })
+      console.error('Chat error:', chatError)
     }
-  }, [chatError, toast])
+  }, [chatError])
 
-// Log events for debugging (can be removed in production)
+// Handle webinar events for real-time updates
   useEffect(() => {
     if (events.length > 0) {
-      console.log('Received events:', events)
       events.forEach((event) => {
-        toast({
-          title: `Получен ивент: ${event.type}`,
-          description: JSON.stringify(event.data, null, 2),
-          variant: 'default',
-        })
+        console.log('Received event:', event.type, event.data)
+
+        switch (event.type) {
+          case 'event':
+            // Handle chat API events
+            if (event.data.showChat !== undefined) {
+              setWebinarSettings((prev) => ({ ...prev, showChat: event.data.showChat }))
+              console.log('Chat visibility updated:', event.data.showChat)
+            }
+            if (event.data.muted !== undefined) {
+              setWebinarSettings((prev) => ({ ...prev, isMuted: event.data.muted }))
+              console.log('Audio mute updated:', event.data.muted)
+            }
+            if (event.data.bannerSettings) {
+              setWebinarSettings((prev) => ({
+                ...prev,
+                bannerSettings: { ...prev.bannerSettings, ...event.data.bannerSettings }
+              }))
+              console.log('Banner settings updated:', event.data.bannerSettings)
+            }
+            if (event.data.roomStarted !== undefined) {
+              setWebinar((prev) => prev ? { ...prev, roomStarted: event.data.roomStarted } : null)
+              console.log('Webinar room status updated:', event.data.roomStarted)
+            }
+            break
+
+          default:
+            // For debugging other events
+            toast({
+              title: `Получен ивент: ${event.type}`,
+              description: JSON.stringify(event.data, null, 2),
+              variant: 'default',
+            })
+        }
       })
     }
   }, [events, toast])
 
-  
+
   // Fetch webinar data with owner validation
   useEffect(() => {
     const fetchWebinarAndValidate = async () => {
@@ -131,78 +190,20 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
             createdAt: new Date().toISOString(),
           }
           setWebinar(mockData)
-          setIsOwner(false)
           setLoading(false)
+          setLoadingHistory(false)
           return
         }
 
         const webinarData = await webinarResponse.json()
         setWebinar(webinarData)
 
-        // If user has token, validate ownership
-        if (token) {
-          try {
-            // Get current user data
-            const userResponse = await fetch('https://isracms.vercel.app/api/users/me', {
-              headers: {
-                Authorization: `JWT ${token}`,
-              },
-            })
-
-            if (userResponse.ok) {
-              const userData = await userResponse.json()
-
-              // Debug logging
-              console.log('Webinar owner ID:', webinarData.user?.id, typeof webinarData.user?.id)
-              console.log('Current user ID:', userData.user?.id, typeof userData.user?.id)
-              console.log('Webinar data:', webinarData.user)
-              console.log('User data:', userData.user)
-
-              const isUserOwner = webinarData.user && userData.user.id.toString() === webinarData.user.id.toString()
-              console.log('Is user owner?', isUserOwner)
-
-              if (isUserOwner) {
-                // User is the owner - use their actual data
-                const displayName = userData.user.firstName || userData.user.name || userData.user.email.split('@')[0]
-                setUserName(displayName)
-
-                // Use phone if available, otherwise fall back to email for chat
-                const userPhone = userData.user.phone || userData.user.email
-                setUserPhone(userPhone)
-                localStorage.setItem('user_name', displayName)
-                localStorage.setItem('user_phone', userPhone)
-
-                setIsOwner(true)
-                setLoading(false)
-
-                toast({
-                  title: 'Доступ владельца',
-                  description: 'Вы вошли как владелец вебинара',
-                  variant: 'default',
-                })
-              } else {
-                // User is authenticated but not owner - use guest auth
-                setIsOwner(false)
-                await handleGuestAuth()
-              }
-            } else {
-              // Invalid token - use guest auth
-              setIsOwner(false)
-              await handleGuestAuth()
-            }
-          } catch (error) {
-            console.error('Error validating ownership:', error)
-            setIsOwner(false)
-            await handleGuestAuth()
-          }
-        } else {
-          // No token or no owner data - use guest auth
-          setIsOwner(false)
-          await handleGuestAuth()
-        }
+        // Use guest auth for all users
+        await handleGuestAuth()
       } catch (error) {
         console.error('Error fetching webinar:', error)
         setLoading(false)
+        setLoadingHistory(false)
 
         toast({
           title: 'Ошибка загрузки',
@@ -226,6 +227,7 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
       setUserName(storedName)
       setUserPhone(storedPhone)
       setLoading(false)
+      setLoadingHistory(false)
     }
 
     fetchWebinarAndValidate()
@@ -233,9 +235,9 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
 
   // Timer for duration
   useEffect(() => {
-    if (!webinar?.roomStarted) return
+    if (!webinar?.roomStarted || !webinar?.startedAt) return
 
-    const startTime = Date.now()
+    const startTime = new Date(webinar.startedAt).getTime()
     const timer = setInterval(() => {
       const elapsed = Math.floor((Date.now() - startTime) / 1000)
       const hours = Math.floor(elapsed / 3600)
@@ -252,19 +254,25 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
     return () => clearInterval(timer)
   }, [webinar])
 
-  // Simulate viewer count
+  // Function to scroll to bottom
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
-    const interval = setInterval(() => {
-      setViewerCount((prev) => Math.max(1, prev + Math.floor(Math.random() * 3) - 1))
-    }, 5000)
+    scrollToBottom()
+  }, [messages, events])
 
-    setViewerCount(Math.floor(Math.random() * 50) + 10)
-
-    return () => clearInterval(interval)
-  }, [])
+  // Auto-scroll to bottom when history is loaded
+  useEffect(() => {
+    if (!loadingHistory) {
+      scrollToBottom()
+    }
+  }, [loadingHistory])
 
   const handleSendMessage = async () => {
-    if (!messageText.trim() || !webinar?.showChat || !isConnected) return
+    if (!messageText.trim() || !webinarSettings.showChat || !isConnected) return
 
     try {
       // Send message through WebSocket hook
@@ -272,6 +280,9 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
 
       // Clear input after successful send
       setMessageText('')
+
+      // Scroll to bottom after sending message
+      setTimeout(scrollToBottom, 100)
     } catch (error) {
       console.error('Failed to send message:', error)
       toast({
@@ -289,64 +300,18 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
     }
   }
 
-  // Функция для отправки тестовых ивентов (для модераторов)
-  const handleSendTestEvent = async () => {
-    try {
-      const testEvent: SendEventRequest = {
-        type: 'moderator_action',
-        data: {
-          action: 'mute_user',
-          userId: 'test-user-id',
-          timestamp: new Date().toISOString(),
-          moderator: userName,
-        },
-      }
+  
+  // Simulate viewer count
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setViewerCount((prev) => Math.max(1, prev + Math.floor(Math.random() * 3) - 1))
+    }, 5000)
 
-      await sendEvent(testEvent)
+    setViewerCount(Math.floor(Math.random() * 50) + 10)
 
-      toast({
-        title: 'Тестовый ивент отправлен',
-        description: `Тип: ${testEvent.type}`,
-        variant: 'default',
-      })
-    } catch (error) {
-      console.error('Failed to send test event:', error)
-      toast({
-        title: 'Ошибка отправки ивента',
-        description: 'Не удалось отправить тестовый ивент',
-        variant: 'destructive',
-      })
-    }
-  }
+    return () => clearInterval(interval)
+  }, [])
 
-  // Функция для отправки ивента начала вебинара
-  const handleStartWebinar = async () => {
-    try {
-      const startEvent: SendEventRequest = {
-        type: 'webinar_status',
-        data: {
-          status: 'started',
-          timestamp: new Date().toISOString(),
-          startedBy: userName,
-        },
-      }
-
-      await sendEvent(startEvent)
-
-      toast({
-        title: 'Вебинар запущен',
-        description: 'Отправлен ивент о начале вебинара',
-        variant: 'default',
-      })
-    } catch (error) {
-      console.error('Failed to send start webinar event:', error)
-      toast({
-        title: 'Ошибка',
-        description: 'Не удалось отправить ивент о начале вебинара',
-        variant: 'destructive',
-      })
-    }
-  }
 
   if (loading) {
     return (
@@ -400,59 +365,18 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
 
             <div className='flex items-center gap-4'>
               {webinar.roomStarted && (
-                <>
-                  <Badge className='bg-red-500/20 text-red-400 border-red-500/50 animate-pulse'>
-                    <div className='w-2 h-2 bg-red-500 rounded-full mr-2 animate-pulse' />
-                    LIVE
-                  </Badge>
-
-                  <div className='flex items-center gap-2 text-white'>
-                    <Clock className='h-4 w-4' />
-                    <span className='font-mono'>{duration}</span>
-                  </div>
-                </>
+                <div className='flex items-center gap-2 text-white'>
+                  <Clock className='h-4 w-4' />
+                  <span className='font-mono'>{duration}</span>
+                </div>
               )}
 
-              {/* Owner badge */}
-              {isOwner && (
-                <Badge className='bg-purple-500/20 text-purple-400 border-purple-500/50'>
-                  👑 Владелец
-                </Badge>
-              )}
-
-              <div className='flex items-center gap-2 text-white'>
-                <Eye className='h-4 w-4' />
-                <span>{viewerCount}</span>
-              </div>
-
-              {/* Owner controls */}
-              {isOwner && (
-                <>
-                  <Button
-                    variant='ghost'
-                    size='sm'
-                    className='text-white'
-                    onClick={handleStartWebinar}
-                    disabled={!isConnected}
-                    title='Запустить вебинар'
-                  >
-                    <Play className='h-4 w-4' />
-                  </Button>
-
-                  <Button
-                    variant='ghost'
-                    size='sm'
-                    className='text-white'
-                    onClick={handleSendTestEvent}
-                    disabled={!isConnected}
-                    title='Отправить тестовый ивент'
-                  >
-                    <Zap className='h-4 w-4' />
-                  </Button>
-                </>
-              )}
-
-              <Button variant='ghost' size='sm' className='text-white'>
+              <Button
+                variant='ghost'
+                size='sm'
+                className='text-white'
+                onClick={() => setSettingsOpen(true)}
+              >
                 <Settings className='h-4 w-4' />
               </Button>
             </div>
@@ -460,11 +384,66 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
         </div>
       </div>
 
+      {/* Webinar Banner */}
+      <WebinarBanner
+        show={webinarSettings.bannerSettings.show}
+        text={webinarSettings.bannerSettings.text}
+        buttonText={webinarSettings.bannerSettings.button}
+        buttonUrl={webinarSettings.bannerSettings.buttonUrl}
+      />
+
       {/* Main Content */}
       <div className='container mx-auto px-4 py-6'>
-        <div className='grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-160px)]'>
+        {!webinar.roomStarted ? (
+          // Webinar not started screen
+          <div className='min-h-[calc(100vh-160px)] flex items-center justify-center'>
+            <Card className='card-glass max-w-md w-full'>
+              <CardContent className='pt-8 pb-6 text-center space-y-6'>
+                <div className='space-y-4'>
+                  <div className='mx-auto w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center'>
+                    <Clock className='h-8 w-8 text-yellow-400' />
+                  </div>
+                  <h2 className='text-2xl font-bold text-white'>Вебинар еще не начался</h2>
+                  <p className='text-gray-300 leading-relaxed'>
+                    Этот вебинар пока не запущен организатором. Пожалуйста, подождите немного или вернитесь позже.
+                  </p>
+                  <div className='space-y-2'>
+                    <p className='text-sm text-gray-400'>
+                      {webinar.scheduledDate ? (
+                        <>Запланировано на: {new Date(webinar.scheduledDate).toLocaleDateString('ru-RU', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}</>
+                      ) : (
+                        <>Время начала будет объявлено позже</>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <div className='space-y-3 pt-4'>
+                  <Button onClick={() => router.push('/rooms')} className='gradient-primary w-full'>
+                    <ArrowLeft className='h-4 w-4 mr-2' />
+                    Вернуться к списку вебинаров
+                  </Button>
+                  <Button
+                    variant='outline'
+                    onClick={() => window.location.reload()}
+                    className='w-full border-white/20 text-white hover:bg-white/10'
+                  >
+                    Обновить страницу
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        ) : (
+          // Active webinar content
+          <div className='grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-160px)]'>
           {/* Chat Section - LEFT SIDE */}
-          {webinar.showChat && (
+          {webinarSettings.showChat && (
             <Card className='card-glass lg:col-span-1 lg:order-1 flex flex-col'>
               <div className='p-4 border-b border-white/10'>
                 <div className='flex items-center justify-between'>
@@ -474,15 +453,13 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
                   </h2>
                   <div className='flex items-center gap-2'>
                     {isConnected ? (
-                      <Badge className='bg-green-500/20 text-green-400 border-green-500/50'>
-                        <Wifi className='h-3 w-3 mr-1' />
-                        Онлайн
-                      </Badge>
+                      <div className='text-white'>
+                        <Wifi className='h-4 w-4' />
+                      </div>
                     ) : (
-                      <Badge className='bg-red-500/20 text-red-400 border-red-500/50'>
-                        <WifiOff className='h-3 w-3 mr-1' />
-                        Офлайн
-                      </Badge>
+                      <div className='text-red-400'>
+                        <WifiOff className='h-4 w-4' />
+                      </div>
                     )}
                     <Badge variant='outline' className='text-white'>
                       <Users className='h-3 w-3 mr-1' />
@@ -494,19 +471,13 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
 
               {/* Messages */}
               <div className='flex-1 overflow-y-auto p-4 space-y-3'>
-                {/* Owner info */}
-                {isOwner && (
-                  <div className='bg-purple-500/10 border border-purple-500/30 rounded-lg p-3 mb-4'>
-                    <div className='flex items-center gap-2 text-purple-300 text-sm'>
-                      <span className='font-semibold'>👑 Вы владелец вебинара</span>
-                    </div>
-                    <p className='text-purple-200 text-xs mt-1'>
-                      У вас есть доступ к управлению вебинаром и отправке ивентов
-                    </p>
-                  </div>
-                )}
 
-                {messages.length === 0 && events.length === 0 ? (
+                {loadingHistory ? (
+                  <div className='text-center text-gray-400 py-8'>
+                    <Loader2 className='h-12 w-12 mx-auto mb-3 animate-spin opacity-50' />
+                    <p>Загрузка истории сообщений...</p>
+                  </div>
+                ) : messages.length === 0 && events.length === 0 ? (
                   <div className='text-center text-gray-400 py-8'>
                     <MessageSquare className='h-12 w-12 mx-auto mb-3 opacity-50' />
                     <p>Пока нет сообщений</p>
@@ -549,15 +520,13 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
                 ))}
                 </>
               )}
+
+              {/* Invisible element for auto-scrolling */}
+              <div ref={messagesEndRef} />
               </div>
 
               {/* Message Input */}
               <div className='p-4 border-t border-white/10'>
-                {!isConnected && (
-                  <div className='mb-2 text-sm text-red-400 text-center'>
-                    Соединение потеряно. Пытаемся подключиться...
-                  </div>
-                )}
                 <div className='flex gap-2'>
                   <Input
                     value={messageText}
@@ -581,7 +550,7 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
 
           {/* Video Section - RIGHT SIDE */}
           <Card
-            className={`card-glass flex flex-col lg:order-2 ${webinar.showChat ? 'lg:col-span-2' : 'lg:col-span-3'}`}
+            className={`card-glass flex flex-col lg:order-2 ${webinarSettings.showChat ? 'lg:col-span-2' : 'lg:col-span-3'}`}
           >
             <CardContent className='p-0 flex-1 relative'>
               <div className='w-full h-full bg-black rounded-lg overflow-hidden'>
@@ -605,7 +574,22 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
             )}
           </Card>
         </div>
+        )}
       </div>
+
+      {/* Webinar Settings Modal */}
+      <WebinarSettingsModal
+        webinar={webinar}
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        onSettingsUpdate={(updatedWebinar) => {
+          setWebinar(prev => prev ? { ...prev, ...updatedWebinar } : null);
+          // Update local settings state if needed
+          if (updatedWebinar.showChat !== undefined) {
+            setWebinarSettings(prev => ({ ...prev, showChat: updatedWebinar.showChat! }));
+          }
+        }}
+      />
     </div>
   )
 }

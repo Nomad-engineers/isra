@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { MoreHorizontal, Edit, Trash2, Eye, Copy, Calendar, Users, Clock, FileText } from 'lucide-react'
+import { MoreHorizontal, Edit, Trash2, Eye, Copy, Calendar, Users, Clock, FileText, Play } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { formatDate } from '@/lib/utils'
 import { cn } from '@/lib/utils'
@@ -13,6 +13,7 @@ interface WebinarCardProps {
   onEdit?: (id: string) => void
   onDelete?: (id: string) => void
   onCopyLink?: (id: string) => void
+  onStartWebinar?: (id: string) => void
   actions?: React.ReactNode
 }
 
@@ -44,7 +45,7 @@ const statusConfig = {
   },
 }
 
-export function WebinarCard({ webinar, onView, onEdit, onDelete, onCopyLink, actions }: WebinarCardProps) {
+export function WebinarCard({ webinar, onView, onEdit, onDelete, onCopyLink, onStartWebinar, actions }: WebinarCardProps) {
   const statusInfo = statusConfig[webinar.status] || statusConfig.draft
 
   const getParticipantInfo = () => {
@@ -121,6 +122,12 @@ export function WebinarCard({ webinar, onView, onEdit, onDelete, onCopyLink, act
                   <DropdownMenuItem onClick={() => onCopyLink(webinar.id)}>
                     <Copy className='h-4 w-4 mr-2' />
                     Копировать ссылку
+                  </DropdownMenuItem>
+                )}
+                {onStartWebinar && !webinar.roomStarted && (
+                  <DropdownMenuItem onClick={() => onStartWebinar(webinar.id)} className="text-green-600 focus:text-green-600">
+                    <Play className='h-4 w-4 mr-2' />
+                    Старт вебинара
                   </DropdownMenuItem>
                 )}
                 {onDelete && (

@@ -140,7 +140,7 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
         setWebinar(webinarData)
 
         // If user has token, validate ownership
-        if (token && webinarData.user) {
+        if (token) {
           try {
             // Get current user data
             const userResponse = await fetch('https://isracms.vercel.app/api/users/me', {
@@ -151,21 +151,26 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
 
             if (userResponse.ok) {
               const userData = await userResponse.json()
-              const isUserOwner = userData.user.id === webinarData.user.id
+
+              // Debug logging
+              console.log('Webinar owner ID:', webinarData.user?.id, typeof webinarData.user?.id)
+              console.log('Current user ID:', userData.user?.id, typeof userData.user?.id)
+              console.log('Webinar data:', webinarData.user)
+              console.log('User data:', userData.user)
+
+              const isUserOwner = webinarData.user && userData.user.id.toString() === webinarData.user.id.toString()
+              console.log('Is user owner?', isUserOwner)
 
               if (isUserOwner) {
                 // User is the owner - use their actual data
                 const displayName = userData.user.firstName || userData.user.name || userData.user.email.split('@')[0]
                 setUserName(displayName)
 
-                const userPhone = userData.user.phone
-                if (userPhone) {
-                  setUserPhone(userPhone)
-                  localStorage.setItem('user_name', displayName)
-                  localStorage.setItem('user_phone', userPhone)
-                } else {
-                  throw new Error('Owner phone is required')
-                }
+                // Use phone if available, otherwise fall back to email for chat
+                const userPhone = userData.user.phone || userData.user.email
+                setUserPhone(userPhone)
+                localStorage.setItem('user_name', displayName)
+                localStorage.setItem('user_phone', userPhone)
 
                 setIsOwner(true)
                 setLoading(false)

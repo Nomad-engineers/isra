@@ -51,8 +51,13 @@ importers:
         specifier: ^1.2.15
         version: 1.2.15(@types/react-dom@19.2.3(@types/react@19.2.6))(@types/react@19.2.6)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@vidstack/react':
+<<<<<<< HEAD
+        specifier: ^1.12.13
+        version: 1.12.13(@types/react@19.2.6)(react@19.2.0)
+=======
         specifier: ^0.6.15
         version: 0.6.15(@types/react@19.2.6)(maverick.js@0.37.0)(react@19.2.0)(vidstack@0.6.15)
+>>>>>>> 3b819e428cedd29c7b5f8a0ed22925b805b183a3
       centrifuge:
         specifier: ^5.5.2
         version: 5.5.2
@@ -1615,6 +1620,14 @@ packages:
     cpu: [x64]
     os: [win32]
 
+<<<<<<< HEAD
+  '@vidstack/react@1.12.13':
+    resolution: {integrity: sha512-zyNydy1+HtoK6cJ8EmqFNkPPGHIFMrr2KH+ef3654EqXx4IcJ8A5LCNMXBuALQE8IMxtk040JMoR9OKyeXjBOQ==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@types/react': ^18.0.0 || ^19.0.0
+      react: ^18.0.0 || ^19.0.0
+=======
   '@vidstack/react@0.6.15':
     resolution: {integrity: sha512-S8KkYCte84Pqwb8Zd9vuOCe2YuaXqRdtYQ22zSvDUPlS7m8ilYs6ypfHwZzmgSVZdayVU1C703aFMSdcLfpxpg==}
     engines: {node: '>=16'}
@@ -1623,6 +1636,7 @@ packages:
       maverick.js: 0.37.0
       react: ^18.0.0
       vidstack: 0.6.15
+>>>>>>> 3b819e428cedd29c7b5f8a0ed22925b805b183a3
 
   '@vitejs/plugin-react@5.1.1':
     resolution: {integrity: sha512-WQfkSw0QbQ5aJ2CHYw23ZGkqnRwqKHD/KYsMeTkZzPT4Jcf0DcBxBtwMJxnu6E7oxw5+JC6ZAiePgh28uJ1HBA==}
@@ -2588,12 +2602,17 @@ packages:
     resolution: {integrity: sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==}
     engines: {node: '>= 0.4'}
 
+<<<<<<< HEAD
+  media-captions@1.0.4:
+    resolution: {integrity: sha512-cyDNmuZvvO4H27rcBq2Eudxo9IZRDCOX/I7VEyqbxsEiD2Ei7UYUhG/Sc5fvMZjmathgz3fEK7iAKqvpY+Ux1w==}
+=======
   maverick.js@0.37.0:
     resolution: {integrity: sha512-1Dk/9rienLiihlktVvH04ADC2UJTMflC1fOMVQCCaQAaz7hgzDI5i0p/arFbDM52hFFiIcq4RdXtYz47SgsLgw==}
     engines: {node: '>=16'}
 
   media-captions@0.0.18:
     resolution: {integrity: sha512-JW18P6FuHdyLSGwC4TQ0kF3WdNj/+wMw2cKOb8BnmY6vSJGtnwJ+vkYj+IjHOV34j3XMc70HDeB/QYKR7E7fuQ==}
+>>>>>>> 3b819e428cedd29c7b5f8a0ed22925b805b183a3
     engines: {node: '>=16'}
 
   merge2@1.4.1:
@@ -4667,12 +4686,21 @@ snapshots:
   '@unrs/resolver-binding-win32-x64-msvc@1.11.1':
     optional: true
 
+<<<<<<< HEAD
+  '@vidstack/react@1.12.13(@types/react@19.2.6)(react@19.2.0)':
+    dependencies:
+      '@floating-ui/dom': 1.7.4
+      '@types/react': 19.2.6
+      media-captions: 1.0.4
+      react: 19.2.0
+=======
   '@vidstack/react@0.6.15(@types/react@19.2.6)(maverick.js@0.37.0)(react@19.2.0)(vidstack@0.6.15)':
     dependencies:
       '@types/react': 19.2.6
       maverick.js: 0.37.0
       react: 19.2.0
       vidstack: 0.6.15
+>>>>>>> 3b819e428cedd29c7b5f8a0ed22925b805b183a3
 
   '@vitejs/plugin-react@5.1.1(vite@7.2.4(@types/node@20.19.25)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.3))':
     dependencies:
@@ -5809,12 +5837,16 @@ snapshots:
 
   math-intrinsics@1.1.0: {}
 
+<<<<<<< HEAD
+  media-captions@1.0.4: {}
+=======
   maverick.js@0.37.0:
     dependencies:
       '@maverick-js/signals': 5.11.5
       type-fest: 3.13.1
 
   media-captions@0.0.18: {}
+>>>>>>> 3b819e428cedd29c7b5f8a0ed22925b805b183a3
 
   merge2@1.4.1: {}
 

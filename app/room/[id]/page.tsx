@@ -2,12 +2,19 @@
 
 import { useState, useEffect, use, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Centrifuge } from 'centrifuge';
+import { Centrifuge } from "centrifuge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
+import { MediaPlayer, MediaProvider } from "@vidstack/react";
+import {
+  defaultLayoutIcons,
+  DefaultVideoLayout,
+} from "@vidstack/react/player/layouts/default";
+import "@vidstack/react/player/styles/default/theme.css";
+import "@vidstack/react/player/styles/default/layouts/video.css";
 import {
   ArrowLeft,
   Send,
@@ -17,9 +24,10 @@ import {
   MessageSquare,
   Eye,
   Settings,
-  Maximize2,
   Wifi,
   WifiOff,
+  ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 
 interface WebinarData {
@@ -50,20 +58,23 @@ interface ChatMessage {
 }
 
 // Функция для получения токенов чата
-async function getChatTokens(roomId: string, userIdentifier: string): Promise<ChatTokens> {
-  const chatApiUrl = process.env.NEXT_PUBLIC_CHAT_API_URL || 'http://144.76.109.45:8089';
+async function getChatTokens(
+  roomId: string,
+  userIdentifier: string
+): Promise<ChatTokens> {
+  const chatApiUrl =
+    process.env.NEXT_PUBLIC_CHAT_API_URL || "http://144.76.109.45:8089";
 
-  // Determine if userIdentifier is phone or email
   let emailToSend: string;
-  if (userIdentifier.includes('@')) {
-    // It's already an email (authenticated user)
+  if (userIdentifier.includes("@")) {
     emailToSend = userIdentifier;
   } else {
-    // It's a phone number (localStorage auth)
     emailToSend = `${userIdentifier}@chat.local`;
   }
 
-  const response = await fetch(`${chatApiUrl}/webinars/${roomId}/token?email=${encodeURIComponent(emailToSend)}`);
+  const response = await fetch(
+    `${chatApiUrl}/webinars/${roomId}/token?email=${encodeURIComponent(emailToSend)}`
+  );
 
   if (!response.ok) {
     throw new Error(`Failed to get chat tokens: ${response.status}`);
@@ -73,32 +84,33 @@ async function getChatTokens(roomId: string, userIdentifier: string): Promise<Ch
 }
 
 // Функция для отправки сообщения через API
-async function sendMessageToChat(roomId: string, userIdentifier: string, userName: string, message: string): Promise<ChatMessage> {
-  const chatApiUrl = process.env.NEXT_PUBLIC_CHAT_API_URL || 'http://144.76.109.45:8089';
+async function sendMessageToChat(
+  roomId: string,
+  userIdentifier: string,
+  userName: string,
+  message: string
+): Promise<ChatMessage> {
+  const chatApiUrl =
+    process.env.NEXT_PUBLIC_CHAT_API_URL || "http://144.76.109.45:8089";
   const token = localStorage.getItem("payload-token");
 
-  // Prepare headers
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   };
 
-  // Add Authorization header if user is authenticated in system
   if (token) {
-    headers['Authorization'] = `JWT ${token}`;
+    headers["Authorization"] = `JWT ${token}`;
   }
 
-  // Determine if userIdentifier is phone or email
   let emailToSend: string;
-  if (userIdentifier.includes('@')) {
-    // It's already an email (authenticated user)
+  if (userIdentifier.includes("@")) {
     emailToSend = userIdentifier;
   } else {
-    // It's a phone number (localStorage auth)
     emailToSend = `${userIdentifier}@chat.local`;
   }
 
   const response = await fetch(`${chatApiUrl}/chat/${roomId}/messages`, {
-    method: 'POST',
+    method: "POST",
     headers,
     body: JSON.stringify({
       email: emailToSend,
@@ -122,7 +134,6 @@ export default function WebinarRoomPage({
   const router = useRouter();
   const { toast } = useToast();
 
-  // Unwrap params Promise
   const { id: roomId } = use(params);
 
   const [webinar, setWebinar] = useState<WebinarData | null>(null);
@@ -132,86 +143,106 @@ export default function WebinarRoomPage({
   const [userPhone, setUserPhone] = useState("");
   const [viewerCount, setViewerCount] = useState(0);
   const [duration, setDuration] = useState("00:00:00");
+  const [isChatOpen, setIsChatOpen] = useState(true);
 
   // Chat states
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isConnected, setIsConnected] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected');
+  const [connectionStatus, setConnectionStatus] = useState<
+    "disconnected" | "connecting" | "connected" | "error"
+  >("disconnected");
 
   // WebSocket refs
   const centrifugeRef = useRef<any>(null);
   const subscriptionRef = useRef<any>(null);
   const connectionAttemptRef = useRef(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom of messages
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   // WebSocket connection effect
   useEffect(() => {
     const connectToChat = async () => {
-      // Check if we have required data
       if (!roomId || !userPhone || connectionAttemptRef.current) {
-        console.log('Cannot connect to chat:', { roomId: !!roomId, userPhone: !!userPhone, connectionAttempt: connectionAttemptRef.current });
+        console.log("Cannot connect to chat:", {
+          roomId: !!roomId,
+          userPhone: !!userPhone,
+          connectionAttempt: connectionAttemptRef.current,
+        });
         return;
       }
 
-      if (connectionStatus === 'connecting' || connectionStatus === 'connected') {
-        console.log('Already connected or connecting');
+      if (
+        connectionStatus === "connecting" ||
+        connectionStatus === "connected"
+      ) {
+        console.log("Already connected or connecting");
         return;
       }
 
       try {
-        console.log('Starting chat connection...', { roomId, userPhone });
+        console.log("Starting chat connection...", { roomId, userPhone });
         connectionAttemptRef.current = true;
-        setConnectionStatus('connecting');
+        setConnectionStatus("connecting");
 
-        // Get chat tokens
         const tokens = await getChatTokens(roomId, userPhone);
-        console.log('Chat tokens received:', { hasConnectionToken: !!tokens.connectionToken, hasSubscriptionToken: !!tokens.subscriptionToken });
+        console.log("Chat tokens received");
 
-        // Initialize Centrifuge client
-        const centrifugoUrl = process.env.NEXT_PUBLIC_CENTRIFUGO_WS_URL || 'ws://144.76.109.45:8001/connection/websocket';
+        const centrifugoUrl =
+          process.env.NEXT_PUBLIC_CENTRIFUGO_WS_URL ||
+          "ws://144.76.109.45:8001/connection/websocket";
         centrifugeRef.current = new Centrifuge(centrifugoUrl, {
-          token: tokens.connectionToken
+          token: tokens.connectionToken,
         });
 
-        // Centrifuge event handlers
-        centrifugeRef.current.on('connecting', function (ctx: any) {
-          console.log('Connecting to Centrifugo...', ctx);
-          setConnectionStatus('connecting');
+        centrifugeRef.current.on("connecting", function (ctx: any) {
+          console.log("Connecting to Centrifugo...", ctx);
+          setConnectionStatus("connecting");
         });
 
-        centrifugeRef.current.on('connected', function (ctx: any) {
-          console.log('Connected to Centrifugo', ctx);
-          setConnectionStatus('connected');
+        centrifugeRef.current.on("connected", function (ctx: any) {
+          console.log("Connected to Centrifugo", ctx);
+          setConnectionStatus("connected");
           setIsConnected(true);
         });
 
-        centrifugeRef.current.on('disconnected', function (ctx: any) {
-          console.log('Disconnected from Centrifugo', ctx);
-          setConnectionStatus('disconnected');
-          setIsConnected(false);
-          connectionAttemptRef.current = false; // Allow reconnection
-        });
-
-        centrifugeRef.current.on('error', function (ctx: any) {
-          console.error('Centrifuge error:', ctx);
-          setConnectionStatus('error');
+        centrifugeRef.current.on("disconnected", function (ctx: any) {
+          console.log("Disconnected from Centrifugo", ctx);
+          setConnectionStatus("disconnected");
           setIsConnected(false);
           connectionAttemptRef.current = false;
         });
 
-        // Create subscription to chat channel
-        const channel = `webinar:${roomId}:chat`;
-        subscriptionRef.current = centrifugeRef.current.newSubscription(channel, {
-          token: tokens.subscriptionToken
+        centrifugeRef.current.on("error", function (ctx: any) {
+          console.error("Centrifuge error:", ctx);
+          setConnectionStatus("error");
+          setIsConnected(false);
+          connectionAttemptRef.current = false;
         });
 
-        // Subscription event handlers
-        subscriptionRef.current.on('publication', function (ctx: any) {
-          console.log('Chat message received:', ctx.data);
+        const channel = `webinar:${roomId}:chat`;
+        subscriptionRef.current = centrifugeRef.current.newSubscription(
+          channel,
+          {
+            token: tokens.subscriptionToken,
+          }
+        );
 
-          // Handle Java message format: Map.of("webinarId", ..., "participantId", ..., "username", ..., "message", ..., "createdAt", ...)
+        subscriptionRef.current.on("publication", function (ctx: any) {
+          console.log("Chat message received:", ctx.data);
+
           const messageData = ctx.data;
           const newMessage: ChatMessage = {
-            id: messageData.participantId || `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            id:
+              messageData.participantId ||
+              `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             username: messageData.username,
             message: messageData.message,
             createdAt: messageData.createdAt || new Date().toISOString(),
@@ -222,22 +253,20 @@ export default function WebinarRoomPage({
           setMessages((prev) => [...prev, newMessage]);
         });
 
-        subscriptionRef.current.on('subscribed', function (ctx: any) {
-          console.log('Subscribed to chat channel', ctx);
+        subscriptionRef.current.on("subscribed", function (ctx: any) {
+          console.log("Subscribed to chat channel", ctx);
         });
 
-        subscriptionRef.current.on('error', function (ctx: any) {
-          console.error('Subscription error:', ctx);
-          setConnectionStatus('error');
+        subscriptionRef.current.on("error", function (ctx: any) {
+          console.error("Subscription error:", ctx);
+          setConnectionStatus("error");
         });
 
-        // Start connection
         subscriptionRef.current.subscribe();
         centrifugeRef.current.connect();
-
       } catch (error) {
-        console.error('Failed to connect to chat:', error);
-        setConnectionStatus('error');
+        console.error("Failed to connect to chat:", error);
+        setConnectionStatus("error");
         setIsConnected(false);
         connectionAttemptRef.current = false;
       }
@@ -245,7 +274,6 @@ export default function WebinarRoomPage({
 
     connectToChat();
 
-    // Cleanup function
     return () => {
       if (subscriptionRef.current) {
         subscriptionRef.current.unsubscribe();
@@ -257,17 +285,15 @@ export default function WebinarRoomPage({
       }
       connectionAttemptRef.current = false;
     };
-  }, [roomId, userPhone]);
+  }, [roomId, userPhone, connectionStatus]);
 
   // Check auth and load user data
   useEffect(() => {
-    // First, check if user is authenticated in the system (has JWT token)
     const token = localStorage.getItem("payload-token");
     const storedName = localStorage.getItem("user_name");
     const storedPhone = localStorage.getItem("user_phone");
 
     if (token) {
-      // User is authenticated in the system, get user data
       const fetchUserData = async () => {
         try {
           const userResponse = await fetch(
@@ -281,43 +307,36 @@ export default function WebinarRoomPage({
 
           if (userResponse.ok) {
             const userData = await userResponse.json();
-            const displayName = userData.user.firstName ||
+            const displayName =
+              userData.user.firstName ||
               userData.user.name ||
               userData.user.email.split("@")[0];
             setUserName(displayName);
-
-            // Use email as phone for chat (or you can extract phone from user data if available)
             setUserPhone(userData.user.email);
 
-            // Also store in localStorage for consistency
             localStorage.setItem("user_name", displayName);
             localStorage.setItem("user_phone", userData.user.email);
           } else {
-            // Token is invalid, clear it and check localStorage
             localStorage.removeItem("payload-token");
             checkLocalStorageAuth();
           }
         } catch (error) {
           console.error("Error fetching user data:", error);
-          // On error, fallback to localStorage auth
           checkLocalStorageAuth();
         }
       };
 
       fetchUserData();
     } else {
-      // No system token, check localStorage auth
       checkLocalStorageAuth();
     }
 
     function checkLocalStorageAuth() {
       if (!storedName || !storedPhone) {
-        // User is not authenticated anywhere, redirect to auth page
         router.push(`/room/${roomId}/auth`);
         return;
       }
 
-      // Set user data from localStorage
       setUserName(storedName);
       setUserPhone(storedPhone);
     }
@@ -326,7 +345,6 @@ export default function WebinarRoomPage({
   // Fetch webinar data
   useEffect(() => {
     const fetchWebinar = async () => {
-      // Don't fetch if user is not authenticated
       const storedName = localStorage.getItem("user_name");
       const storedPhone = localStorage.getItem("user_phone");
 
@@ -335,13 +353,11 @@ export default function WebinarRoomPage({
       }
 
       try {
-        // Try to get webinar data (without auth for now)
         const response = await fetch(
           `https://isracms.vercel.app/api/rooms/${roomId}`
         );
 
         if (!response.ok) {
-          // If API fails, create mock data for testing
           console.warn("Failed to fetch webinar, using mock data");
           const mockData: WebinarData = {
             id: roomId,
@@ -349,7 +365,7 @@ export default function WebinarRoomPage({
             description: "Это тестовый вебинар для демонстрации чата",
             speaker: "Спикер",
             type: "webinar",
-            videoUrl: "",
+            videoUrl: "https://www.youtube.com/watch?v=gIVbICtADU4",
             scheduledDate: new Date().toISOString(),
             roomStarted: true,
             showChat: true,
@@ -362,14 +378,13 @@ export default function WebinarRoomPage({
         }
       } catch (error) {
         console.error("Error fetching webinar:", error);
-        // Create mock data on error
         const mockData: WebinarData = {
           id: roomId,
           name: "Тестовый вебинар",
           description: "Это тестовый вебинар для демонстрации чата",
           speaker: "Спикер",
           type: "webinar",
-          videoUrl: "",
+          videoUrl: "https://www.youtube.com/watch?v=gIVbICtADU4",
           scheduledDate: new Date().toISOString(),
           roomStarted: true,
           showChat: true,
@@ -379,7 +394,8 @@ export default function WebinarRoomPage({
 
         toast({
           title: "Используются тестовые данные",
-          description: "Не удалось загрузить данные вебинара, используется демо-версия",
+          description:
+            "Не удалось загрузить данные вебинара, используется демо-версия",
           variant: "default",
         });
       } finally {
@@ -428,14 +444,10 @@ export default function WebinarRoomPage({
     if (!messageText.trim() || !webinar?.showChat || !isConnected) return;
 
     try {
-      // Send message through API
       await sendMessageToChat(roomId, userPhone, userName, messageText);
-
-      // Clear input after successful send
       setMessageText("");
-
     } catch (error) {
-      console.error('Failed to send message:', error);
+      console.error("Failed to send message:", error);
       toast({
         title: "Ошибка отправки",
         description: "Не удалось отправить сообщение",
@@ -535,139 +547,154 @@ export default function WebinarRoomPage({
       </div>
 
       {/* Main Content */}
+
       <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-160px)]">
-          {/* Chat Section - LEFT SIDE */}
-          {webinar.showChat && (
-            <Card className="card-glass lg:col-span-1 lg:order-1 flex flex-col">
-              <div className="p-4 border-b border-white/10">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5 text-isra-cyan" />
-                    Чат
-                  </h2>
-                  <div className="flex items-center gap-2">
-                    {isConnected ? (
-                      <Badge className="bg-green-500/20 text-green-400 border-green-500/50">
-                        <Wifi className="h-3 w-3 mr-1" />
-                        Онлайн
-                      </Badge>
-                    ) : (
-                      <Badge className="bg-red-500/20 text-red-400 border-red-500/50">
-                        <WifiOff className="h-3 w-3 mr-1" />
-                        Офлайн
-                      </Badge>
-                    )}
-                    <Badge variant="outline" className="text-white">
-                      <Users className="h-3 w-3 mr-1" />
-                      {viewerCount}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                {messages.length === 0 ? (
-                  <div className="text-center text-gray-400 py-8">
-                    <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p>Пока нет сообщений</p>
-                    <p className="text-sm">Будьте первым, кто напишет!</p>
-                  </div>
-                ) : (
-                  messages.map((msg) => (
-                    <div key={msg.id} className="space-y-1">
-                      <div className="flex items-baseline gap-2">
-                        <span className="font-semibold text-isra-cyan text-sm">
-                          {msg.username}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          {new Date(msg.createdAt).toLocaleTimeString("ru-RU", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </span>
-                      </div>
-                      <p className="text-white text-sm bg-white/5 rounded-lg px-3 py-2">
-                        {msg.message}
-                      </p>
-                    </div>
-                  ))
-                )}
-              </div>
-
-              {/* Message Input */}
-              <div className="p-4 border-t border-white/10">
-                {!isConnected && (
-                  <div className="mb-2 text-sm text-red-400 text-center">
-                    Соединение потеряно. Пытаемся подключиться...
-                  </div>
-                )}
-                <div className="flex gap-2">
-                  <Input
-                    value={messageText}
-                    onChange={(e) => setMessageText(e.target.value)}
-                    onKeyDown={handleKeyPress}
-                    placeholder="Написать сообщение..."
-                    disabled={!isConnected}
-                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-400 disabled:opacity-50"
-                  />
-                  <Button
-                    onClick={handleSendMessage}
-                    disabled={!messageText.trim() || !isConnected}
-                    className="gradient-primary"
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          )}
-
-          {/* Video Section - RIGHT SIDE */}
-          <Card
-            className={`card-glass flex flex-col lg:order-2 ${webinar.showChat ? "lg:col-span-2" : "lg:col-span-3"}`}
+        <div className="relative flex flex-col lg:flex-row gap-6 h-[calc(100vh-160px)]">
+          {/* Video Section */}
+          <div
+            className={`flex-1 transition-all duration-300 ${isChatOpen && webinar.showChat ? "mr-0" : "mr-0"}`}
           >
-            <CardContent className="p-0 flex-1 relative">
-              <div className="absolute inset-0 bg-black rounded-lg overflow-hidden">
-                {webinar.videoUrl ? (
-                  <iframe
-                    src={webinar.videoUrl}
+            <Card className="card-glass h-full flex flex-col">
+              <CardContent className="p-0 flex-1 relative">
+                <div className="absolute inset-0 bg-black rounded-lg overflow-hidden">
+                  <MediaPlayer
+                    src={
+                      webinar.videoUrl ||
+                      "https://www.youtube.com/watch?v=gIVbICtADU4"
+                    }
                     className="w-full h-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
+                  >
+                    <MediaProvider />
+                    <DefaultVideoLayout icons={defaultLayoutIcons} />
+                  </MediaPlayer>
+                </div>
+              </CardContent>
+
+              {/* Video Info */}
+              {webinar.description && (
+                <div className="p-4 border-t border-white/10">
+                  <h3 className="text-sm font-semibold text-white mb-2">
+                    О вебинаре
+                  </h3>
+                  <p className="text-sm text-gray-400">{webinar.description}</p>
+                </div>
+              )}
+            </Card>
+          </div>
+
+          {/* Chat Section */}
+          {webinar.showChat && (
+            <div
+              className={`relative transition-all duration-300 ${isChatOpen ? "w-96" : "w-12"}`}
+            >
+              {/* Toggle Button */}
+              <Button
+                onClick={() => setIsChatOpen(!isChatOpen)}
+                variant="ghost"
+                size="sm"
+                className="absolute -left-10 top-1/2 -translate-y-1/2 bg-isra-dark/80 hover:bg-isra-dark text-white rounded-full p-2 z-10 border border-white/10"
+              >
+                {isChatOpen ? (
+                  <ChevronRight className="h-4 w-4" />
                 ) : (
-                  <iframe
-                    src="https://www.youtube.com/embed/gIVbICtADU4?autoplay=1"
-                    className="w-full h-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    title="Webinar Video"
-                  />
+                  <ChevronLeft className="h-4 w-4" />
                 )}
+              </Button>
 
-                {/* Fullscreen Button */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white z-10"
-                >
-                  <Maximize2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
+              {/* Chat Panel */}
+              <Card
+                className={`card-glass h-full flex flex-col transition-opacity duration-300 ${isChatOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+              >
+                <div className="p-4 border-b border-white/10">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                      <MessageSquare className="h-5 w-5 text-isra-cyan" />
+                      Чат
+                    </h2>
+                    <div className="flex items-center gap-2">
+                      {isConnected ? (
+                        <Badge className="bg-green-500/20 text-green-400 border-green-500/50">
+                          <Wifi className="h-3 w-3 mr-1" />
+                          Онлайн
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-red-500/20 text-red-400 border-red-500/50">
+                          <WifiOff className="h-3 w-3 mr-1" />
+                          Офлайн
+                        </Badge>
+                      )}
+                      <Badge variant="outline" className="text-white">
+                        <Users className="h-3 w-3 mr-1" />
+                        {viewerCount}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
 
-            {/* Video Info */}
-            {webinar.description && (
-              <div className="p-4 border-t border-white/10">
-                <h3 className="text-sm font-semibold text-white mb-2">
-                  О вебинаре
-                </h3>
-                <p className="text-sm text-gray-400">{webinar.description}</p>
-              </div>
-            )}
-          </Card>
+                {/* Messages */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                  {messages.length === 0 ? (
+                    <div className="text-center text-gray-400 py-8">
+                      <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p>Пока нет сообщений</p>
+                      <p className="text-sm">Будьте первым, кто напишет!</p>
+                    </div>
+                  ) : (
+                    <>
+                      {messages.map((msg) => (
+                        <div key={msg.id} className="space-y-1">
+                          <div className="flex items-baseline gap-2">
+                            <span className="font-semibold text-isra-cyan text-sm">
+                              {msg.username}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {new Date(msg.createdAt).toLocaleTimeString(
+                                "ru-RU",
+                                {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                }
+                              )}
+                            </span>
+                          </div>
+                          <p className="text-white text-sm bg-white/5 rounded-lg px-3 py-2">
+                            {msg.message}
+                          </p>
+                        </div>
+                      ))}
+                      <div ref={messagesEndRef} />
+                    </>
+                  )}
+                </div>
+
+                {/* Message Input */}
+                <div className="p-4 border-t border-white/10">
+                  {!isConnected && (
+                    <div className="mb-2 text-sm text-red-400 text-center">
+                      Соединение потеряно. Пытаемся подключиться...
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <Input
+                      value={messageText}
+                      onChange={(e) => setMessageText(e.target.value)}
+                      onKeyDown={handleKeyPress}
+                      placeholder="Написать сообщение..."
+                      disabled={!isConnected}
+                      className="bg-white/5 border-white/10 text-white placeholder:text-gray-400 disabled:opacity-50"
+                    />
+                    <Button
+                      onClick={handleSendMessage}
+                      disabled={!messageText.trim() || !isConnected}
+                      className="gradient-primary"
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          )}
         </div>
       </div>
     </div>

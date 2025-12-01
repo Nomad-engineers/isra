@@ -87,6 +87,51 @@ export function useTokenAuth() {
     }
   }
 
+  /**
+   * Refresh the authentication token
+   */
+  const refreshToken = async () => {
+    try {
+      const currentRefreshToken = localStorage.getItem('refresh-token')
+
+      if (!currentRefreshToken) {
+        throw new Error('No refresh token available')
+      }
+
+      const response = await fetch('/api/users/refresh-token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          refreshToken: currentRefreshToken
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to refresh token')
+      }
+
+      const data = await response.json()
+
+      if (data.token) {
+        localStorage.setItem('payload-token', data.token)
+        setToken(data.token)
+        setIsAuthenticated(true)
+
+        if (data.user) {
+          localStorage.setItem('user-data', JSON.stringify(data.user))
+        }
+      }
+
+      return data
+    } catch (error) {
+      console.error('Token refresh error:', error)
+      logout() // Clear invalid tokens
+      throw error
+    }
+  }
+
   return {
     token,
     isAuthenticated,
@@ -94,6 +139,7 @@ export function useTokenAuth() {
     getToken,
     checkAuth,
     login,
-    logout
+    logout,
+    refreshToken
   }
 }

@@ -43,11 +43,6 @@ interface WebinarData {
   createdAt: string;
 }
 
-interface ChatTokens {
-  connectionToken: string;
-  subscriptionToken: string;
-}
-
 interface ChatMessage {
   id: string;
   username: string;
@@ -55,6 +50,11 @@ interface ChatMessage {
   createdAt: string;
   webinarId: string;
   userId?: string;
+}
+
+interface ChatTokens {
+  connectionToken: string;
+  subscriptionToken: string;
 }
 
 // Функция для получения токенов чата
@@ -372,10 +372,11 @@ export default function WebinarRoomPage({
             createdAt: new Date().toISOString(),
           };
           setWebinar(mockData);
-        } else {
-          const data = await response.json();
-          setWebinar(data);
+          return;
         }
+
+        const data = await response.json();
+        setWebinar(data);
       } catch (error) {
         console.error("Error fetching webinar:", error);
         const mockData: WebinarData = {
@@ -547,7 +548,6 @@ export default function WebinarRoomPage({
       </div>
 
       {/* Main Content */}
-
       <div className="container mx-auto px-4 py-6">
         <div className="relative flex flex-col lg:flex-row gap-6 h-[calc(100vh-160px)]">
           {/* Video Section */}

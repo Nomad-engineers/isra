@@ -23,7 +23,11 @@
     "@radix-ui/react-switch": "^1.2.6",
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-toast": "^1.2.15",
+<<<<<<< HEAD
     "@vidstack/react": "^1.12.13",
+=======
+    "@vidstack/react": "^0.6.15",
+>>>>>>> 3b819e428cedd29c7b5f8a0ed22925b805b183a3
     "centrifuge": "^5.5.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -39,6 +43,7 @@
     "react-router-dom": "^7.9.6",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
+    "vidstack": "^0.6.15",
     "zod": "^4.1.12"
   },
   "devDependencies": {

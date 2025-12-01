@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect, use, useRef, useImperativeHandle, forwardRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -21,9 +21,10 @@ import {
   Wifi,
   WifiOff,
   Play,
+  Square,
   Zap,
 } from 'lucide-react'
-import { VidstackPlayer } from '@/components/video/vidstack-player'
+import { VidstackPlayer, VidstackPlayerRef } from '@/components/video/vidstack-player'
 
 interface WebinarUser {
   id: number
@@ -64,6 +65,9 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
   const [isOwner, setIsOwner] = useState(false)
   const [viewerCount, setViewerCount] = useState(0)
   const [duration, setDuration] = useState('00:00:00')
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false)
+  const [webinarStarted, setWebinarStarted] = useState(false)
+  const videoPlayerRef = useRef<VidstackPlayerRef>(null)
 
   // Chat WebSocket hook
   const {
@@ -319,30 +323,76 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
     }
   }
 
-  // Функция для отправки ивента начала вебинара
+  // Video control functions
+  const handlePlayVideo = () => {
+    if (videoPlayerRef.current) {
+      videoPlayerRef.current.play()
+      setIsVideoPlaying(true)
+      setWebinarStarted(true)
+    }
+  }
+
+  const handleStopVideo = () => {
+    if (videoPlayerRef.current) {
+      videoPlayerRef.current.stop()
+      setIsVideoPlaying(false)
+      setWebinarStarted(false)
+    }
+  }
+
+  const handleVideoStateChange = (playing: boolean) => {
+    setIsVideoPlaying(playing)
+  }
+
+  // Функция для отправки ивента начала вебинара и управления видео
   const handleStartWebinar = async () => {
     try {
-      const startEvent: SendEventRequest = {
-        type: 'webinar_status',
-        data: {
-          status: 'started',
-          timestamp: new Date().toISOString(),
-          startedBy: userName,
-        },
+      if (!webinarStarted) {
+        // Start webinar and video
+        await handlePlayVideo()
+
+        const startEvent: SendEventRequest = {
+          type: 'webinar_status',
+          data: {
+            status: 'started',
+            timestamp: new Date().toISOString(),
+            startedBy: userName,
+          },
+        }
+
+        await sendEvent(startEvent)
+
+        toast({
+          title: 'Вебинар запущен',
+          description: 'Вебинар и видео запущены',
+          variant: 'default',
+        })
+      } else {
+        // Stop webinar and video
+        await handleStopVideo()
+
+        const stopEvent: SendEventRequest = {
+          type: 'webinar_status',
+          data: {
+            status: 'stopped',
+            timestamp: new Date().toISOString(),
+            stoppedBy: userName,
+          },
+        }
+
+        await sendEvent(stopEvent)
+
+        toast({
+          title: 'Вебинар остановлен',
+          description: 'Вебинар и видео остановлены',
+          variant: 'default',
+        })
       }
-
-      await sendEvent(startEvent)
-
-      toast({
-        title: 'Вебинар запущен',
-        description: 'Отправлен ивент о начале вебинара',
-        variant: 'default',
-      })
     } catch (error) {
-      console.error('Failed to send start webinar event:', error)
+      console.error('Failed to handle webinar state change:', error)
       toast({
         title: 'Ошибка',
-        description: 'Не удалось отправить ивент о начале вебинара',
+        description: 'Не удалось изменить состояние вебинара',
         variant: 'destructive',
       })
     }
@@ -431,12 +481,12 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
                   <Button
                     variant='ghost'
                     size='sm'
-                    className='text-white'
+                    className={`text-white ${webinarStarted ? 'bg-red-500/20 hover:bg-red-500/30' : ''}`}
                     onClick={handleStartWebinar}
                     disabled={!isConnected}
-                    title='Запустить вебинар'
+                    title={webinarStarted ? 'Остановить вебинар' : 'Запустить вебинар'}
                   >
-                    <Play className='h-4 w-4' />
+                    {webinarStarted ? <Square className='h-4 w-4' /> : <Play className='h-4 w-4' />}
                   </Button>
 
                   <Button
@@ -586,12 +636,14 @@ export default function WebinarRoomPage({ params }: { params: Promise<{ id: stri
             <CardContent className='p-0 flex-1 relative'>
               <div className='w-full h-full bg-black rounded-lg overflow-hidden'>
                 <VidstackPlayer
+                  ref={videoPlayerRef}
                   src={webinar.videoUrl || 'https://www.youtube.com/watch?v=6fty5yB7bFo'}
-                  title={webinar.name}
                   autoPlay={true}
                   muted={true}
-                  controls={true}
+                  controls={false}
+                  showCustomControls={true}
                   aspectRatio="16/9"
+                  onPlayStateChange={handleVideoStateChange}
                 />
               </div>
             </CardContent>

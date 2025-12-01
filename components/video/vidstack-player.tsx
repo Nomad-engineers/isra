@@ -1,5 +1,9 @@
 'use client'
 
+import { useState, useRef, useEffect, useImperativeHandle, forwardRef } from 'react'
+import { Play, Pause, Square } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+
 interface VidstackPlayerProps {
   src?: string
   poster?: string
@@ -8,9 +12,18 @@ interface VidstackPlayerProps {
   muted?: boolean
   controls?: boolean
   aspectRatio?: string
+  showCustomControls?: boolean
+  onPlayStateChange?: (playing: boolean) => void
 }
 
-export function VidstackPlayer({
+export interface VidstackPlayerRef {
+  play: () => void
+  pause: () => void
+  stop: () => void
+  isPlaying: () => boolean
+}
+
+const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(({
   src,
   poster,
   title = 'Video Player',
@@ -18,7 +31,101 @@ export function VidstackPlayer({
   muted = true,
   controls = true,
   aspectRatio = '16/9',
-}: VidstackPlayerProps) {
+  showCustomControls = false,
+  onPlayStateChange,
+}, ref) => {
+  const [isPlaying, setIsPlaying] = useState(autoPlay)
+  const [isStopped, setIsStopped] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const iframeRef = useRef<HTMLIFrameElement>(null)
+
+  // Control functions for YouTube iframe
+  const postMessageToYouTube = (action: string, value?: string) => {
+    if (iframeRef.current && iframeRef.current.contentWindow) {
+      iframeRef.current.contentWindow.postMessage(
+        JSON.stringify({ event: 'command', func: action, args: value ? [value] : [] }),
+        '*'
+      )
+    }
+  }
+
+  const handlePlay = () => {
+    setIsPlaying(true)
+    setIsStopped(false)
+
+    if (videoRef.current) {
+      videoRef.current.play()
+    } else if (iframeRef.current) {
+      postMessageToYouTube('playVideo')
+    }
+
+    onPlayStateChange?.(true)
+  }
+
+  const handlePause = () => {
+    setIsPlaying(false)
+
+    if (videoRef.current) {
+      videoRef.current.pause()
+    } else if (iframeRef.current) {
+      postMessageToYouTube('pauseVideo')
+    }
+
+    onPlayStateChange?.(false)
+  }
+
+  const handleStop = () => {
+    setIsPlaying(false)
+    setIsStopped(true)
+
+    if (videoRef.current) {
+      videoRef.current.pause()
+      videoRef.current.currentTime = 0
+    } else if (iframeRef.current) {
+      postMessageToYouTube('stopVideo')
+    }
+
+    onPlayStateChange?.(false)
+  }
+
+  // Expose methods via ref
+  useImperativeHandle(ref, () => ({
+    play: handlePlay,
+    pause: handlePause,
+    stop: handleStop,
+    isPlaying: () => isPlaying,
+  }), [isPlaying])
+
+  // Handle video events for HTML5 video
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+
+    const handlePlayEvent = () => {
+      setIsPlaying(true)
+      onPlayStateChange?.(true)
+    }
+    const handlePauseEvent = () => {
+      setIsPlaying(false)
+      onPlayStateChange?.(false)
+    }
+    const handleEndedEvent = () => {
+      setIsPlaying(false)
+      setIsStopped(true)
+      onPlayStateChange?.(false)
+    }
+
+    video.addEventListener('play', handlePlayEvent)
+    video.addEventListener('pause', handlePauseEvent)
+    video.addEventListener('ended', handleEndedEvent)
+
+    return () => {
+      video.removeEventListener('play', handlePlayEvent)
+      video.removeEventListener('pause', handlePauseEvent)
+      video.removeEventListener('ended', handleEndedEvent)
+    }
+  }, [onPlayStateChange])
+
   // Extract YouTube video ID from URL
   const getYoutubeVideoId = (url: string) => {
     if (!url) return null
@@ -41,18 +148,183 @@ export function VidstackPlayer({
       )
     }
 
-    const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=${autoPlay ? '1' : '0'}&mute=${muted ? '1' : '0'}&controls=${controls ? '1' : '0'}&rel=0&modestbranding=1`
+    const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=${autoPlay ? '1' : '0'}&mute=${muted ? '1' : '0'}&controls=${controls && !showCustomControls ? '1' : '0'}&rel=0&modestbranding=1&showinfo=0&iv_load_policy=3&disablekb=1&enablejsapi=1&cc_load_policy=0&hl=en&playlist=${videoId}&loop=1&fs=0&autohide=1&widgetid=1`
 
     return (
-      <div className={`w-full h-full bg-black rounded-lg overflow-hidden`} style={{ aspectRatio }}>
+      <div className={`w-full bg-black rounded-lg overflow-hidden relative`} style={{ aspectRatio }}>
+        <style jsx>{`
+          /* Hide YouTube video title and all related elements */
+          iframe[src*="youtube.com"] {
+            pointer-events: none;
+          }
+
+          /* Hide title overlays and branding */
+          .ytp-title-text,
+          .ytp-title,
+          .ytp-title-channel,
+          .ytp-impression-link,
+          .ytp-chrome-top,
+          .ytp-chrome-bottom,
+          .ytp-show-cards-title,
+          .ytp-videowall-still-info,
+          .ytp-branding,
+          .ytp-branding-img,
+          .ytp-watermark,
+          .ytp-watermark-text {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+          }
+
+          /* Hide "More videos" and recommendations */
+          .ytp-pause-overlay,
+          .ytp-recommendations,
+          .ytp-suggestion,
+          .ytp-suggestion-set,
+          .ytp-upnext,
+          .ytp-endscreen,
+          .ytp-endscreen-content,
+          .ytp-related-on-error-overlay,
+          .ytp-player-content,
+          .ytp-related-container {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+          }
+
+          /* Hide buttons and interactive elements */
+          .ytp-button,
+          .ytp-next-button,
+          .ytp-prev-button,
+          .ytp-menu-button,
+          .ytp-share-button,
+          .ytp-button.ytp-overflow-button,
+          .ytp-button.ytp-settings-button {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+          }
+
+          /* Hide any overlays that might contain titles or suggestions */
+          .ytp-ce-element,
+          .ytp-ce,
+          .ytp-ce-video,
+          .ytp-ce-playlist,
+          .ytp-ce-channel,
+          .ytp-autonav-endscreen,
+          .ytp-autonav-overlay {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+          }
+
+          /* Hide YouTube's overlay advertisements and cards */
+          .ytp-ad-overlay,
+          .ytp-cards-button,
+          .ytp-cards-teaser,
+          .ytp-invideo-ad-clickthrough-overlay,
+          .ytp-ad-message-overlay {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+          }
+
+          /* Hide YouTube's video info and suggestions */
+          .ytp-info-panel,
+          .ytp-info-panel-content,
+          .ytp-info-panel-title,
+          .ytp-info-panel-text {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+          }
+        `}</style>
         <iframe
+          ref={iframeRef}
           className="w-full h-full"
           src={embedUrl}
           title={title}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
           referrerPolicy="strict-origin-when-cross-origin"
+          style={{
+            pointerEvents: showCustomControls ? 'none' : 'auto',
+            WebkitUserSelect: 'none',
+            userSelect: 'none'
+          }}
+          onLoad={() => {
+            // Additional hiding using JavaScript when iframe loads
+            if (iframeRef.current) {
+              iframeRef.current.onload = () => {
+                // Force hide any overlay elements that might appear
+                const hideOverlays = () => {
+                  const iframe = iframeRef.current;
+                  if (iframe && iframe.contentWindow) {
+                    try {
+                      // Try to inject CSS into the iframe (will work only for same-origin)
+                      // This won't work for YouTube due to cross-origin, but we try anyway
+                      iframe.contentWindow.postMessage(JSON.stringify({
+                        event: 'command',
+                        func: 'hideAnnotations',
+                        args: []
+                      }), '*');
+                    } catch (e) {
+                      // Expected due to cross-origin
+                    }
+                  }
+                };
+
+                // Try hiding overlays periodically
+                setTimeout(hideOverlays, 1000);
+                setTimeout(hideOverlays, 3000);
+                setTimeout(hideOverlays, 5000);
+              };
+            }
+          }}
         />
+        {/* Aggressive overlay to hide any persistent YouTube UI elements */}
+        <div
+          className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-black via-black/90 to-transparent z-20 pointer-events-none"
+          style={{ height: '20%' }}
+        />
+
+        {/* Bottom overlay to hide suggestions and recommendations */}
+        <div
+          className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black via-black/90 to-transparent z-20 pointer-events-none"
+          style={{
+            height: '25%',
+            display: showCustomControls ? 'none' : 'block'
+          }}
+        />
+
+        {/* Side overlays to hide any side panel suggestions */}
+        <div className="absolute top-0 right-0 bottom-0 w-12 bg-gradient-to-l from-black via-black/60 to-transparent z-20 pointer-events-none" />
+
+        {/* Left overlay for symmetry */}
+        <div className="absolute top-0 left-0 bottom-0 w-8 bg-gradient-to-r from-black via-black/40 to-transparent z-20 pointer-events-none" />
+
+        {showCustomControls && (
+          <div className="absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-sm p-4 z-30 pointer-events-none">
+            <div className="flex items-center gap-2 pointer-events-auto">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={isPlaying ? handlePause : handlePlay}
+                className="h-8 w-8 p-0"
+              >
+                {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleStop}
+                className="h-8 w-8 p-0"
+              >
+                <Square className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -64,8 +336,9 @@ export function VidstackPlayer({
   const finalSource = videoSource || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
 
   return (
-    <div className={`w-full h-full bg-black rounded-lg overflow-hidden`} style={{ aspectRatio }}>
+    <div className={`w-full bg-black rounded-lg overflow-hidden relative`} style={{ aspectRatio }}>
       <video
+        ref={videoRef}
         className="w-full h-full"
         title={title}
         src={finalSource}
@@ -74,8 +347,34 @@ export function VidstackPlayer({
         playsInline
         autoPlay={autoPlay}
         muted={muted}
-        controls={controls}
+        controls={controls && !showCustomControls}
       />
+      {showCustomControls && (
+        <div className="absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-sm p-4">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={isPlaying ? handlePause : handlePlay}
+              className="h-8 w-8 p-0"
+            >
+              {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleStop}
+              className="h-8 w-8 p-0"
+            >
+              <Square className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
-}
+})
+
+VidstackPlayer.displayName = 'VidstackPlayer'
+
+export { VidstackPlayer }

@@ -174,7 +174,7 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
 
       return (
         <div
-          className={`w-full bg-black rounded-lg overflow-hidden relative`}
+          className={`w-full h-full bg-black rounded-lg overflow-hidden relative`}
           style={{ aspectRatio }}
         >
           <style jsx>{`
@@ -448,7 +448,7 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
 
     return (
       <div
-        className={`w-full bg-black rounded-lg overflow-hidden relative`}
+        className={`w-full h-full bg-black rounded-lg overflow-hidden relative`}
         style={{ aspectRatio }}
       >
         <video
@@ -463,7 +463,7 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
           muted={muted}
           controls={controls && !showCustomControls}
         />
-        {showCustomControls && (
+        {/* {showCustomControls && (
           <div className="absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-sm p-4">
             <div className="flex items-center gap-2">
               <Button
@@ -488,7 +488,7 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
               </Button>
             </div>
           </div>
-        )}
+        )} */}
       </div>
     );
   }

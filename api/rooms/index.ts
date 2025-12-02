@@ -1,6 +1,6 @@
 import { ApiClient } from '@/lib/api-client'
 import { Room, RoomResponse, CreateRoomData, UpdateRoomData } from '@/types/room'
-import { Webinar, CreateWebinarData } from '@/types/webinar'
+import { Webinar, CreateWebinarData, WebinarRoomStats } from '@/types/webinar'
 
 export class RoomsApi {
   private client = new ApiClient()
@@ -36,6 +36,31 @@ export class RoomsApi {
     scheduledDate?: string
   }): Promise<Webinar> {
     return await this.client.post<Webinar>('/rooms/create', data)
+  }
+
+  // Webinar stats methods
+  async getWebinarStats(id: string): Promise<WebinarRoomStats> {
+    const chatApiUrl = process.env.NEXT_PUBLIC_CHAT_API_URL || 'http://144.76.109.45:8089'
+    const token = localStorage.getItem('payload-token')
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    }
+
+    if (token) {
+      headers['Authorization'] = `JWT ${token}`
+    }
+
+    const response = await fetch(`${chatApiUrl}/webinars/${id}/stats`, {
+      method: 'GET',
+      headers,
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to get webinar stats: ${response.status}`)
+    }
+
+    return response.json()
   }
 
   // Utility methods

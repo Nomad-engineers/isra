@@ -18,6 +18,7 @@ import {
   Square,
   Volume2,
   VolumeX,
+  Users,
 } from "lucide-react";
 
 interface WebinarData {
@@ -52,6 +53,7 @@ interface WebinarSettingsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSettingsUpdate?: (settings: Partial<WebinarData>) => void;
+  onlineParticipants?: number;
 }
 
 export function WebinarSettingsModal({
@@ -59,6 +61,7 @@ export function WebinarSettingsModal({
   open,
   onOpenChange,
   onSettingsUpdate,
+  onlineParticipants = 0,
 }: WebinarSettingsModalProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -262,6 +265,20 @@ export function WebinarSettingsModal({
         </DialogHeader>
 
         <div className="space-y-6">
+          {/* Webinar Stats */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Статистика вебинара</h3>
+            <div className="bg-muted/50 p-4 rounded-lg">
+              <div className="flex items-center gap-3">
+                <Users className="h-5 w-5 text-blue-500" />
+                <div>
+                  <p className="text-2xl font-bold text-blue-500">{onlineParticipants}</p>
+                  <p className="text-sm text-muted-foreground">Участников онлайн</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Webinar Control */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Управление вебинаром</h3>
@@ -271,7 +288,7 @@ export function WebinarSettingsModal({
                   onClick={handleStopWebinar}
                   variant="destructive"
                   disabled={isSubmitting}
-                  className="flex items-center justify-center gap-2 min-h-[3rem]"
+                  className="flex items-center justify-center gap-2 min-h-12"
                 >
                   <Square className="h-4 w-4" />
                   Остановить вебинар
@@ -283,7 +300,7 @@ export function WebinarSettingsModal({
                 variant="outline"
                 onClick={handleToggleChat}
                 disabled={isSubmitting}
-                className="flex items-center justify-center gap-2 min-h-[3rem]"
+                className="flex items-center justify-center gap-2 min-h-12"
               >
                 {showChat ? (
                   <MessageSquare className="h-4 w-4" />
@@ -297,7 +314,7 @@ export function WebinarSettingsModal({
                 variant="outline"
                 onClick={handleToggleAudio}
                 disabled={isSubmitting}
-                className="flex items-center justify-center gap-2 min-h-[3rem]"
+                className="flex items-center justify-center gap-2 min-h-12"
               >
                 {isVolumeOn ? (
                   <Volume2 className="h-4 w-4" />

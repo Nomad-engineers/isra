@@ -1,3 +1,9 @@
+IMPORTANT:
+
+- Do not write test-\* files
+- Our package manager its pnpm
+- Do not run application like pnpm dev
+
 # 🚀 Универсальное руководство по разработке на Next.js Frontend
 
 ## 📁 Структура проекта

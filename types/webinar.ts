@@ -55,3 +55,9 @@ export interface WebinarStats {
   scheduled: number;
   drafts: number;
 }
+
+// Webinar room stats from chat API
+export interface WebinarRoomStats {
+  totalParticipants: number;
+  onlineParticipants: number;
+}

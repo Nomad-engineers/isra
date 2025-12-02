@@ -23,6 +23,8 @@ import {
 import { VidstackPlayer } from "@/components/video/vidstack-player";
 import { WebinarSettingsModal } from "@/components/webinars/webinar-settings-modal";
 import { WebinarBanner } from "@/components/webinars/webinar-banner";
+import { roomsApi } from "@/api/rooms";
+import { WebinarRoomStats } from "@/types/webinar";
 
 interface WebinarUser {
   id: number;
@@ -71,6 +73,7 @@ export default function WebinarRoomPage({
   const [userName, setUserName] = useState("Гость");
   const [userPhone, setUserPhone] = useState("");
   const [viewerCount, setViewerCount] = useState(0);
+  const [onlineParticipants, setOnlineParticipants] = useState(0);
   const [duration, setDuration] = useState("00:00:00");
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [webinarStarted, setWebinarStarted] = useState(false);
@@ -326,6 +329,18 @@ export default function WebinarRoomPage({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // Function to fetch webinar stats
+  const fetchWebinarStats = async () => {
+    try {
+      const stats = await roomsApi.getWebinarStats(roomId);
+      setOnlineParticipants(stats.onlineParticipants);
+      setViewerCount(stats.onlineParticipants); // Update viewer count to match online participants
+    } catch (error) {
+      console.error("Failed to fetch webinar stats:", error);
+      // Keep using mock data if API fails
+    }
+  };
+
   useEffect(() => {
     scrollToBottom();
   }, [messages, events]);
@@ -362,16 +377,21 @@ export default function WebinarRoomPage({
   };
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setViewerCount((prev) =>
-        Math.max(1, prev + Math.floor(Math.random() * 3) - 1)
-      );
-    }, 5000);
+    // Fetch stats immediately
+    fetchWebinarStats();
 
-    setViewerCount(Math.floor(Math.random() * 50) + 10);
+    // Set up interval to fetch stats every 10 seconds
+    const interval = setInterval(() => {
+      fetchWebinarStats();
+    }, 10000);
+
+    // Set initial viewer count as fallback
+    if (viewerCount === 0) {
+      setViewerCount(Math.floor(Math.random() * 50) + 10);
+    }
 
     return () => clearInterval(interval);
-  }, []);
+  }, [roomId]);
 
   const handlePlayVideo = () => {
     if (videoPlayerRef.current && webinar?.startedAt) {
@@ -610,7 +630,7 @@ export default function WebinarRoomPage({
                       )}
                       <Badge variant="outline" className="text-white">
                         <Users className="h-3 w-3 mr-1" />
-                        {viewerCount}
+                        {onlineParticipants} онлайн
                       </Badge>
                     </div>
                   </div>
@@ -717,6 +737,7 @@ export default function WebinarRoomPage({
         webinar={webinar}
         open={settingsOpen}
         onOpenChange={setSettingsOpen}
+        onlineParticipants={onlineParticipants}
         onSettingsUpdate={(updatedWebinar) => {
           setWebinar((prev) => (prev ? { ...prev, ...updatedWebinar } : null));
           if (updatedWebinar.showChat !== undefined) {

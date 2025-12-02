@@ -12,33 +12,39 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
-import { MessageSquare, MessageSquareOff, Square, Volume2, VolumeX } from "lucide-react";
+import {
+  MessageSquare,
+  MessageSquareOff,
+  Square,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 
 interface WebinarData {
-  id: string
-  name: string
-  description?: string
-  speaker: string
-  type: string
-  videoUrl: string
-  scheduledDate: string
-  roomStarted: boolean
-  showChat?: boolean
-  isVolumeOn?: boolean
-  bannerUrl?: string
-  showBanner?: boolean
-  btnUrl?: string
-  showBtn?: boolean
-  startedAt?: string
-  createdAt: string
+  id: string;
+  name: string;
+  description?: string;
+  speaker: string;
+  type: string;
+  videoUrl: string;
+  scheduledDate: string;
+  roomStarted: boolean;
+  showChat?: boolean;
+  isVolumeOn?: boolean;
+  bannerUrl?: string;
+  showBanner?: boolean;
+  btnUrl?: string;
+  showBtn?: boolean;
+  startedAt?: string;
+  createdAt: string;
   user?: {
-    id: number
-    email: string
-    firstName: string
-    lastName: string
-    phone: string
-    role: string
-  }
+    id: number;
+    email: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    role: string;
+  };
 }
 
 interface WebinarSettingsModalProps {
@@ -63,7 +69,6 @@ export function WebinarSettingsModal({
   const [bannerButton, setBannerButton] = useState("");
   const [showBtn, setShowBtn] = useState(false);
 
-  
   // Update settings in database and send event to Centrifugo
   const updateSettings = async (updates: Partial<WebinarData>) => {
     setIsSubmitting(true);
@@ -79,7 +84,8 @@ export function WebinarSettingsModal({
         return;
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_PAYLOAD_API_URL || 'https://isracms.vercel.app';
+      const apiUrl =
+        process.env.NEXT_PUBLIC_PAYLOAD_API_URL || "https://isracms.vercel.app";
 
       // Update in database
       const response = await fetch(`${apiUrl}/api/rooms/${webinar.id}`, {
@@ -93,7 +99,9 @@ export function WebinarSettingsModal({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.errors?.[0]?.message || "Failed to update settings");
+        throw new Error(
+          errorData.errors?.[0]?.message || "Failed to update settings"
+        );
       }
 
       const result = await response.json();
@@ -108,12 +116,14 @@ export function WebinarSettingsModal({
         title: "Настройки сохранены",
         description: "Изменения применены для всех участников",
       });
-
     } catch (error) {
       console.error("Settings update error:", error);
       toast({
         title: "Ошибка сохранения",
-        description: error instanceof Error ? error.message : "Не удалось сохранить настройки",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Не удалось сохранить настройки",
         variant: "destructive",
       });
     } finally {
@@ -136,16 +146,20 @@ export function WebinarSettingsModal({
   const handleUpdateBanner = async () => {
     // Update database only (no chat API events for now)
     await updateSettings({
-      bannerUrl: bannerUrl.trim() || null,
+      bannerUrl: bannerUrl.trim() || undefined,
       showBanner: showBanner,
-      btnUrl: bannerButton.trim() || null,
+      btnUrl: bannerButton.trim() || undefined,
       showBtn: showBtn,
     });
   };
 
   // Handle stop webinar
   const handleStopWebinar = async () => {
-    if (!confirm("Вы уверены, что хотите остановить вебинар? Это действие нельзя отменить.")) {
+    if (
+      !confirm(
+        "Вы уверены, что хотите остановить вебинар? Это действие нельзя отменить."
+      )
+    ) {
       return;
     }
 
@@ -159,7 +173,8 @@ export function WebinarSettingsModal({
       // Send stop event via chat API
       try {
         const token = localStorage.getItem("payload-token");
-        const chatApiUrl = process.env.NEXT_PUBLIC_CHAT_API_URL || 'http://144.76.109.45:8089';
+        const chatApiUrl =
+          process.env.NEXT_PUBLIC_CHAT_API_URL || "http://144.76.109.45:8089";
 
         const headers: Record<string, string> = {
           "Content-Type": "application/json",
@@ -209,7 +224,8 @@ export function WebinarSettingsModal({
     // Send event via chat API
     try {
       const token = localStorage.getItem("payload-token");
-      const chatApiUrl = process.env.NEXT_PUBLIC_CHAT_API_URL || 'http://144.76.109.45:8089';
+      const chatApiUrl =
+        process.env.NEXT_PUBLIC_CHAT_API_URL || "http://144.76.109.45:8089";
 
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
@@ -236,12 +252,13 @@ export function WebinarSettingsModal({
     }
   };
 
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="rounded-xl p-6 gap-6 max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">Настройки вебинара</DialogTitle>
+          <DialogTitle className="text-xl font-semibold">
+            Настройки вебинара
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
@@ -289,8 +306,7 @@ export function WebinarSettingsModal({
                 )}
                 {isVolumeOn ? "Выключить звук" : "Включить звук"}
               </Button>
-
-              </div>
+            </div>
           </div>
 
           {/* Banner Settings */}

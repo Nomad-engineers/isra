@@ -16,6 +16,7 @@ export interface Webinar extends BaseEntity, StatusEntity {
   currentParticipants?: number;
   link?: string;
   streamUrl?: string; // Stream URL for webinar access
+  roomStarted?: boolean; // Флаг, запущена ли комната вебинара
   roomSettings?: {
     allowRecording: boolean;
     allowChat: boolean;

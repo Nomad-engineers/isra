@@ -40,7 +40,7 @@ export class RoomsApi {
 
   // Webinar stats methods
   async getWebinarStats(id: string): Promise<WebinarRoomStats> {
-    const chatApiUrl = process.env.NEXT_PUBLIC_CHAT_API_URL || "http://144.76.109.45:8089"
+    const chatApiUrl = process.env.NEXT_PUBLIC_CHAT_API_URL || 'http://144.76.109.45:8089'
     const token = localStorage.getItem('payload-token')
 
     const headers: Record<string, string> = {
@@ -51,7 +51,7 @@ export class RoomsApi {
       headers['Authorization'] = `JWT ${token}`
     }
 
-    const response = await fetch(`${chatApiUrl}/chat/${id}/stats`, {
+    const response = await fetch(`${chatApiUrl}/webinars/${id}/stats`, {
       method: 'GET',
       headers,
     })

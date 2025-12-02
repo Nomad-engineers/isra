@@ -61,9 +61,8 @@ export default function WebinarRoomPage({
   const router = useRouter();
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const videoPlayerRef = useRef<any>(null); // Добавлено: ref для видео плеера
+  const videoPlayerRef = useRef<any>(null);
 
-  // Unwrap params Promise
   const { id: roomId } = use(params);
 
   const [webinar, setWebinar] = useState<WebinarData | null>(null);
@@ -73,8 +72,9 @@ export default function WebinarRoomPage({
   const [userPhone, setUserPhone] = useState("");
   const [viewerCount, setViewerCount] = useState(0);
   const [duration, setDuration] = useState("00:00:00");
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false); // Добавлено
-  const [webinarStarted, setWebinarStarted] = useState(false); // Добавлено
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [webinarStarted, setWebinarStarted] = useState(false);
+  const [videoStartTime, setVideoStartTime] = useState(0);
 
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -89,7 +89,6 @@ export default function WebinarRoomPage({
     },
   });
 
-  // Chat WebSocket hook
   const {
     messages,
     events,
@@ -105,7 +104,6 @@ export default function WebinarRoomPage({
     autoConnect: !!userPhone && !!userName,
   });
 
-  // Load chat history immediately when user data is available
   useEffect(() => {
     if (userPhone && userName) {
       setLoadingHistory(true);
@@ -122,14 +120,12 @@ export default function WebinarRoomPage({
     }
   }, [userPhone, userName, loadMessages]);
 
-  // Log chat errors to console only
   useEffect(() => {
     if (chatError) {
       console.error("Chat error:", chatError);
     }
   }, [chatError]);
 
-  // Handle webinar events for real-time updates
   useEffect(() => {
     if (events.length > 0) {
       events.forEach((event) => {
@@ -221,7 +217,6 @@ export default function WebinarRoomPage({
     }
   }, [events, toast]);
 
-  // Fetch webinar data with owner validation
   useEffect(() => {
     const fetchWebinarAndValidate = async () => {
       try {
@@ -284,12 +279,18 @@ export default function WebinarRoomPage({
     fetchWebinarAndValidate();
   }, [roomId, router, toast]);
 
-  // Timer for duration
+  // Timer for duration and sync video
   useEffect(() => {
     if (!webinar?.roomStarted || !webinar?.startedAt) return;
 
     const startTime = new Date(webinar.startedAt).getTime();
-    const timer = setInterval(() => {
+
+    // Calculate initial elapsed time and set it for video
+    const initialElapsed = Math.floor((Date.now() - startTime) / 1000);
+    setVideoStartTime(initialElapsed);
+
+    // Calculate elapsed time and set video position
+    const updateTimer = () => {
       const elapsed = Math.floor((Date.now() - startTime) / 1000);
       const hours = Math.floor(elapsed / 3600);
       const minutes = Math.floor((elapsed % 3600) / 60);
@@ -300,22 +301,35 @@ export default function WebinarRoomPage({
           .toString()
           .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
       );
-    }, 1000);
+
+      // Sync video time if player exists and video is not at correct position
+      if (videoPlayerRef.current && videoPlayerRef.current.getCurrentTime) {
+        const currentTime = videoPlayerRef.current.getCurrentTime();
+        const timeDiff = Math.abs(currentTime - elapsed);
+
+        // Only sync if difference is more than 3 seconds to avoid constant adjustments
+        if (timeDiff > 3) {
+          videoPlayerRef.current.setCurrentTime(elapsed);
+        }
+      }
+    };
+
+    // Initial sync
+    updateTimer();
+
+    const timer = setInterval(updateTimer, 1000);
 
     return () => clearInterval(timer);
   }, [webinar]);
 
-  // Function to scroll to bottom
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Auto-scroll to bottom when messages change
   useEffect(() => {
     scrollToBottom();
   }, [messages, events]);
 
-  // Auto-scroll to bottom when history is loaded
   useEffect(() => {
     if (!loadingHistory) {
       scrollToBottom();
@@ -347,7 +361,6 @@ export default function WebinarRoomPage({
     }
   };
 
-  // Simulate viewer count
   useEffect(() => {
     const interval = setInterval(() => {
       setViewerCount((prev) =>
@@ -360,10 +373,14 @@ export default function WebinarRoomPage({
     return () => clearInterval(interval);
   }, []);
 
-  // Добавлено: функции управления видео
   const handlePlayVideo = () => {
-    if (videoPlayerRef.current) {
+    if (videoPlayerRef.current && webinar?.startedAt) {
+      const startTime = new Date(webinar.startedAt).getTime();
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+
+      videoPlayerRef.current.setCurrentTime(elapsed);
       videoPlayerRef.current.play();
+
       setIsVideoPlaying(true);
       setWebinarStarted(true);
     }
@@ -381,7 +398,6 @@ export default function WebinarRoomPage({
     setIsVideoPlaying(playing);
   };
 
-  // Функция для отправки ивента начала вебинара и управления видео
   const handleStartWebinar = async () => {
     try {
       if (!webinarStarted) {
@@ -465,7 +481,6 @@ export default function WebinarRoomPage({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-isra-dark via-isra-medium to-isra-dark">
-      {/* Header */}
       <div className="bg-isra-dark/50 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
@@ -509,7 +524,6 @@ export default function WebinarRoomPage({
         </div>
       </div>
 
-      {/* Webinar Banner */}
       <WebinarBanner
         show={webinarSettings.bannerSettings.show}
         text={webinarSettings.bannerSettings.text}
@@ -517,10 +531,8 @@ export default function WebinarRoomPage({
         buttonUrl={webinarSettings.bannerSettings.buttonUrl}
       />
 
-      {/* Main Content */}
       <div className="container mx-auto px-4 py-6">
         {!webinar.roomStarted ? (
-          // Webinar not started screen
           <div className="min-h-[calc(100vh-160px)] flex items-center justify-center">
             <Card className="card-glass max-w-md w-full">
               <CardContent className="pt-8 pb-6 text-center space-y-6">
@@ -577,9 +589,7 @@ export default function WebinarRoomPage({
             </Card>
           </div>
         ) : (
-          // Active webinar content
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-160px)]">
-            {/* Chat Section - LEFT SIDE */}
             {webinarSettings.showChat && (
               <Card className="card-glass lg:col-span-1 lg:order-1 flex flex-col">
                 <div className="p-4 border-b border-white/10">
@@ -606,7 +616,6 @@ export default function WebinarRoomPage({
                   </div>
                 </div>
 
-                {/* Messages */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                   {loadingHistory ? (
                     <div className="text-center text-gray-400 py-8">
@@ -648,7 +657,6 @@ export default function WebinarRoomPage({
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Message Input */}
                 <div className="p-4 border-t border-white/10">
                   <div className="flex gap-2">
                     <Input
@@ -671,7 +679,6 @@ export default function WebinarRoomPage({
               </Card>
             )}
 
-            {/* Video Section - RIGHT SIDE */}
             <Card
               className={`card-glass flex flex-col lg:order-2 ${webinarSettings.showChat ? "lg:col-span-2" : "lg:col-span-3"}`}
             >
@@ -683,17 +690,16 @@ export default function WebinarRoomPage({
                       webinar.videoUrl ||
                       "https://www.youtube.com/watch?v=6fty5yB7bFo"
                     }
-                    autoPlay={true}
-                    muted={true}
-                    controls={false}
-                    showCustomControls={true}
+                    autoPlay={webinar.roomStarted}
+                    muted={!webinarSettings.isVolumeOn}
+                    controls={true}
                     aspectRatio="16/9"
+                    startTime={videoStartTime}
                     onPlayStateChange={handleVideoStateChange}
                   />
                 </div>
               </CardContent>
 
-              {/* Video Info */}
               {webinar.description && (
                 <div className="p-4 border-t border-white/10">
                   <h3 className="text-sm font-semibold text-white mb-2">
@@ -707,7 +713,6 @@ export default function WebinarRoomPage({
         )}
       </div>
 
-      {/* Webinar Settings Modal */}
       <WebinarSettingsModal
         webinar={webinar}
         open={settingsOpen}

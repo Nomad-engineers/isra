@@ -20,6 +20,7 @@ interface VidstackPlayerProps {
   aspectRatio?: string;
   showCustomControls?: boolean;
   onPlayStateChange?: (playing: boolean) => void;
+  startTime?: number;
 }
 
 export interface VidstackPlayerRef {
@@ -27,6 +28,8 @@ export interface VidstackPlayerRef {
   pause: () => void;
   stop: () => void;
   isPlaying: () => boolean;
+  getCurrentTime: () => number;
+  setCurrentTime: (time: number) => void;
 }
 
 const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
@@ -41,6 +44,7 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
       aspectRatio = "16/9",
       showCustomControls = false,
       onPlayStateChange,
+      startTime = 0,
     },
     ref
   ) => {
@@ -48,6 +52,7 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
     const [isStopped, setIsStopped] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
     const iframeRef = useRef<HTMLIFrameElement>(null);
+    const hasSetInitialTime = useRef(false);
 
     // Control functions for YouTube iframe
     const postMessageToYouTube = (action: string, value?: string) => {
@@ -102,6 +107,21 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
       onPlayStateChange?.(false);
     };
 
+    const getCurrentTime = () => {
+      if (videoRef.current) {
+        return videoRef.current.currentTime;
+      }
+      return 0;
+    };
+
+    const setCurrentTime = (time: number) => {
+      if (videoRef.current) {
+        videoRef.current.currentTime = time;
+      } else if (iframeRef.current) {
+        postMessageToYouTube("seekTo", time.toString());
+      }
+    };
+
     // Expose methods via ref
     useImperativeHandle(
       ref,
@@ -110,6 +130,8 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
         pause: handlePause,
         stop: handleStop,
         isPlaying: () => isPlaying,
+        getCurrentTime,
+        setCurrentTime,
       }),
       [isPlaying]
     );
@@ -133,16 +155,28 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
         onPlayStateChange?.(false);
       };
 
+      const handleLoadedMetadata = () => {
+        if (!hasSetInitialTime.current && startTime > 0) {
+          video.currentTime = startTime;
+          hasSetInitialTime.current = true;
+          if (autoPlay) {
+            video.play().catch(console.error);
+          }
+        }
+      };
+
       video.addEventListener("play", handlePlayEvent);
       video.addEventListener("pause", handlePauseEvent);
       video.addEventListener("ended", handleEndedEvent);
+      video.addEventListener("loadedmetadata", handleLoadedMetadata);
 
       return () => {
         video.removeEventListener("play", handlePlayEvent);
         video.removeEventListener("pause", handlePauseEvent);
         video.removeEventListener("ended", handleEndedEvent);
+        video.removeEventListener("loadedmetadata", handleLoadedMetadata);
       };
-    }, [onPlayStateChange]);
+    }, [onPlayStateChange, startTime, autoPlay]);
 
     // Extract YouTube video ID from URL
     const getYoutubeVideoId = (url: string) => {
@@ -170,7 +204,7 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
         );
       }
 
-      const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=${autoPlay ? "1" : "0"}&mute=${muted ? "1" : "0"}&controls=${controls && !showCustomControls ? "1" : "0"}&rel=0&modestbranding=1&showinfo=0&iv_load_policy=3&disablekb=1&enablejsapi=1&cc_load_policy=0&hl=en&playlist=${videoId}&loop=1&fs=0&autohide=1&widgetid=1`;
+      const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=${autoPlay ? "1" : "0"}&mute=${muted ? "1" : "0"}&controls=${controls && !showCustomControls ? "1" : "0"}&rel=0&modestbranding=1&showinfo=0&iv_load_policy=3&disablekb=1&enablejsapi=1&cc_load_policy=0&hl=en&playlist=${videoId}&loop=1&fs=0&autohide=1&widgetid=1${startTime > 0 ? `&start=${Math.floor(startTime)}` : ""}`;
 
       return (
         <div
@@ -304,16 +338,12 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
               userSelect: "none",
             }}
             onLoad={() => {
-              // Additional hiding using JavaScript when iframe loads
               if (iframeRef.current) {
                 iframeRef.current.onload = () => {
-                  // Force hide any overlay elements that might appear
                   const hideOverlays = () => {
                     const iframe = iframeRef.current;
                     if (iframe && iframe.contentWindow) {
                       try {
-                        // Try to inject CSS into the iframe (will work only for same-origin)
-                        // This won't work for YouTube due to cross-origin, but we try anyway
                         iframe.contentWindow.postMessage(
                           JSON.stringify({
                             event: "command",
@@ -328,9 +358,7 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
                     }
                   };
 
-                  // Monitor for any YouTube suggestion elements that might appear in the parent
                   const monitorSuggestions = () => {
-                    // Common YouTube suggestion class names
                     const suggestionSelectors = [
                       ".ytp-pause-overlay",
                       ".ytp-related-videos",
@@ -345,7 +373,6 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
                       '[class*="related"]',
                     ];
 
-                    // This monitors for any elements that might be injected by YouTube
                     suggestionSelectors.forEach((selector) => {
                       try {
                         const elements = document.querySelectorAll(selector);
@@ -366,47 +393,35 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
                     });
                   };
 
-                  // Try hiding overlays periodically
                   setTimeout(hideOverlays, 1000);
                   setTimeout(hideOverlays, 3000);
                   setTimeout(hideOverlays, 5000);
 
-                  // Monitor for suggestions more frequently
                   setTimeout(monitorSuggestions, 2000);
                   setInterval(monitorSuggestions, 5000);
                 };
               }
             }}
           />
-          {/* Aggressive overlay to hide any persistent YouTube UI elements */}
           <div
             className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-black via-black/90 to-transparent z-20 pointer-events-none"
             style={{ height: "20%" }}
           />
-
-          {/* Bottom overlay to hide suggestions and recommendations */}
           <div
             className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/90 to-transparent z-20 pointer-events-none"
             style={{
-              height: showCustomControls ? "60px" : "25%", // Smaller height when showing custom controls to avoid interference
-              display: "block", // Always show to hide YouTube suggestions
-            }}
-          />
-
-          {/* Additional overlay specifically for "More videos" text area */}
-          <div
-            className="absolute bottom-0 left-0 right-0 bg-black z-25 pointer-events-none"
-            style={{
-              height: showCustomControls ? "24px" : "40px", // Target specific area for "More videos" text
+              height: showCustomControls ? "60px" : "25%",
               display: "block",
             }}
           />
-
-          {/* Side overlays to hide any side panel suggestions */}
+          <div
+            className="absolute bottom-0 left-0 right-0 bg-black z-25 pointer-events-none"
+            style={{
+              height: showCustomControls ? "24px" : "40px",
+              display: "block",
+            }}
+          />
           <div className="absolute top-0 right-0 bottom-0 w-12 bg-gradient-to-l from-black via-black/60 to-transparent z-20 pointer-events-none" />
-
-          {/* Left overlay for symmetry */}
-          <div className="absolute top-0 left-0 bottom-0 w-8 bg-gradient-to-r from-black via-black/40 to-transparent z-20 pointer-events-none" />
 
           {showCustomControls && (
             <div className="absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-sm p-4 z-30 pointer-events-none">
@@ -441,7 +456,6 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
     // Handle direct video URLs with HTML5 video
     const videoSource = src && src.match(/\.(mp4|webm|ogg|mov)$/i) ? src : null;
 
-    // Default to a demo video if no valid source is provided
     const finalSource =
       videoSource ||
       "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
@@ -463,7 +477,7 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
           muted={muted}
           controls={controls && !showCustomControls}
         />
-        {/* {showCustomControls && (
+        {showCustomControls && (
           <div className="absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-sm p-4">
             <div className="flex items-center gap-2">
               <Button
@@ -488,7 +502,7 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
               </Button>
             </div>
           </div>
-        )} */}
+        )}
       </div>
     );
   }

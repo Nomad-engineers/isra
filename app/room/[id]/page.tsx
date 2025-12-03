@@ -263,7 +263,7 @@ export default function WebinarRoomPage({
         saveWebinarSession({
           firstName,
           lastName,
-          userId: currentUserId,
+          userId: parseInt(currentUserId, 10),
           email,
         });
 

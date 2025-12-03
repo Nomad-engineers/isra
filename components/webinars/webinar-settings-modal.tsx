@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -63,11 +63,19 @@ export function WebinarSettingsModal({
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showChat, setShowChat] = useState(webinar.showChat ?? true);
-  const [isVolumeOn, setIsVolumeOn] = useState(true);
+  const [isVolumeOn, setIsVolumeOn] = useState(webinar.isVolumeOn ?? true);
   const [showBanner, setShowBanner] = useState(false);
   const [bannerUrl, setBannerUrl] = useState("");
   const [bannerButton, setBannerButton] = useState("");
   const [showBtn, setShowBtn] = useState(false);
+
+  // Синхронизируем состояние с пропсами при открытии модалки
+  useEffect(() => {
+    if (open) {
+      setShowChat(webinar.showChat ?? true);
+      setIsVolumeOn(webinar.isVolumeOn ?? true);
+    }
+  }, [open, webinar.showChat, webinar.isVolumeOn]);
 
   // Update settings in database and send event to Centrifugo
   const updateSettings = async (updates: Partial<WebinarData>) => {
@@ -107,8 +115,6 @@ export function WebinarSettingsModal({
       const result = await response.json();
       console.log("Settings updated successfully:", result);
 
-      // All settings will be handled via chat API events, no Centrifugo events needed
-
       // Call parent callback
       onSettingsUpdate?.({ ...webinar, ...updates });
 
@@ -136,10 +142,40 @@ export function WebinarSettingsModal({
     const newVolumeState = !isVolumeOn;
     setIsVolumeOn(newVolumeState);
 
-    // Update database only (no chat API events for now)
+    // Update database
     await updateSettings({
       isVolumeOn: newVolumeState,
     });
+
+    // Send event via chat API
+    try {
+      const token = localStorage.getItem("payload-token");
+      const chatApiUrl =
+        process.env.NEXT_PUBLIC_CHAT_API_URL || "http://144.76.109.45:8089";
+
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+
+      if (token) {
+        headers["Authorization"] = `JWT ${token}`;
+      }
+
+      await fetch(`${chatApiUrl}/chat/${webinar.id}/events`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          type: "event",
+          data: {
+            isVolumeOn: newVolumeState,
+          },
+        }),
+      });
+
+      console.log(`Volume toggle event sent: isVolumeOn=${newVolumeState}`);
+    } catch (eventError) {
+      console.warn("Failed to send volume toggle event:", eventError);
+    }
   };
 
   // Handle banner settings

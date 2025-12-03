@@ -333,7 +333,7 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
             allowFullScreen
             referrerPolicy="strict-origin-when-cross-origin"
             style={{
-              pointerEvents: showCustomControls ? "none" : "auto",
+              pointerEvents: "none",
               WebkitUserSelect: "none",
               userSelect: "none",
             }}
@@ -475,7 +475,10 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
           playsInline
           autoPlay={autoPlay}
           muted={muted}
-          controls={controls && !showCustomControls}
+          controls={false}
+          style={{
+            pointerEvents: "none",
+          }}
         />
         {showCustomControls && (
           <div className="absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-sm p-4">

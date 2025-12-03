@@ -232,50 +232,23 @@ export default function WebinarRoomPage({
     };
 
     const handleGuestAuth = async (webinarData: WebinarData) => {
-      // Получаем ID текущего залогиненного пользователя
-      const currentUserId = localStorage.getItem("user_id");
-
-      // Проверяем, является ли текущий пользователь создателем
-      if (
-        currentUserId &&
-        webinarData.user &&
-        currentUserId === webinarData.user.id.toString()
-      ) {
-        // Пользователь - создатель вебинара
-        setIsCreator(true);
-        setUserRole("admin");
-
-        const firstName =
-          localStorage.getItem("user_firstName") ||
-          webinarData.user.firstName ||
-          "Создатель";
-        const lastName =
-          localStorage.getItem("user_lastName") ||
-          webinarData.user.lastName ||
-          "";
-        const email =
-          localStorage.getItem("user_email") || webinarData.user.email;
-
-        setUserName(`${firstName} ${lastName}`.trim());
-        setUserEmail(email);
-
-        // Автоматически сохраняем сессию для создателя
-        saveWebinarSession({
-          firstName,
-          lastName,
-          userId: parseInt(currentUserId, 10),
-          email,
-        });
-
-        setLoading(false);
-        setLoadingHistory(false);
-        return;
-      }
-
-      // Для обычных пользователей проверяем сессию вебинара
+      // Сначала проверяем сессию вебинара - возможно пользователь уже входил
       const sessionData = getSessionData();
 
       if (sessionData && sessionData.verified) {
+        console.log("Found session data:", sessionData);
+
+        // Проверяем, является ли этот пользователь создателем вебинара
+        if (
+          sessionData.userId &&
+          webinarData.user &&
+          sessionData.userId === webinarData.user.id
+        ) {
+          console.log("User is webinar creator (from session)");
+          setIsCreator(true);
+          setUserRole("admin");
+        }
+
         setUserName(`${sessionData.firstName} ${sessionData.lastName}`);
         setUserEmail(sessionData.email);
         await fetchUserRole(sessionData.email);
@@ -284,6 +257,75 @@ export default function WebinarRoomPage({
         setLoadingHistory(false);
         return;
       }
+
+      // Если нет сессии, пробуем проверить через API авторизацию
+      try {
+        console.log("Checking user authentication via API...");
+
+        const meResponse = await fetch(
+          "https://isracms.vercel.app/api/users/me",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        console.log("API response status:", meResponse.status);
+
+        if (meResponse.ok) {
+          const responseData = await meResponse.json();
+          console.log("Current user data:", responseData);
+
+          // Проверяем разные структуры ответа
+          const currentUser = responseData.user || responseData;
+
+          // Если пользователь авторизован и есть его данные
+          if (currentUser && currentUser.id && !responseData.message) {
+            console.log("User is authenticated:", currentUser);
+
+            // Проверяем, является ли текущий пользователь создателем вебинара
+            if (webinarData.user && currentUser.id === webinarData.user.id) {
+              console.log("User is webinar creator!");
+              setIsCreator(true);
+              setUserRole("admin");
+
+              const firstName = currentUser.firstName || "Создатель";
+              const lastName = currentUser.lastName || "";
+              const email = currentUser.email;
+
+              setUserName(`${firstName} ${lastName}`.trim());
+              setUserEmail(email);
+
+              // Автоматически сохраняем сессию для создателя
+              saveWebinarSession({
+                firstName,
+                lastName,
+                userId: currentUser.id,
+                email,
+              });
+
+              setLoading(false);
+              setLoadingHistory(false);
+              return;
+            } else {
+              console.log("User is authenticated but not creator");
+              console.log("Current user ID:", currentUser.id);
+              console.log("Webinar creator ID:", webinarData.user?.id);
+            }
+          } else {
+            console.log(
+              "User is not authenticated or response structure is different"
+            );
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch current user:", error);
+      }
+
+      // Если дошли сюда - пользователь не авторизован и нет сессии
+      console.log("No authentication found, showing access form");
       setLoading(false);
       setLoadingHistory(false);
     };

@@ -9,7 +9,7 @@ import { Loader2, Video } from "lucide-react";
 
 interface WebinarAccessFormProps {
   webinarName?: string;
-  onSubmit: (data: { firstName: string; lastName: string }) => Promise<void>;
+  onSubmit: (data: { firstName: string; phone: string }) => Promise<void>;
   isLoading: boolean;
   error?: string;
 }
@@ -21,7 +21,7 @@ export function WebinarAccessForm({
   error,
 }: WebinarAccessFormProps) {
   const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
   const [validationError, setValidationError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,8 +34,8 @@ export function WebinarAccessForm({
       return;
     }
 
-    if (!lastName.trim()) {
-      setValidationError("Пожалуйста, введите вашу фамилию");
+    if (!phone.trim()) {
+      setValidationError("Пожалуйста, введите ваш номер телефона");
       return;
     }
 
@@ -44,14 +44,21 @@ export function WebinarAccessForm({
       return;
     }
 
-    if (lastName.trim().length < 2) {
-      setValidationError("Фамилия должна содержать минимум 2 символа");
+    // Проверка формата телефона (базовая)
+    const phoneRegex = /^[\d\s\-\+\(\)]+$/;
+    if (!phoneRegex.test(phone.trim())) {
+      setValidationError("Неверный формат номера телефона");
+      return;
+    }
+
+    if (phone.trim().replace(/\D/g, "").length < 10) {
+      setValidationError("Номер телефона должен содержать минимум 10 цифр");
       return;
     }
 
     await onSubmit({
       firstName: firstName.trim(),
-      lastName: lastName.trim(),
+      phone: phone.trim(),
     });
   };
 
@@ -92,18 +99,18 @@ export function WebinarAccessForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="lastName" className="text-white">
-                Фамилия <span className="text-red-400">*</span>
+              <Label htmlFor="phone" className="text-white">
+                Номер телефона <span className="text-red-400">*</span>
               </Label>
               <Input
-                id="lastName"
-                type="text"
-                placeholder="Введите вашу фамилию"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
+                id="phone"
+                type="tel"
+                placeholder="+7 (XXX) XXX-XX-XX"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
                 disabled={isLoading}
                 className="bg-white/5 border-white/10 text-white placeholder:text-gray-400 focus:border-isra-primary focus:ring-isra-primary"
-                autoComplete="family-name"
+                autoComplete="tel"
               />
             </div>
 

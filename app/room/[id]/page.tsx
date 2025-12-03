@@ -22,8 +22,6 @@ import {
   Wifi,
   WifiOff,
   Clock,
-  Volume2,
-  VolumeX,
   Shield,
 } from "lucide-react";
 import { VidstackPlayer } from "@/components/video/vidstack-player";
@@ -90,6 +88,7 @@ export default function WebinarRoomPage({
   const [videoStartTime, setVideoStartTime] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [audioInitialized, setAudioInitialized] = useState(false);
+  const [isCreator, setIsCreator] = useState(false);
 
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -124,7 +123,6 @@ export default function WebinarRoomPage({
     if (sessionData && sessionData.verified) {
       setUserName(`${sessionData.firstName} ${sessionData.lastName}`);
       setUserEmail(sessionData.email);
-      // Role will be fetched from user data
     }
   }, [roomId]);
 
@@ -211,7 +209,6 @@ export default function WebinarRoomPage({
         const webinarData = await webinarResponse.json();
         setWebinar(webinarData);
 
-        // Инициализируем состояние звука из данных вебинара
         const volumeState = webinarData.isVolumeOn ?? true;
         setWebinarSettings((prev) => ({
           ...prev,
@@ -220,7 +217,7 @@ export default function WebinarRoomPage({
         setIsMuted(!volumeState);
         setAudioInitialized(true);
 
-        await handleGuestAuth();
+        await handleGuestAuth(webinarData);
       } catch (error) {
         console.error("Error fetching webinar:", error);
         setLoading(false);
@@ -234,30 +231,66 @@ export default function WebinarRoomPage({
       }
     };
 
-    const handleGuestAuth = async () => {
-      const sessionData = getSessionData();
+    const handleGuestAuth = async (webinarData: WebinarData) => {
+      // Получаем ID текущего залогиненного пользователя
+      const currentUserId = localStorage.getItem("user_id");
 
-      if (sessionData && sessionData.verified) {
-        setUserName(`${sessionData.firstName} ${sessionData.lastName}`);
-        setUserEmail(sessionData.email);
-        // Fetch user role from API
-        fetchUserRole(sessionData.email);
+      // Проверяем, является ли текущий пользователь создателем
+      if (
+        currentUserId &&
+        webinarData.user &&
+        currentUserId === webinarData.user.id.toString()
+      ) {
+        // Пользователь - создатель вебинара
+        setIsCreator(true);
+        setUserRole("admin");
+
+        const firstName =
+          localStorage.getItem("user_firstName") ||
+          webinarData.user.firstName ||
+          "Создатель";
+        const lastName =
+          localStorage.getItem("user_lastName") ||
+          webinarData.user.lastName ||
+          "";
+        const email =
+          localStorage.getItem("user_email") || webinarData.user.email;
+
+        setUserName(`${firstName} ${lastName}`.trim());
+        setUserEmail(email);
+
+        // Автоматически сохраняем сессию для создателя
+        saveWebinarSession({
+          firstName,
+          lastName,
+          userId: currentUserId,
+          email,
+        });
+
         setLoading(false);
         setLoadingHistory(false);
         return;
       }
 
-      localStorage.removeItem("user_name");
-      localStorage.removeItem("user_email");
-      localStorage.removeItem("user_id");
+      // Для обычных пользователей проверяем сессию вебинара
+      const sessionData = getSessionData();
+
+      if (sessionData && sessionData.verified) {
+        setUserName(`${sessionData.firstName} ${sessionData.lastName}`);
+        setUserEmail(sessionData.email);
+        await fetchUserRole(sessionData.email);
+
+        setLoading(false);
+        setLoadingHistory(false);
+        return;
+      }
       setLoading(false);
       setLoadingHistory(false);
     };
 
     fetchWebinarAndValidate();
-  }, [roomId, router, toast, hasAccess]);
+  }, [roomId, router, toast]);
 
-  // Слушаем события изменения звука
   useEffect(() => {
     const volumeEvent = events.find(
       (e) => e.type === "event" && e.data?.isVolumeOn !== undefined
@@ -273,7 +306,6 @@ export default function WebinarRoomPage({
     }
   }, [events]);
 
-  // Fetch user role from API
   const fetchUserRole = async (email: string) => {
     try {
       const response = await fetch(
@@ -422,16 +454,16 @@ export default function WebinarRoomPage({
 
   const handleAccessFormSubmit = async (data: {
     firstName: string;
-    lastName: string;
+    phone: string;
   }) => {
     setIsAuthenticating(true);
     setAuthError("");
 
     try {
-      console.log("Поиск пользователя:", data);
+      console.log("Поиск пользователя по номеру:", data.phone);
 
       const usersResponse = await fetch(
-        `https://isracms.vercel.app/api/users?where[firstName][equals]=${encodeURIComponent(data.firstName)}&where[lastName][equals]=${encodeURIComponent(data.lastName)}`
+        `https://isracms.vercel.app/api/users?where[phone][equals]=${encodeURIComponent(data.phone)}`
       );
 
       console.log("Ответ API статус:", usersResponse.status);
@@ -454,7 +486,7 @@ export default function WebinarRoomPage({
 
       if (users.length === 0) {
         throw new Error(
-          `Пользователь с именем ${data.firstName} ${data.lastName} не найден. Проверьте правильность написания имени и фамилии.`
+          `Пользователь с номером телефона ${data.phone} не найден. Проверьте правильность введенного номера.`
         );
       }
 
@@ -471,20 +503,21 @@ export default function WebinarRoomPage({
 
       saveWebinarSession({
         firstName: user.firstName || data.firstName,
-        lastName: user.lastName || data.lastName,
+        lastName: user.lastName || "",
         userId: user.id,
         email: user.email,
       });
 
       setUserName(
-        `${user.firstName || data.firstName} ${user.lastName || data.lastName}`
+        `${user.firstName || data.firstName} ${user.lastName || ""}`.trim()
       );
       setUserEmail(user.email);
+      setUserPhone(user.phone || data.phone);
       setUserRole(user.role || "user");
 
       toast({
         title: "Добро пожаловать!",
-        description: `${data.firstName} ${data.lastName}, вы успешно вошли в вебинар`,
+        description: `${user.firstName || data.firstName}, вы успешно вошли в вебинар`,
       });
     } catch (error: any) {
       console.error("Authentication error:", error);
@@ -496,14 +529,11 @@ export default function WebinarRoomPage({
     }
   };
 
-  // Функция для определения роли пользователя из сообщения
   const getMessageUserRole = (message: any): string => {
-    // Если есть информация о роли в сообщении
     if (message.userRole) {
       return message.userRole;
     }
 
-    // Если это сообщение от владельца вебинара
     if (webinar?.user?.email === message.userEmail) {
       return "admin";
     }
@@ -522,7 +552,8 @@ export default function WebinarRoomPage({
     );
   }
 
-  if (!hasAccess) {
+  // Если пользователь - создатель вебинара, пропускаем проверку доступа
+  if (!isCreator && !hasAccess) {
     return (
       <WebinarAccessForm
         webinarName={webinar?.name}
@@ -577,6 +608,16 @@ export default function WebinarRoomPage({
             </div>
 
             <div className="flex items-center gap-4">
+              {isCreator && (
+                <Badge
+                  variant="outline"
+                  className="border-amber-400 text-amber-400"
+                >
+                  <Shield className="h-3 w-3 mr-1" />
+                  Создатель
+                </Badge>
+              )}
+
               {webinar.roomStarted && (
                 <div className="flex items-center gap-2 text-white">
                   <Clock className="h-4 w-4" />

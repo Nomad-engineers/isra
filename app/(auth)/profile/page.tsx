@@ -773,18 +773,20 @@ export default function ProfilePage() {
 
                 <div className="h-2"></div>
 
-                <Button
-                  variant="outline"
-                  className="w-full flex items-center gap-3 h-auto p-4 justify-start"
-                >
-                  <FileText className="h-5 w-5 flex-shrink-0" />
-                  <div className="text-left">
-                    <div className="font-medium">Отчеты</div>
-                    <div className="text-sm text-muted-foreground">
-                      Аналитика и статистика
+                <Link href="/reports">
+                  <Button
+                    variant="outline"
+                    className="w-full flex items-center gap-3 h-auto p-4 justify-start"
+                  >
+                    <FileText className="h-5 w-5 flex-shrink-0" />
+                    <div className="text-left">
+                      <div className="font-medium">Отчеты</div>
+                      <div className="text-sm text-muted-foreground">
+                        Аналитика и статистика
+                      </div>
                     </div>
-                  </div>
-                </Button>
+                  </Button>
+                </Link>
               </div>
             </CardContent>
           </Card>

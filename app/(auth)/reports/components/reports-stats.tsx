@@ -6,7 +6,6 @@ import {
   Users,
   Calendar,
   Clock,
-  TrendingUp,
   Activity
 } from 'lucide-react'
 
@@ -18,8 +17,8 @@ interface ReportsStatsProps {
 export function ReportsStats({ stats, loading = false }: ReportsStatsProps) {
   if (loading && !stats) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        {Array.from({ length: 6 }).map((_, i) => (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        {Array.from({ length: 5 }).map((_, i) => (
           <div
             key={i}
             className="bg-muted animate-pulse rounded-lg h-24"
@@ -38,7 +37,7 @@ export function ReportsStats({ stats, loading = false }: ReportsStatsProps) {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       {/* Webinar Stats */}
       <StatsCard
         title="Всего вебинаров"
@@ -69,14 +68,6 @@ export function ReportsStats({ stats, loading = false }: ReportsStatsProps) {
         value={stats.totalParticipants.toLocaleString()}
         description="Общее количество"
         icon={Users}
-      />
-
-      <StatsCard
-        title="Активные пользователи"
-        value={stats.activeUsers.toLocaleString()}
-        description="Уникальные участники"
-        icon={TrendingUp}
-        trend={{ value: 12, isUp: true }}
       />
 
       <StatsCard

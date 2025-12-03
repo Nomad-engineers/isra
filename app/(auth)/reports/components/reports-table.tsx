@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   Table,
   TableBody,
@@ -68,6 +69,7 @@ export function ReportsTable({
   totalPages,
   onPageChange
 }: ReportsTableProps) {
+  const router = useRouter()
   const [sortField, setSortField] = useState<SortField>('date')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
 
@@ -97,8 +99,9 @@ export function ReportsTable({
   }
 
   const handleViewItem = (item: ReportData) => {
-    // View item details functionality
-    console.log('View item:', item)
+    if (item.type === 'webinar') {
+      router.push(`/reports/${item.id}`)
+    }
   }
 
   return (
@@ -239,7 +242,16 @@ export function ReportsTable({
                 <TableRow key={item.id} className="hover:bg-muted/50">
                   <TableCell className="font-medium">
                     <div>
-                      <div className="font-medium">{item.title}</div>
+                      {item.type === 'webinar' ? (
+                        <button
+                          onClick={() => handleViewItem(item)}
+                          className="font-medium text-left hover:text-primary transition-colors"
+                        >
+                          {item.title}
+                        </button>
+                      ) : (
+                        <div className="font-medium">{item.title}</div>
+                      )}
                       {item.description && (
                         <div className="text-sm text-muted-foreground line-clamp-1">
                           {item.description}

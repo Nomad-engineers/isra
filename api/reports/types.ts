@@ -93,3 +93,51 @@ export interface UserStats {
   lastActive: string
   status: 'active' | 'inactive'
 }
+
+export interface WebinarViewer {
+  id: string
+  name: string
+  email: string
+  joinedAt: string
+  leftAt: string | null
+  totalWatchTime: number
+  isOnline: boolean
+}
+
+export interface WebinarChatMessage {
+  id: string
+  userId: string
+  userName: string
+  message: string
+  timestamp: string
+  isModerator: boolean
+}
+
+export interface WebinarModerator {
+  id: string
+  name: string
+  email: string
+  role: string
+  joinedAt: string
+  permissions: string[]
+}
+
+export interface WebinarReport {
+  webinar: ReportData
+  viewers: {
+    total: number
+    currentlyOnline: number
+    list: WebinarViewer[]
+  }
+  chat: WebinarChatMessage[]
+  moderators: WebinarModerator[]
+}
+
+export interface WebinarReportParams {
+  id: string
+  viewersPage?: number
+  viewersLimit?: number
+  viewersSearch?: string
+  chatPage?: number
+  chatLimit?: number
+}

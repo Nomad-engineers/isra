@@ -4,7 +4,12 @@ import {
   ReportsResponse,
   ReportStats,
   ApiWebinar,
-  UserStats
+  UserStats,
+  WebinarReport,
+  WebinarReportParams,
+  WebinarViewer,
+  WebinarChatMessage,
+  WebinarModerator
 } from './types'
 
 // Mock data for testing UI
@@ -151,6 +156,102 @@ const mockWebinars: ApiWebinar[] = [
   }
 ]
 
+// Mock viewers data
+const mockViewers: WebinarViewer[] = [
+  {
+    id: "1",
+    name: "Александр Иванов",
+    email: "alex.ivanov@example.com",
+    joinedAt: "2024-12-01T10:02:00.000Z",
+    leftAt: "2024-12-01T11:30:00.000Z",
+    totalWatchTime: 5280,
+    isOnline: false
+  },
+  {
+    id: "2",
+    name: "Мария Петрова",
+    email: "maria.petrova@example.com",
+    joinedAt: "2024-12-01T10:05:00.000Z",
+    leftAt: null,
+    totalWatchTime: 4800,
+    isOnline: true
+  },
+  {
+    id: "3",
+    name: "Дмитрий Сидоров",
+    email: "dmitry.sidorov@example.com",
+    joinedAt: "2024-12-01T10:10:00.000Z",
+    leftAt: "2024-12-01T11:15:00.000Z",
+    totalWatchTime: 3900,
+    isOnline: false
+  },
+  {
+    id: "4",
+    name: "Елена Козлова",
+    email: "elena.kozlova@example.com",
+    joinedAt: "2024-12-01T10:08:00.000Z",
+    leftAt: null,
+    totalWatchTime: 4200,
+    isOnline: true
+  }
+]
+
+// Mock chat data
+const mockChat: WebinarChatMessage[] = [
+  {
+    id: "1",
+    userId: "2",
+    userName: "Мария Петрова",
+    message: "Отличный вебинар! Очень интересная тема.",
+    timestamp: "2024-12-01T10:15:00.000Z",
+    isModerator: false
+  },
+  {
+    id: "2",
+    userId: "mod1",
+    userName: "Модератор",
+    message: "Спасибо за ваш вопрос! Сейчас мы разберем этот пример.",
+    timestamp: "2024-12-01T10:18:00.000Z",
+    isModerator: true
+  },
+  {
+    id: "3",
+    userId: "3",
+    userName: "Дмитрий Сидоров",
+    message: "Можно ли получить презентацию вебинара?",
+    timestamp: "2024-12-01T10:25:00.000Z",
+    isModerator: false
+  },
+  {
+    id: "4",
+    userId: "4",
+    userName: "Елена Козлова",
+    message: "Подскажите, пожалуйста, где можно найти дополнительные материалы?",
+    timestamp: "2024-12-01T10:30:00.000Z",
+    isModerator: false
+  }
+]
+
+// Mock moderators data
+const mockModerators: WebinarModerator[] = [
+  {
+    id: "mod1",
+    name: "Иван Модераторов",
+    email: "ivan.moderator@example.com",
+    role: "moderator",
+    joinedAt: "2024-12-01T10:00:00.000Z",
+    permissions: ["chat_moderation", "user_management", "content_control"]
+  },
+  {
+    id: "mod2",
+    name: "Анна Помощник",
+    email: "anna.helper@example.com",
+    role: "assistant",
+    joinedAt: "2024-12-01T10:01:00.000Z",
+    permissions: ["chat_moderation", "technical_support"]
+  }
+]
+
 export class ReportsApi {
   async getReports(params: ReportsParams = {}): Promise<ReportsResponse> {
     // Simulate API delay
@@ -267,6 +368,84 @@ export class ReportsApi {
     // Get all data without pagination for export
     const response = await this.getReports({ ...params, limit: 10000 })
     return response.data
+  }
+
+  async getWebinarReport(params: WebinarReportParams): Promise<WebinarReport> {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 300))
+
+    try {
+      // Find webinar by ID
+      const webinar = mockWebinars.find(w => w.id.toString() === params.id)
+      if (!webinar) {
+        throw new Error(`Webinar with ID ${params.id} not found`)
+      }
+
+      // Transform webinar to ReportData format
+      const reportData: ReportData = {
+        id: webinar.id.toString(),
+        title: webinar.name,
+        type: 'webinar',
+        date: webinar.scheduledDate || webinar.createdAt,
+        status: webinar.roomStarted && !webinar.stoppedAt
+          ? 'active'
+          : webinar.stoppedAt
+            ? 'completed'
+            : new Date(webinar.scheduledDate) > new Date()
+              ? 'scheduled'
+              : 'cancelled',
+        participants: mockViewers.length,
+        duration: webinar.startedAt && webinar.stoppedAt
+          ? new Date(webinar.stoppedAt).getTime() - new Date(webinar.startedAt).getTime()
+          : undefined,
+        speaker: webinar.speaker,
+        description: webinar.description,
+        scheduledDate: webinar.scheduledDate,
+        startedAt: webinar.startedAt,
+        stoppedAt: webinar.stoppedAt,
+        createdAt: webinar.createdAt,
+        updatedAt: webinar.updatedAt
+      }
+
+      // Filter viewers if search is provided
+      let filteredViewers = mockViewers
+      if (params.viewersSearch) {
+        const search = params.viewersSearch.toLowerCase()
+        filteredViewers = mockViewers.filter(viewer =>
+          viewer.name.toLowerCase().includes(search) ||
+          viewer.email.toLowerCase().includes(search)
+        )
+      }
+
+      // Apply pagination to viewers
+      const viewersPage = params.viewersPage || 1
+      const viewersLimit = params.viewersLimit || 10
+      const viewersStart = (viewersPage - 1) * viewersLimit
+      const paginatedViewers = filteredViewers.slice(viewersStart, viewersStart + viewersLimit)
+
+      // Apply pagination to chat
+      const chatPage = params.chatPage || 1
+      const chatLimit = params.chatLimit || 50
+      const chatStart = (chatPage - 1) * chatLimit
+      const paginatedChat = mockChat.slice(chatStart, chatStart + chatLimit)
+
+      const currentlyOnline = mockViewers.filter(v => v.isOnline).length
+
+      return {
+        webinar: reportData,
+        viewers: {
+          total: mockViewers.length,
+          currentlyOnline,
+          list: paginatedViewers
+        },
+        chat: paginatedChat,
+        moderators: mockModerators
+      }
+
+    } catch (error) {
+      console.error('Webinar report API error:', error)
+      throw error
+    }
   }
 
   private calculateStats(data: ReportData[]): ReportStats {

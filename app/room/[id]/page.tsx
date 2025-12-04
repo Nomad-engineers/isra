@@ -268,7 +268,7 @@ export default function WebinarRoomPage({
 
         // 3. Проверяем, является ли пользователь владельцем вебинара
         const isWebinarOwner =
-          user && webinarData.user && user.id === webinarData.user.id;
+          !!user && !!webinarData.user && user.id === webinarData.user.id;
         setIsOwner(isWebinarOwner);
 
         // 4. Если пользователь - владелец, пропускаем аутентификацию

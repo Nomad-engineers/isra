@@ -154,7 +154,6 @@ export default function WebinarReportPage() {
             id: 'viewers',
             label: 'Зрители',
             icon: ReportIcons.viewers,
-            badge: data.viewers.total,
             content: (
               <ViewersSection
                 viewers={data.viewers}
@@ -168,7 +167,6 @@ export default function WebinarReportPage() {
             id: 'chat',
             label: 'Чат',
             icon: ReportIcons.chat,
-            badge: data.chat.length,
             content: (
               <ChatSection
                 chat={data.chat}
@@ -182,7 +180,6 @@ export default function WebinarReportPage() {
             id: 'moderators',
             label: 'Модераторы',
             icon: ReportIcons.moderators,
-            badge: data.moderators.length,
             content: (
               <ModeratorsSection
                 moderators={data.moderators}

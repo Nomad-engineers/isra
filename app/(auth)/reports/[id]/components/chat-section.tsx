@@ -145,12 +145,11 @@ export function ChatSection({ chat, params, onParamsChange, loading }: ChatSecti
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Поиск по сообщениям..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                className="pl-8 w-80"
+                className="w-80"
               />
             </div>
             <div className="flex items-center gap-2">

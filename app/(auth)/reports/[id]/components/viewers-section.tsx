@@ -9,7 +9,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Progress } from '@/components/ui/progress'
 import {
   Users,
-  Search,
   Eye,
   EyeOff,
   Clock,
@@ -144,12 +143,11 @@ export function ViewersSection({ viewers, params, onParamsChange, loading }: Vie
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Поиск по имени или email..."
                 value={searchInput}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                className="pl-8 w-80"
+                className="w-80"
               />
             </div>
             <Button variant="outline" size="sm">

@@ -21,6 +21,7 @@ interface VidstackPlayerProps {
   showCustomControls?: boolean;
   onPlayStateChange?: (playing: boolean) => void;
   startTime?: number;
+  disableInteraction?: boolean;
 }
 
 export interface VidstackPlayerRef {

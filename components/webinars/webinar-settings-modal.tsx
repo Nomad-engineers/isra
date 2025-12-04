@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -66,13 +66,23 @@ export function WebinarSettingsModal({
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showChat, setShowChat] = useState(webinar.showChat ?? true);
-  const [isVolumeOn, setIsVolumeOn] = useState(true);
-  const [showBanner, setShowBanner] = useState(false);
-  const [bannerUrl, setBannerUrl] = useState("");
-  const [bannerButton, setBannerButton] = useState("");
-  const [showBtn, setShowBtn] = useState(false);
+  const [isVolumeOn, setIsVolumeOn] = useState(webinar.isVolumeOn ?? true);
+  const [showBanner, setShowBanner] = useState(webinar.showBanner ?? false);
+  const [bannerUrl, setBannerUrl] = useState(webinar.bannerUrl ?? "");
+  const [bannerButton, setBannerButton] = useState(webinar.btnUrl ?? "");
+  const [showBtn, setShowBtn] = useState(webinar.showBtn ?? false);
 
-  // Update settings in database and send event to Centrifugo
+  // Синхронизация с props при изменении webinar
+  useEffect(() => {
+    setShowChat(webinar.showChat ?? true);
+    setIsVolumeOn(webinar.isVolumeOn ?? true);
+    setShowBanner(webinar.showBanner ?? false);
+    setBannerUrl(webinar.bannerUrl ?? "");
+    setBannerButton(webinar.btnUrl ?? "");
+    setShowBtn(webinar.showBtn ?? false);
+  }, [webinar]);
+
+  // Update settings in database and send event to chat API
   const updateSettings = async (updates: Partial<WebinarData>) => {
     setIsSubmitting(true);
 
@@ -110,7 +120,27 @@ export function WebinarSettingsModal({
       const result = await response.json();
       console.log("Settings updated successfully:", result);
 
-      // All settings will be handled via chat API events, no Centrifugo events needed
+      // Send event via chat API
+      try {
+        const chatApiUrl =
+          process.env.NEXT_PUBLIC_CHAT_API_URL || "http://144.76.109.45:8089";
+
+        await fetch(`${chatApiUrl}/chat/${webinar.id}/events`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `JWT ${token}`,
+          },
+          body: JSON.stringify({
+            type: "event",
+            data: updates,
+          }),
+        });
+
+        console.log("Event sent to chat API:", updates);
+      } catch (eventError) {
+        console.warn("Failed to send event to chat API:", eventError);
+      }
 
       // Call parent callback
       onSettingsUpdate?.({ ...webinar, ...updates });
@@ -139,7 +169,6 @@ export function WebinarSettingsModal({
     const newVolumeState = !isVolumeOn;
     setIsVolumeOn(newVolumeState);
 
-    // Update database only (no chat API events for now)
     await updateSettings({
       isVolumeOn: newVolumeState,
     });
@@ -147,7 +176,6 @@ export function WebinarSettingsModal({
 
   // Handle banner settings
   const handleUpdateBanner = async () => {
-    // Update database only (no chat API events for now)
     await updateSettings({
       bannerUrl: bannerUrl.trim() || undefined,
       showBanner: showBanner,
@@ -168,40 +196,9 @@ export function WebinarSettingsModal({
 
     setIsSubmitting(true);
     try {
-      // Update in database first
       await updateSettings({
         roomStarted: false,
       });
-
-      // Send stop event via chat API
-      try {
-        const token = localStorage.getItem("payload-token");
-        const chatApiUrl =
-          process.env.NEXT_PUBLIC_CHAT_API_URL || "http://144.76.109.45:8089";
-
-        const headers: Record<string, string> = {
-          "Content-Type": "application/json",
-        };
-
-        if (token) {
-          headers["Authorization"] = `JWT ${token}`;
-        }
-
-        await fetch(`${chatApiUrl}/chat/${webinar.id}/events`, {
-          method: "POST",
-          headers,
-          body: JSON.stringify({
-            type: "event",
-            data: {
-              roomStarted: false,
-            },
-          }),
-        });
-
-        console.log("Webinar stop event sent");
-      } catch (eventError) {
-        console.warn("Failed to send stop event to chat API:", eventError);
-      }
 
       toast({
         title: "Вебинар остановлен",
@@ -219,40 +216,9 @@ export function WebinarSettingsModal({
     const newChatState = !showChat;
     setShowChat(newChatState);
 
-    // Update database
     await updateSettings({
       showChat: newChatState,
     });
-
-    // Send event via chat API
-    try {
-      const token = localStorage.getItem("payload-token");
-      const chatApiUrl =
-        process.env.NEXT_PUBLIC_CHAT_API_URL || "http://144.76.109.45:8089";
-
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-
-      if (token) {
-        headers["Authorization"] = `JWT ${token}`;
-      }
-
-      await fetch(`${chatApiUrl}/chat/${webinar.id}/events`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          type: "event",
-          data: {
-            showChat: newChatState,
-          },
-        }),
-      });
-
-      console.log(`Chat toggle event sent: showChat=${newChatState}`);
-    } catch (eventError) {
-      console.warn("Failed to send chat toggle event:", eventError);
-    }
   };
 
   return (
@@ -272,8 +238,12 @@ export function WebinarSettingsModal({
               <div className="flex items-center gap-3">
                 <Users className="h-5 w-5 text-blue-500" />
                 <div>
-                  <p className="text-2xl font-bold text-blue-500">{onlineParticipants}</p>
-                  <p className="text-sm text-muted-foreground">Участников онлайн</p>
+                  <p className="text-2xl font-bold text-blue-500">
+                    {onlineParticipants}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Участников онлайн
+                  </p>
                 </div>
               </div>
             </div>
@@ -295,7 +265,6 @@ export function WebinarSettingsModal({
                 </Button>
               )}
 
-              {/* Дополнительные кнопки управления */}
               <Button
                 variant="outline"
                 onClick={handleToggleChat}
@@ -330,7 +299,6 @@ export function WebinarSettingsModal({
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Настройки баннера</h3>
             <div className="space-y-4 p-4 border rounded-lg">
-              {/* Banner URL */}
               <div className="flex items-center gap-4">
                 <div className="flex-1">
                   <Label htmlFor="bannerUrl">URL баннера</Label>
@@ -353,7 +321,6 @@ export function WebinarSettingsModal({
                 </div>
               </div>
 
-              {/* Button */}
               <div className="flex items-center gap-4">
                 <div className="flex-1">
                   <Label htmlFor="bannerButton">URL кнопки</Label>

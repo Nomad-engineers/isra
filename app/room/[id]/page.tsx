@@ -23,6 +23,7 @@ import {
 import { VidstackPlayer } from "@/components/video/vidstack-player";
 import { WebinarSettingsModal } from "@/components/webinars/webinar-settings-modal";
 import { WebinarBanner } from "@/components/webinars/webinar-banner";
+import { WebinarAccessModal } from "@/components/webinars/webinar-access";
 import { roomsApi } from "@/api/rooms";
 import { WebinarRoomStats } from "@/types/webinar";
 
@@ -52,7 +53,16 @@ interface WebinarData {
   showBtn?: boolean;
   startedAt?: string;
   createdAt: string;
-  user?: WebinarUser;
+  user: WebinarUser;
+}
+
+interface CurrentUser {
+  id: number;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  role: string;
 }
 
 export default function WebinarRoomPage({
@@ -68,6 +78,9 @@ export default function WebinarRoomPage({
   const { id: roomId } = use(params);
 
   const [webinar, setWebinar] = useState<WebinarData | null>(null);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+  const [isOwner, setIsOwner] = useState(false);
+  const [needsAuth, setNeedsAuth] = useState(false);
   const [loading, setLoading] = useState(true);
   const [messageText, setMessageText] = useState("");
   const [userName, setUserName] = useState("Гость");
@@ -107,6 +120,35 @@ export default function WebinarRoomPage({
     autoConnect: !!userPhone && !!userName,
   });
 
+  // Функция для получения текущего пользователя
+  const fetchCurrentUser = async (): Promise<CurrentUser | null> => {
+    try {
+      const token = localStorage.getItem("payload-token");
+
+      if (!token) {
+        return null;
+      }
+
+      const response = await fetch("https://isracms.vercel.app/api/users/me", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `JWT ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        return null;
+      }
+
+      const userData = await response.json();
+      return userData.user || userData;
+    } catch (error) {
+      console.error("Error fetching current user:", error);
+      return null;
+    }
+  };
+
   useEffect(() => {
     if (userPhone && userName) {
       setLoadingHistory(true);
@@ -141,49 +183,42 @@ export default function WebinarRoomPage({
                 ...prev,
                 showChat: event.data.showChat,
               }));
-              console.log("Chat visibility updated:", event.data.showChat);
             }
             if (event.data.isVolumeOn !== undefined) {
               setWebinarSettings((prev) => ({
                 ...prev,
                 isVolumeOn: event.data.isVolumeOn,
               }));
-              console.log("Audio volume updated:", event.data.isVolumeOn);
             }
             if (event.data.muted !== undefined) {
               setWebinarSettings((prev) => ({
                 ...prev,
                 isVolumeOn: !event.data.muted,
               }));
-              console.log("Audio mute updated (legacy):", event.data.muted);
             }
             if (event.data.bannerUrl !== undefined) {
               setWebinarSettings((prev) => ({
                 ...prev,
                 bannerUrl: event.data.bannerUrl,
               }));
-              console.log("Banner URL updated:", event.data.bannerUrl);
             }
             if (event.data.showBanner !== undefined) {
               setWebinarSettings((prev) => ({
                 ...prev,
                 showBanner: event.data.showBanner,
               }));
-              console.log("Banner show updated:", event.data.showBanner);
             }
             if (event.data.btnUrl !== undefined) {
               setWebinarSettings((prev) => ({
                 ...prev,
                 btnUrl: event.data.btnUrl,
               }));
-              console.log("Banner button URL updated:", event.data.btnUrl);
             }
             if (event.data.showBtn !== undefined) {
               setWebinarSettings((prev) => ({
                 ...prev,
                 showBtn: event.data.showBtn,
               }));
-              console.log("Banner button show updated:", event.data.showBtn);
             }
             if (event.data.bannerSettings) {
               setWebinarSettings((prev) => ({
@@ -193,18 +228,10 @@ export default function WebinarRoomPage({
                 btnUrl: event.data.bannerSettings.button,
                 showBtn: !!event.data.bannerSettings.button,
               }));
-              console.log(
-                "Banner settings updated (legacy):",
-                event.data.bannerSettings
-              );
             }
             if (event.data.roomStarted !== undefined) {
               setWebinar((prev) =>
                 prev ? { ...prev, roomStarted: event.data.roomStarted } : null
-              );
-              console.log(
-                "Webinar room status updated:",
-                event.data.roomStarted
               );
             }
             break;
@@ -223,34 +250,60 @@ export default function WebinarRoomPage({
   useEffect(() => {
     const fetchWebinarAndValidate = async () => {
       try {
+        // 1. Получаем данные вебинара
         const webinarResponse = await fetch(
           `https://isracms.vercel.app/api/rooms/${roomId}`
         );
 
         if (!webinarResponse.ok) {
-          console.warn("Failed to fetch webinar, using mock data");
-          const mockData: WebinarData = {
-            id: roomId,
-            name: "Тестовый вебинар",
-            description: "Это тестовый вебинар для демонстрации чата",
-            speaker: "Спикер",
-            type: "webinar",
-            videoUrl: "",
-            scheduledDate: new Date().toISOString(),
-            roomStarted: true,
-            showChat: true,
-            createdAt: new Date().toISOString(),
-          };
-          setWebinar(mockData);
+          throw new Error("Failed to fetch webinar");
+        }
+
+        const webinarData: WebinarData = await webinarResponse.json();
+        setWebinar(webinarData);
+
+        // 2. Получаем текущего пользователя
+        const user = await fetchCurrentUser();
+        setCurrentUser(user);
+
+        // 3. Проверяем, является ли пользователь владельцем вебинара
+        const isWebinarOwner =
+          user && webinarData.user && user.id === webinarData.user.id;
+        setIsOwner(isWebinarOwner);
+
+        // 4. Если пользователь - владелец, пропускаем аутентификацию
+        if (isWebinarOwner) {
+          console.log(
+            "User is the webinar owner, skipping guest authentication"
+          );
+
+          // Устанавливаем имя владельца для чата
+          const ownerName =
+            user.firstName || user.email.split("@")[0] || "Владелец";
+          setUserName(ownerName);
+          setUserPhone(user.phone || user.email);
+
           setLoading(false);
           setLoadingHistory(false);
           return;
         }
 
-        const webinarData = await webinarResponse.json();
-        setWebinar(webinarData);
+        // 5. Если не владелец, проверяем сохраненные данные гостя
+        const storedName = localStorage.getItem("user_name");
+        const storedPhone = localStorage.getItem("user_phone");
 
-        await handleGuestAuth();
+        if (storedName && storedPhone) {
+          // Есть сохраненные данные, используем их
+          setUserName(storedName);
+          setUserPhone(storedPhone);
+          setLoading(false);
+          setLoadingHistory(false);
+        } else {
+          // Нет сохраненных данных, показываем модальное окно аутентификации
+          setNeedsAuth(true);
+          setLoading(false);
+          setLoadingHistory(false);
+        }
       } catch (error) {
         console.error("Error fetching webinar:", error);
         setLoading(false);
@@ -264,25 +317,24 @@ export default function WebinarRoomPage({
       }
     };
 
-    const handleGuestAuth = async () => {
-      const storedName = localStorage.getItem("user_name");
-      const storedPhone = localStorage.getItem("user_phone");
-
-      if (!storedName || !storedPhone) {
-        router.push(`/room/${roomId}/auth`);
-        return;
-      }
-
-      setUserName(storedName);
-      setUserPhone(storedPhone);
-      setLoading(false);
-      setLoadingHistory(false);
-    };
-
     fetchWebinarAndValidate();
   }, [roomId, router, toast]);
 
-  // Timer for duration and sync video
+  // Callback после успешной аутентификации
+  const handleAuthenticated = (name: string, phone: string) => {
+    setUserName(name);
+    setUserPhone(phone);
+    setNeedsAuth(false);
+    setLoadingHistory(false);
+
+    toast({
+      title: "Добро пожаловать!",
+      description: `${name}, вы успешно вошли в вебинар`,
+      variant: "default",
+    });
+  };
+
+  // Timer for duration
   useEffect(() => {
     if (!webinar?.roomStarted || !webinar?.startedAt) return;
 
@@ -292,7 +344,7 @@ export default function WebinarRoomPage({
     const initialElapsed = Math.floor((Date.now() - startTime) / 1000);
     setVideoStartTime(initialElapsed);
 
-    // Calculate elapsed time and set video position
+    // Update only the timer display, not video position
     const updateTimer = () => {
       const elapsed = Math.floor((Date.now() - startTime) / 1000);
       const hours = Math.floor(elapsed / 3600);
@@ -304,20 +356,9 @@ export default function WebinarRoomPage({
           .toString()
           .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
       );
-
-      // Sync video time if player exists and video is not at correct position
-      if (videoPlayerRef.current && videoPlayerRef.current.getCurrentTime) {
-        const currentTime = videoPlayerRef.current.getCurrentTime();
-        const timeDiff = Math.abs(currentTime - elapsed);
-
-        // Only sync if difference is more than 3 seconds to avoid constant adjustments
-        if (timeDiff > 3) {
-          videoPlayerRef.current.setCurrentTime(elapsed);
-        }
-      }
     };
 
-    // Initial sync
+    // Initial timer update
     updateTimer();
 
     const timer = setInterval(updateTimer, 1000);
@@ -334,10 +375,9 @@ export default function WebinarRoomPage({
     try {
       const stats = await roomsApi.getWebinarStats(roomId);
       setOnlineParticipants(stats.onlineParticipants);
-      setViewerCount(stats.onlineParticipants); // Update viewer count to match online participants
+      setViewerCount(stats.onlineParticipants);
     } catch (error) {
       console.error("Failed to fetch webinar stats:", error);
-      // Keep using mock data if API fails
     }
   };
 
@@ -501,6 +541,13 @@ export default function WebinarRoomPage({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-isra-dark via-isra-medium to-isra-dark">
+      {/* Модальное окно аутентификации для гостей */}
+      <WebinarAccessModal
+        roomId={roomId}
+        open={needsAuth}
+        onAuthenticated={handleAuthenticated}
+      />
+
       <div className="bg-isra-dark/50 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
@@ -519,6 +566,9 @@ export default function WebinarRoomPage({
                 <h1 className="text-xl font-bold text-white">{webinar.name}</h1>
                 <p className="text-sm text-gray-400">
                   Ведущий: {webinar.speaker}
+                  {isOwner && (
+                    <span className="ml-2 text-isra-cyan">(Вы владелец)</span>
+                  )}
                 </p>
               </div>
             </div>
@@ -531,14 +581,16 @@ export default function WebinarRoomPage({
                 </div>
               )}
 
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-white"
-                onClick={() => setSettingsOpen(true)}
-              >
-                <Settings className="h-4 w-4" />
-              </Button>
+              {isOwner && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-white"
+                  onClick={() => setSettingsOpen(true)}
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -733,21 +785,25 @@ export default function WebinarRoomPage({
         )}
       </div>
 
-      <WebinarSettingsModal
-        webinar={webinar}
-        open={settingsOpen}
-        onOpenChange={setSettingsOpen}
-        onlineParticipants={onlineParticipants}
-        onSettingsUpdate={(updatedWebinar) => {
-          setWebinar((prev) => (prev ? { ...prev, ...updatedWebinar } : null));
-          if (updatedWebinar.showChat !== undefined) {
-            setWebinarSettings((prev) => ({
-              ...prev,
-              showChat: updatedWebinar.showChat!,
-            }));
-          }
-        }}
-      />
+      {isOwner && (
+        <WebinarSettingsModal
+          webinar={webinar}
+          open={settingsOpen}
+          onOpenChange={setSettingsOpen}
+          onlineParticipants={onlineParticipants}
+          onSettingsUpdate={(updatedWebinar) => {
+            setWebinar((prev) =>
+              prev ? { ...prev, ...updatedWebinar } : null
+            );
+            if (updatedWebinar.showChat !== undefined) {
+              setWebinarSettings((prev) => ({
+                ...prev,
+                showChat: updatedWebinar.showChat!,
+              }));
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

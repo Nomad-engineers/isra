@@ -46,6 +46,7 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
       showCustomControls = false,
       onPlayStateChange,
       startTime = 0,
+      disableInteraction = false,
     },
     ref
   ) => {
@@ -166,18 +167,31 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
         }
       };
 
+      // Prevent pause/stop when disableInteraction is true
+      const preventPause = (e: Event) => {
+        if (disableInteraction && isPlaying) {
+          e.preventDefault();
+          video.play();
+        }
+      };
+
       video.addEventListener("play", handlePlayEvent);
       video.addEventListener("pause", handlePauseEvent);
       video.addEventListener("ended", handleEndedEvent);
       video.addEventListener("loadedmetadata", handleLoadedMetadata);
+
+      if (disableInteraction) {
+        video.addEventListener("pause", preventPause);
+      }
 
       return () => {
         video.removeEventListener("play", handlePlayEvent);
         video.removeEventListener("pause", handlePauseEvent);
         video.removeEventListener("ended", handleEndedEvent);
         video.removeEventListener("loadedmetadata", handleLoadedMetadata);
+        video.removeEventListener("pause", preventPause);
       };
-    }, [onPlayStateChange, startTime, autoPlay]);
+    }, [onPlayStateChange, startTime, autoPlay, disableInteraction, isPlaying]);
 
     // Extract YouTube video ID from URL
     const getYoutubeVideoId = (url: string) => {
@@ -213,12 +227,10 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
           style={{ aspectRatio }}
         >
           <style jsx>{`
-            /* Hide YouTube video title and all related elements */
             iframe[src*="youtube.com"] {
-              pointer-events: none;
+              pointer-events: ${disableInteraction ? "none" : "auto"};
             }
 
-            /* Hide title overlays and branding */
             .ytp-title-text,
             .ytp-title,
             .ytp-title-channel,
@@ -236,7 +248,6 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
               visibility: hidden !important;
             }
 
-            /* Hide "More videos" and recommendations */
             .ytp-pause-overlay,
             .ytp-recommendations,
             .ytp-suggestion,
@@ -252,7 +263,6 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
               visibility: hidden !important;
             }
 
-            /* Hide buttons and interactive elements */
             .ytp-button,
             .ytp-next-button,
             .ytp-prev-button,
@@ -265,7 +275,6 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
               visibility: hidden !important;
             }
 
-            /* Hide any overlays that might contain titles or suggestions */
             .ytp-ce-element,
             .ytp-ce,
             .ytp-ce-video,
@@ -278,7 +287,6 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
               visibility: hidden !important;
             }
 
-            /* Hide YouTube's overlay advertisements and cards */
             .ytp-ad-overlay,
             .ytp-cards-button,
             .ytp-cards-teaser,
@@ -289,7 +297,6 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
               visibility: hidden !important;
             }
 
-            /* Hide YouTube's video info and suggestions */
             .ytp-info-panel,
             .ytp-info-panel-content,
             .ytp-info-panel-title,
@@ -299,7 +306,6 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
               visibility: hidden !important;
             }
 
-            /* Hide YouTube's "More videos" and end screen suggestions more aggressively */
             .ytp-pause-overlay,
             .ytp-related-videos,
             .ytp-suggested-video,
@@ -334,7 +340,7 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
             allowFullScreen
             referrerPolicy="strict-origin-when-cross-origin"
             style={{
-              pointerEvents: showCustomControls ? "none" : "auto",
+              pointerEvents: "none",
               WebkitUserSelect: "none",
               userSelect: "none",
             }}
@@ -404,17 +410,15 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
               }
             }}
           />
+
+          {/* Overlay to block all interactions */}
           <div
-            className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-black via-black/90 to-transparent z-20 pointer-events-none"
-            style={{ height: "20%" }}
+            className="absolute inset-0 z-30 cursor-default"
+            style={{ pointerEvents: "auto" }}
+            onClick={(e) => e.preventDefault()}
+            onContextMenu={(e) => e.preventDefault()}
           />
-          <div
-            className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/90 to-transparent z-20 pointer-events-none"
-            style={{
-              height: showCustomControls ? "60px" : "25%",
-              display: "block",
-            }}
-          />
+
           <div
             className="absolute bottom-0 left-0 right-0 bg-black z-25 pointer-events-none"
             style={{
@@ -422,10 +426,9 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
               display: "block",
             }}
           />
-          <div className="absolute top-0 right-0 bottom-0 w-12 bg-gradient-to-l from-black via-black/60 to-transparent z-20 pointer-events-none" />
 
           {showCustomControls && (
-            <div className="absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-sm p-4 z-30 pointer-events-none">
+            <div className="absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-sm p-4 z-40 pointer-events-none">
               <div className="flex items-center gap-2 pointer-events-auto">
                 <Button
                   variant="secondary"
@@ -476,10 +479,25 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
           playsInline
           autoPlay={autoPlay}
           muted={muted}
-          controls={controls && !showCustomControls}
+          controls={false}
+          controlsList="nodownload nofullscreen noremoteplayback"
+          disablePictureInPicture
+          onContextMenu={(e) => e.preventDefault()}
+          style={{
+            pointerEvents: "none",
+          }}
         />
+
+        {/* Overlay to block all interactions */}
+        <div
+          className="absolute inset-0 z-30 cursor-default"
+          style={{ pointerEvents: "auto" }}
+          onClick={(e) => e.preventDefault()}
+          onContextMenu={(e) => e.preventDefault()}
+        />
+
         {showCustomControls && (
-          <div className="absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-sm p-4">
+          <div className="absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-sm p-4 z-40">
             <div className="flex items-center gap-2">
               <Button
                 variant="secondary"

@@ -441,8 +441,8 @@ export default function WebinarRoomPage({
       videoPlayerRef.current.setCurrentTime(elapsed);
       videoPlayerRef.current.play();
 
-      setIsVideoPlaying(true);
-      setWebinarStarted(true);
+      setIsVideoPlaying(false);
+      setWebinarStarted(false);
     }
   };
 
@@ -764,7 +764,7 @@ export default function WebinarRoomPage({
                     }
                     autoPlay={webinar.roomStarted}
                     muted={!webinarSettings.isVolumeOn}
-                    controls={true}
+                    controls={isOwner}
                     aspectRatio="16/9"
                     startTime={videoStartTime}
                     onPlayStateChange={handleVideoStateChange}

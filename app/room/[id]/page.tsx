@@ -9,6 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { useChatWebSocket } from "@/hooks/use-chat-websocket";
 import { SendEventRequest } from "@/lib/chat-websocket";
+import { useWebinarSession } from "@/hooks/use-webinar-session";
+import { WebinarAccessForm } from "@/components/webinars/webinar-access-form";
+
 import {
   ArrowLeft,
   Send,
@@ -19,6 +22,7 @@ import {
   Wifi,
   WifiOff,
   Clock,
+  Shield,
 } from "lucide-react";
 import { VidstackPlayer } from "@/components/video/vidstack-player";
 import { WebinarSettingsModal } from "@/components/webinars/webinar-settings-modal";
@@ -67,17 +71,27 @@ export default function WebinarRoomPage({
 
   const { id: roomId } = use(params);
 
+  const { hasAccess, isChecking, saveWebinarSession, getSessionData } =
+    useWebinarSession(roomId);
+
   const [webinar, setWebinar] = useState<WebinarData | null>(null);
   const [loading, setLoading] = useState(true);
   const [messageText, setMessageText] = useState("");
   const [userName, setUserName] = useState("Гость");
   const [userPhone, setUserPhone] = useState("");
+  const [userEmail, setUserEmail] = useState("");
+  const [userRole, setUserRole] = useState("user");
+  const [authError, setAuthError] = useState("");
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [viewerCount, setViewerCount] = useState(0);
   const [onlineParticipants, setOnlineParticipants] = useState(0);
   const [duration, setDuration] = useState("00:00:00");
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [webinarStarted, setWebinarStarted] = useState(false);
   const [videoStartTime, setVideoStartTime] = useState(0);
+  const [isMuted, setIsMuted] = useState(false);
+  const [audioInitialized, setAudioInitialized] = useState(false);
+  const [isCreator, setIsCreator] = useState(false);
 
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -102,13 +116,21 @@ export default function WebinarRoomPage({
     error: chatError,
   } = useChatWebSocket({
     roomId,
-    userIdentifier: userPhone,
+    userIdentifier: userEmail,
     userName,
-    autoConnect: !!userPhone && !!userName,
+    autoConnect: !!userEmail && !!userName,
   });
 
   useEffect(() => {
-    if (userPhone && userName) {
+    const sessionData = getSessionData();
+    if (sessionData && sessionData.verified) {
+      setUserName(`${sessionData.firstName} ${sessionData.lastName}`);
+      setUserEmail(sessionData.email);
+    }
+  }, [roomId]);
+
+  useEffect(() => {
+    if (userEmail && userName) {
       setLoadingHistory(true);
       loadMessages()
         .then(() => {
@@ -121,7 +143,7 @@ export default function WebinarRoomPage({
           setLoadingHistory(false);
         });
     }
-  }, [userPhone, userName, loadMessages]);
+  }, [userEmail, userName, loadMessages]);
 
   useEffect(() => {
     if (chatError) {
@@ -130,95 +152,34 @@ export default function WebinarRoomPage({
   }, [chatError]);
 
   useEffect(() => {
-    if (events.length > 0) {
-      events.forEach((event) => {
-        console.log("Received event:", event.type, event.data);
+    if (!webinar?.roomStarted || !webinar?.startedAt) return;
 
-        switch (event.type) {
-          case "event":
-            if (event.data.showChat !== undefined) {
-              setWebinarSettings((prev) => ({
-                ...prev,
-                showChat: event.data.showChat,
-              }));
-              console.log("Chat visibility updated:", event.data.showChat);
-            }
-            if (event.data.isVolumeOn !== undefined) {
-              setWebinarSettings((prev) => ({
-                ...prev,
-                isVolumeOn: event.data.isVolumeOn,
-              }));
-              console.log("Audio volume updated:", event.data.isVolumeOn);
-            }
-            if (event.data.muted !== undefined) {
-              setWebinarSettings((prev) => ({
-                ...prev,
-                isVolumeOn: !event.data.muted,
-              }));
-              console.log("Audio mute updated (legacy):", event.data.muted);
-            }
-            if (event.data.bannerUrl !== undefined) {
-              setWebinarSettings((prev) => ({
-                ...prev,
-                bannerUrl: event.data.bannerUrl,
-              }));
-              console.log("Banner URL updated:", event.data.bannerUrl);
-            }
-            if (event.data.showBanner !== undefined) {
-              setWebinarSettings((prev) => ({
-                ...prev,
-                showBanner: event.data.showBanner,
-              }));
-              console.log("Banner show updated:", event.data.showBanner);
-            }
-            if (event.data.btnUrl !== undefined) {
-              setWebinarSettings((prev) => ({
-                ...prev,
-                btnUrl: event.data.btnUrl,
-              }));
-              console.log("Banner button URL updated:", event.data.btnUrl);
-            }
-            if (event.data.showBtn !== undefined) {
-              setWebinarSettings((prev) => ({
-                ...prev,
-                showBtn: event.data.showBtn,
-              }));
-              console.log("Banner button show updated:", event.data.showBtn);
-            }
-            if (event.data.bannerSettings) {
-              setWebinarSettings((prev) => ({
-                ...prev,
-                bannerUrl: event.data.bannerSettings.text || "",
-                showBanner: event.data.bannerSettings.show,
-                btnUrl: event.data.bannerSettings.button,
-                showBtn: !!event.data.bannerSettings.button,
-              }));
-              console.log(
-                "Banner settings updated (legacy):",
-                event.data.bannerSettings
-              );
-            }
-            if (event.data.roomStarted !== undefined) {
-              setWebinar((prev) =>
-                prev ? { ...prev, roomStarted: event.data.roomStarted } : null
-              );
-              console.log(
-                "Webinar room status updated:",
-                event.data.roomStarted
-              );
-            }
-            break;
+    const startTime = new Date(webinar.startedAt).getTime();
+    const initialElapsed = Math.floor((Date.now() - startTime) / 1000);
+    setVideoStartTime(initialElapsed);
 
-          default:
-            toast({
-              title: `Получен ивент: ${event.type}`,
-              description: JSON.stringify(event.data, null, 2),
-              variant: "default",
-            });
-        }
-      });
+    if (videoPlayerRef.current && videoPlayerRef.current.setCurrentTime) {
+      videoPlayerRef.current.setCurrentTime(initialElapsed);
     }
-  }, [events, toast]);
+
+    const updateTimer = () => {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const hours = Math.floor(elapsed / 3600);
+      const minutes = Math.floor((elapsed % 3600) / 60);
+      const seconds = elapsed % 60;
+
+      setDuration(
+        `${hours.toString().padStart(2, "0")}:${minutes
+          .toString()
+          .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
+      );
+    };
+
+    updateTimer();
+    const timer = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(timer);
+  }, [webinar?.roomStarted, webinar?.startedAt]);
 
   useEffect(() => {
     const fetchWebinarAndValidate = async () => {
@@ -239,6 +200,7 @@ export default function WebinarRoomPage({
             scheduledDate: new Date().toISOString(),
             roomStarted: true,
             showChat: true,
+            isVolumeOn: true,
             createdAt: new Date().toISOString(),
           };
           setWebinar(mockData);
@@ -250,7 +212,15 @@ export default function WebinarRoomPage({
         const webinarData = await webinarResponse.json();
         setWebinar(webinarData);
 
-        await handleGuestAuth();
+        const volumeState = webinarData.isVolumeOn ?? true;
+        setWebinarSettings((prev) => ({
+          ...prev,
+          isVolumeOn: volumeState,
+        }));
+        setIsMuted(!volumeState);
+        setAudioInitialized(true);
+
+        await handleGuestAuth(webinarData);
       } catch (error) {
         console.error("Error fetching webinar:", error);
         setLoading(false);
@@ -264,17 +234,101 @@ export default function WebinarRoomPage({
       }
     };
 
-    const handleGuestAuth = async () => {
-      const storedName = localStorage.getItem("user_name");
-      const storedPhone = localStorage.getItem("user_phone");
+    const handleGuestAuth = async (webinarData: WebinarData) => {
+      // Сначала проверяем сессию вебинара - возможно пользователь уже входил
+      const sessionData = getSessionData();
 
-      if (!storedName || !storedPhone) {
-        router.push(`/room/${roomId}/auth`);
+      if (sessionData && sessionData.verified) {
+        console.log("Found session data:", sessionData);
+
+        // Проверяем, является ли этот пользователь создателем вебинара
+        if (
+          sessionData.userId &&
+          webinarData.user &&
+          sessionData.userId === webinarData.user.id
+        ) {
+          console.log("User is webinar creator (from session)");
+          setIsCreator(true);
+          setUserRole("admin");
+        }
+
+        setUserName(`${sessionData.firstName} ${sessionData.lastName}`);
+        setUserEmail(sessionData.email);
+        await fetchUserRole(sessionData.email);
+
+        setLoading(false);
+        setLoadingHistory(false);
         return;
       }
 
-      setUserName(storedName);
-      setUserPhone(storedPhone);
+      // Если нет сессии, пробуем проверить через API авторизацию
+      try {
+        console.log("Checking user authentication via API...");
+
+        const meResponse = await fetch(
+          "https://isracms.vercel.app/api/users/me",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        console.log("API response status:", meResponse.status);
+
+        if (meResponse.ok) {
+          const responseData = await meResponse.json();
+          console.log("Current user data:", responseData);
+
+          // Проверяем разные структуры ответа
+          const currentUser = responseData.user || responseData;
+
+          // Если пользователь авторизован и есть его данные
+          if (currentUser && currentUser.id && !responseData.message) {
+            console.log("User is authenticated:", currentUser);
+
+            // Проверяем, является ли текущий пользователь создателем вебинара
+            if (webinarData.user && currentUser.id === webinarData.user.id) {
+              console.log("User is webinar creator!");
+              setIsCreator(true);
+              setUserRole("admin");
+
+              const firstName = currentUser.firstName || "Создатель";
+              const lastName = currentUser.lastName || "";
+              const email = currentUser.email;
+
+              setUserName(`${firstName} ${lastName}`.trim());
+              setUserEmail(email);
+
+              // Автоматически сохраняем сессию для создателя
+              saveWebinarSession({
+                firstName,
+                lastName,
+                userId: currentUser.id,
+                email,
+              });
+
+              setLoading(false);
+              setLoadingHistory(false);
+              return;
+            } else {
+              console.log("User is authenticated but not creator");
+              console.log("Current user ID:", currentUser.id);
+              console.log("Webinar creator ID:", webinarData.user?.id);
+            }
+          } else {
+            console.log(
+              "User is not authenticated or response structure is different"
+            );
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch current user:", error);
+      }
+
+      // Если дошли сюда - пользователь не авторизован и нет сессии
+      console.log("No authentication found, showing access form");
       setLoading(false);
       setLoadingHistory(false);
     };
@@ -282,48 +336,39 @@ export default function WebinarRoomPage({
     fetchWebinarAndValidate();
   }, [roomId, router, toast]);
 
-  // Timer for duration and sync video
   useEffect(() => {
-    if (!webinar?.roomStarted || !webinar?.startedAt) return;
+    const volumeEvent = events.find(
+      (e) => e.type === "event" && e.data?.isVolumeOn !== undefined
+    );
 
-    const startTime = new Date(webinar.startedAt).getTime();
+    if (volumeEvent && volumeEvent.data?.isVolumeOn !== undefined) {
+      const shouldMute = !volumeEvent.data.isVolumeOn;
+      setIsMuted(shouldMute);
+      setWebinarSettings((prev) => ({
+        ...prev,
+        isVolumeOn: volumeEvent.data.isVolumeOn,
+      }));
+    }
+  }, [events]);
 
-    // Calculate initial elapsed time and set it for video
-    const initialElapsed = Math.floor((Date.now() - startTime) / 1000);
-    setVideoStartTime(initialElapsed);
-
-    // Calculate elapsed time and set video position
-    const updateTimer = () => {
-      const elapsed = Math.floor((Date.now() - startTime) / 1000);
-      const hours = Math.floor(elapsed / 3600);
-      const minutes = Math.floor((elapsed % 3600) / 60);
-      const seconds = elapsed % 60;
-
-      setDuration(
-        `${hours.toString().padStart(2, "0")}:${minutes
-          .toString()
-          .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
+  const fetchUserRole = async (email: string) => {
+    try {
+      const response = await fetch(
+        `https://isracms.vercel.app/api/users?where[email][equals]=${encodeURIComponent(email)}`
       );
 
-      // Sync video time if player exists and video is not at correct position
-      if (videoPlayerRef.current && videoPlayerRef.current.getCurrentTime) {
-        const currentTime = videoPlayerRef.current.getCurrentTime();
-        const timeDiff = Math.abs(currentTime - elapsed);
+      if (response.ok) {
+        const userData = await response.json();
+        const users = Array.isArray(userData) ? userData : userData.docs || [];
 
-        // Only sync if difference is more than 3 seconds to avoid constant adjustments
-        if (timeDiff > 3) {
-          videoPlayerRef.current.setCurrentTime(elapsed);
+        if (users.length > 0) {
+          setUserRole(users[0].role || "user");
         }
       }
-    };
-
-    // Initial sync
-    updateTimer();
-
-    const timer = setInterval(updateTimer, 1000);
-
-    return () => clearInterval(timer);
-  }, [webinar]);
+    } catch (error) {
+      console.error("Failed to fetch user role:", error);
+    }
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -456,7 +501,7 @@ export default function WebinarRoomPage({
         toast({
           title: "Вебинар остановлен",
           description: "Вебинар и видео остановлены",
-          variant: "default",
+          variant: "destructive",
         });
       }
     } catch (error) {
@@ -469,7 +514,96 @@ export default function WebinarRoomPage({
     }
   };
 
-  if (loading) {
+  const handleAccessFormSubmit = async (data: {
+    firstName: string;
+    phone: string;
+  }) => {
+    setIsAuthenticating(true);
+    setAuthError("");
+
+    try {
+      console.log("Поиск пользователя по номеру:", data.phone);
+
+      const usersResponse = await fetch(
+        `https://isracms.vercel.app/api/users?where[phone][equals]=${encodeURIComponent(data.phone)}`
+      );
+
+      console.log("Ответ API статус:", usersResponse.status);
+
+      if (!usersResponse.ok) {
+        throw new Error("Ошибка при поиске пользователя");
+      }
+
+      const usersData = await usersResponse.json();
+      console.log("Данные пользователей:", usersData);
+
+      let users = [];
+      if (Array.isArray(usersData)) {
+        users = usersData;
+      } else if (usersData.docs && Array.isArray(usersData.docs)) {
+        users = usersData.docs;
+      }
+
+      console.log("Найдено пользователей:", users.length);
+
+      if (users.length === 0) {
+        throw new Error(
+          `Пользователь с номером телефона ${data.phone} не найден. Проверьте правильность введенного номера.`
+        );
+      }
+
+      const user = users[0];
+      console.log("Выбранный пользователь:", user);
+
+      if (!user.id) {
+        throw new Error("У пользователя отсутствует ID");
+      }
+
+      if (!user.email) {
+        throw new Error("У пользователя отсутствует email");
+      }
+
+      saveWebinarSession({
+        firstName: user.firstName || data.firstName,
+        lastName: user.lastName || "",
+        userId: user.id,
+        email: user.email,
+      });
+
+      setUserName(
+        `${user.firstName || data.firstName} ${user.lastName || ""}`.trim()
+      );
+      setUserEmail(user.email);
+      setUserPhone(user.phone || data.phone);
+      setUserRole(user.role || "user");
+
+      toast({
+        title: "Добро пожаловать!",
+        description: `${user.firstName || data.firstName}, вы успешно вошли в вебинар`,
+      });
+    } catch (error: any) {
+      console.error("Authentication error:", error);
+      setAuthError(
+        error.message || "Не удалось войти. Проверьте введенные данные."
+      );
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  const getMessageUserRole = (message: any): string => {
+    if (message.userRole) {
+      return message.userRole;
+    }
+
+    if (webinar?.user?.email === message.userEmail) {
+      return "admin";
+    }
+
+    return "user";
+  };
+
+  if (isChecking || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-isra-dark via-isra-medium to-isra-dark flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -477,6 +611,18 @@ export default function WebinarRoomPage({
           <p className="text-white text-lg">Загрузка вебинара...</p>
         </div>
       </div>
+    );
+  }
+
+  // Если пользователь - создатель вебинара, пропускаем проверку доступа
+  if (!isCreator && !hasAccess) {
+    return (
+      <WebinarAccessForm
+        webinarName={webinar?.name}
+        onSubmit={handleAccessFormSubmit}
+        isLoading={isAuthenticating}
+        error={authError}
+      />
     );
   }
 
@@ -524,6 +670,16 @@ export default function WebinarRoomPage({
             </div>
 
             <div className="flex items-center gap-4">
+              {isCreator && (
+                <Badge
+                  variant="outline"
+                  className="border-amber-400 text-amber-400"
+                >
+                  <Shield className="h-3 w-3 mr-1" />
+                  Создатель
+                </Badge>
+              )}
+
               {webinar.roomStarted && (
                 <div className="flex items-center gap-2 text-white">
                   <Clock className="h-4 w-4" />
@@ -650,27 +806,54 @@ export default function WebinarRoomPage({
                     </div>
                   ) : (
                     <>
-                      {messages.map((msg) => (
-                        <div key={msg.id} className="space-y-1">
-                          <div className="flex items-baseline gap-2">
-                            <span className="font-semibold text-isra-cyan text-sm">
-                              {msg.username}
-                            </span>
-                            <span className="text-xs text-gray-500">
-                              {new Date(msg.createdAt).toLocaleTimeString(
-                                "ru-RU",
-                                {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                }
-                              )}
-                            </span>
+                      {messages.map((msg) => {
+                        const msgRole = getMessageUserRole(msg);
+                        const isModerator =
+                          msgRole === "admin" || msgRole === "moderator";
+
+                        return (
+                          <div key={msg.id} className="space-y-1">
+                            <div className="flex items-baseline gap-2">
+                              <span
+                                className={`font-semibold text-sm flex items-center gap-1 ${
+                                  isModerator
+                                    ? "text-amber-400"
+                                    : "text-isra-cyan"
+                                }`}
+                              >
+                                {isModerator && <Shield className="h-3 w-3" />}
+                                {msg.username}
+                                {isModerator && (
+                                  <Badge
+                                    variant="outline"
+                                    className="ml-1 text-xs px-1 py-0 h-4 border-amber-400 text-amber-400"
+                                  >
+                                    МОД
+                                  </Badge>
+                                )}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {new Date(msg.createdAt).toLocaleTimeString(
+                                  "ru-RU",
+                                  {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  }
+                                )}
+                              </span>
+                            </div>
+                            <p
+                              className={`text-white text-sm rounded-lg px-3 py-2 ${
+                                isModerator
+                                  ? "bg-amber-500/10 border border-amber-500/20"
+                                  : "bg-white/5"
+                              }`}
+                            >
+                              {msg.message}
+                            </p>
                           </div>
-                          <p className="text-white text-sm bg-white/5 rounded-lg px-3 py-2">
-                            {msg.message}
-                          </p>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </>
                   )}
 
@@ -711,8 +894,8 @@ export default function WebinarRoomPage({
                       "https://www.youtube.com/watch?v=6fty5yB7bFo"
                     }
                     autoPlay={webinar.roomStarted}
-                    muted={!webinarSettings.isVolumeOn}
-                    controls={true}
+                    muted={isMuted}
+                    controls={false}
                     aspectRatio="16/9"
                     startTime={videoStartTime}
                     onPlayStateChange={handleVideoStateChange}
@@ -745,6 +928,14 @@ export default function WebinarRoomPage({
               ...prev,
               showChat: updatedWebinar.showChat!,
             }));
+          }
+          if (updatedWebinar.isVolumeOn !== undefined) {
+            setWebinarSettings((prev) => ({
+              ...prev,
+              isVolumeOn: updatedWebinar.isVolumeOn!,
+            }));
+            const shouldMute = !updatedWebinar.isVolumeOn;
+            setIsMuted(shouldMute);
           }
         }}
       />

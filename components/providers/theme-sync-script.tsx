@@ -11,8 +11,8 @@ export function ThemeSyncScript() {
         __html: `
           (function() {
             try {
-              // Get stored theme from localStorage, default to 'dark'
-              var theme = localStorage.getItem('isra-theme') || 'dark';
+              // Get stored theme from localStorage, default to 'system'
+              var theme = localStorage.getItem('isra-theme') || 'system';
               var root = document.documentElement;
 
               // Remove any existing theme classes
@@ -26,8 +26,9 @@ export function ThemeSyncScript() {
                 root.classList.add(theme);
               }
             } catch (e) {
-              // If anything fails, default to dark mode
-              document.documentElement.classList.add('dark');
+              // If anything fails, follow system preference
+              var fallback = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+              document.documentElement.classList.add(fallback);
             }
           })();
         `,

@@ -81,12 +81,12 @@ export function formatDuration(milliseconds: number | undefined): string {
 
 export function getStatusColor(status: string): string {
   const colors: Record<string, string> = {
-    active: 'text-green-600 bg-green-50',
-    completed: 'text-blue-600 bg-blue-50',
-    scheduled: 'text-yellow-600 bg-yellow-50',
-    cancelled: 'text-red-600 bg-red-50'
+    active: 'bg-green-500 text-white border-green-500',
+    completed: 'bg-slate-700 text-white border-slate-700',
+    scheduled: 'bg-amber-500 text-white border-amber-500',
+    cancelled: 'bg-red-500 text-white border-red-500'
   }
-  return colors[status] || 'text-gray-600 bg-gray-50'
+  return colors[status] || 'bg-slate-500 text-white'
 }
 
 export function getStatusLabel(status: string): string {

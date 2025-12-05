@@ -562,7 +562,7 @@ export default function ProfilePage() {
     <div className="flex flex-col lg:flex-row gap-6">
       <div className="flex-1">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold tracking-tight text-white">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
             Профиль
           </h1>
           <p className="text-gray-400">
@@ -589,7 +589,7 @@ export default function ProfilePage() {
           <TabsContent value="profile" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-white">
+                <CardTitle className="flex items-center gap-2 text-foreground">
                   <User className="h-5 w-5" />
                   Профиль пользователя
                 </CardTitle>
@@ -606,7 +606,7 @@ export default function ProfilePage() {
 
           <TabsContent value="statistics" className="space-y-6">
             <div>
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-white">
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-foreground">
                 <BarChart3 className="h-5 w-5" />
                 Статистика
               </h2>
@@ -654,7 +654,7 @@ export default function ProfilePage() {
           <TabsContent value="tariff" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center justify-between text-white">
+                <CardTitle className="flex items-center justify-between text-foreground">
                   <div className="flex items-center gap-2">
                     <CreditCard className="h-5 w-5" />
                     Текущий тариф
@@ -668,7 +668,7 @@ export default function ProfilePage() {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-gray-400">Статус</span>
-                    <span className="font-medium text-white">
+                    <span className="font-medium text-foreground">
                       {profile.planStatus === "active"
                         ? "Активен"
                         : profile.planStatus === "trialing"
@@ -689,7 +689,7 @@ export default function ProfilePage() {
                   {profile.planEndDate && (
                     <div className="flex justify-between">
                       <span className="text-gray-400">Следующее списание</span>
-                      <span className="font-medium text-white">
+                      <span className="font-medium text-foreground">
                         {new Date(profile.planEndDate).toLocaleDateString(
                           "ru-RU",
                           {
@@ -705,7 +705,7 @@ export default function ProfilePage() {
                     <span className="text-gray-400">
                       Участников на вебинаре
                     </span>
-                    <span className="font-medium text-white">
+                    <span className="font-medium text-foreground">
                       {profile.plan?.participants
                         ? `До ${profile.plan.participants}`
                         : "Не ограничено"}
@@ -714,7 +714,7 @@ export default function ProfilePage() {
                   {profile.plan?.rooms && (
                     <div className="flex justify-between">
                       <span className="text-gray-400">Комнат</span>
-                      <span className="font-medium text-white">
+                      <span className="font-medium text-foreground">
                         До {profile.plan.rooms}
                       </span>
                     </div>
@@ -722,7 +722,7 @@ export default function ProfilePage() {
                   {profile.plan?.storage && (
                     <div className="flex justify-between">
                       <span className="text-gray-400">Хранилище</span>
-                      <span className="font-medium text-white">
+                      <span className="font-medium text-foreground">
                         {profile.plan.storage}
                       </span>
                     </div>
@@ -730,7 +730,7 @@ export default function ProfilePage() {
                   {profile.planBillingCycle && (
                     <div className="flex justify-between">
                       <span className="text-gray-400">Период billing</span>
-                      <span className="font-medium text-white">
+                      <span className="font-medium text-foreground">
                         {profile.planBillingCycle === "month"
                           ? "Месячная"
                           : "Годовая"}
@@ -755,7 +755,7 @@ export default function ProfilePage() {
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-white">Быстрые действия</CardTitle>
+              <CardTitle className="text-foreground">Быстрые действия</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -793,7 +793,7 @@ export default function ProfilePage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-white">Управление аккаунтом</CardTitle>
+              <CardTitle className="text-foreground">Управление аккаунтом</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <Dialog>

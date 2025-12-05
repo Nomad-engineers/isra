@@ -15,7 +15,7 @@ export default function TariffsPage() {
   // Show loading state
   if (loading) {
     return (
-      <div className='min-h-scree text-white'>
+      <div className='min-h-screen text-foreground'>
         <div className='container mx-auto px-4 py-8 max-w-7xl'>
           <PageLoader />
         </div>
@@ -97,13 +97,13 @@ export default function TariffsPage() {
   }
 
   return (
-    <div className='min-h-screen text-white'>
+    <div className='min-h-screen text-foreground'>
       <div className='container mx-auto px-4 py-8 max-w-7xl'>
         {/* Header Section */}
         <div className='mb-16'>
           <div className='flex items-center gap-3 mb-8'>
             <div className='w-1 h-8 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full'></div>
-            <h1 className='text-4xl font-bold text-white'>Баланс и тариф</h1>
+            <h1 className='text-4xl font-bold text-foreground'>Баланс и тариф</h1>
           </div>
 
         <div className='bg-gradient-to-r from-gray-900 via-gray-900 to-gray-800 rounded-2xl p-8 border border-gray-700 shadow-2xl backdrop-blur-sm'>
@@ -122,7 +122,7 @@ export default function TariffsPage() {
                 </div>
               </div>
               <div className='flex gap-3'>
-                <button className='px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-xl font-semibold text-white transition-all duration-300 transform hover:scale-105 hover:shadow-lg shadow-blue-600/20'>
+                <button className='px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-xl font-semibold text-foreground transition-all duration-300 transform hover:scale-105 hover:shadow-lg shadow-blue-600/20'>
                   Пополнить
                 </button>
                 <button className='px-6 py-4 bg-gray-800 hover:bg-gray-700 rounded-xl font-medium text-gray-300 transition-all duration-300 border border-gray-600'>
@@ -145,7 +145,7 @@ export default function TariffsPage() {
         {/* Pricing Cards */}
         <div className='mb-20'>
           <div className='text-center mb-12'>
-            <h2 className='text-3xl font-bold text-white mb-4'>Выберите подходящий тариф</h2>
+            <h2 className='text-3xl font-bold text-foreground mb-4'>Выберите подходящий тариф</h2>
             <p className='text-gray-400 text-lg max-w-2xl mx-auto'>
               Гибкие тарифные планы для любых потребностей вашего бизнеса
             </p>
@@ -163,7 +163,7 @@ export default function TariffsPage() {
         {/* Comparison Table */}
         <div className='mb-20'>
           <div className='text-center mb-12'>
-            <h2 className='text-3xl font-bold text-white mb-4'>Сравнение тарифов</h2>
+            <h2 className='text-3xl font-bold text-foreground mb-4'>Сравнение тарифов</h2>
             <p className='text-gray-400 text-lg max-w-2xl mx-auto'>
               Детальное сравнение всех возможностей каждого тарифа
             </p>
@@ -174,7 +174,7 @@ export default function TariffsPage() {
         {/* FAQ Section */}
         <div className='mb-20'>
           <div className='text-center mb-12'>
-            <h2 className='text-3xl font-bold text-white mb-4'>Часто задаваемые вопросы</h2>
+            <h2 className='text-3xl font-bold text-foreground mb-4'>Часто задаваемые вопросы</h2>
             <p className='text-gray-400 text-lg max-w-2xl mx-auto'>Ответы на популярные вопросы о наших тарифах</p>
           </div>
           <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
@@ -201,7 +201,7 @@ export default function TariffsPage() {
                 key={index}
                 className='bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600 transition-colors duration-300'
               >
-                <h3 className='text-lg font-semibold text-white mb-3'>{faq.question}</h3>
+                <h3 className='text-lg font-semibold text-foreground mb-3'>{faq.question}</h3>
                 <p className='text-gray-400 leading-relaxed'>{faq.answer}</p>
               </div>
             ))}
@@ -210,7 +210,7 @@ export default function TariffsPage() {
 
         {/* CTA Section */}
         <div className='bg-gradient-to-r from-blue-900 to-purple-900 rounded-2xl p-12 text-center mb-16 border border-blue-700/50'>
-          <h2 className='text-3xl font-bold text-white mb-4'>Остались вопросы?</h2>
+          <h2 className='text-3xl font-bold text-foreground mb-4'>Остались вопросы?</h2>
           <p className='text-blue-200 text-lg mb-8 max-w-2xl mx-auto'>
             Наша команда поддержки всегда готова помочь вам выбрать подходящий тариф
           </p>
@@ -218,7 +218,7 @@ export default function TariffsPage() {
             <button className='px-8 py-4 bg-white text-blue-900 hover:bg-gray-100 rounded-xl font-bold transition-all duration-300 transform hover:scale-105'>
               Связаться с поддержкой
             </button>
-            <button className='px-8 py-4 bg-transparent text-white hover:bg-white/10 border border-white/30 rounded-xl font-bold transition-all duration-300'>
+            <button className='px-8 py-4 bg-transparent text-foreground hover:bg-white/10 border border-white/30 rounded-xl font-bold transition-all duration-300'>
               Запросить демо
             </button>
           </div>

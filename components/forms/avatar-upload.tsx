@@ -51,12 +51,12 @@ export function AvatarUpload({
 
   return (
     <div className="space-y-4">
-      <Label className="text-white">Аватар профиля</Label>
+      <Label className="text-foreground">Аватар профиля</Label>
 
       <div className="flex items-start gap-6">
         {/* Avatar Preview */}
         <div className="relative group">
-          <Avatar className="h-24 w-24 border-2 border-isra">
+          <Avatar className="h-24 w-24 border-2 border-border">
             <AvatarImage src={displayAvatar} alt={userName} />
             <AvatarFallback className="gradient-primary text-primary-foreground text-2xl font-semibold">
               {initials}
@@ -65,13 +65,13 @@ export function AvatarUpload({
 
           {/* Overlay on hover */}
           <div className="absolute inset-0 bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-            <Camera className="h-8 w-8 text-white" />
+            <Camera className="h-8 w-8 text-primary-foreground" />
           </div>
         </div>
 
         {/* Upload Controls */}
         <div className="flex-1 space-y-3">
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-muted-foreground">
             Загрузите изображение для вашего профиля (JPG, PNG, WEBP, до 5 МБ)
           </p>
 

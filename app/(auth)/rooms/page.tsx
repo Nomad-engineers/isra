@@ -537,7 +537,7 @@ export default function RoomsPage() {
       <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
         <div>
           <div className='flex items-center gap-3'>
-            <h1 className='text-4xl font-bold tracking-tight text-white'>
+            <h1 className='text-4xl font-bold tracking-tight text-foreground'>
               Добро пожаловать, 👋 {getUserDisplayName()}!
             </h1>
           </div>
@@ -554,7 +554,7 @@ export default function RoomsPage() {
               placeholder={isAdmin ? 'Поиск по названию, владельцу...' : 'Поиск вебинаров...'}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className='pl-10 bg-white/5 backdrop-blur-md border-white/10 text-white placeholder:text-gray-400 focus:bg-white/10 focus:border-white/20 transition-all'
+              className='pl-10 bg-card/50 backdrop-blur-md border-border text-foreground placeholder:text-muted-foreground focus:bg-card/80 focus:border-primary/50 transition-all'
             />
           </div>
 
@@ -563,7 +563,7 @@ export default function RoomsPage() {
             size='sm'
             onClick={handleRefresh}
             disabled={loading}
-            className='bg-white/5 backdrop-blur-md border-white/10 text-white hover:bg-white/10 hover:border-white/20 transition-all'
+            className='bg-card/50 backdrop-blur-md border-border text-foreground hover:bg-card/80 hover:border-primary/50 transition-all'
           >
             {loading ? <Loader2 className='h-4 w-4 mr-2 animate-spin' /> : <RefreshCw className='h-4 w-4 mr-2' />}
             Обновить

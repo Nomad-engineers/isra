@@ -50,11 +50,12 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
     },
     ref
   ) => {
-    const [isPlaying, setIsPlaying] = useState(autoPlay);
+    const [isPlaying, setIsPlaying] = useState(false);
     const [isStopped, setIsStopped] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
     const iframeRef = useRef<HTMLIFrameElement>(null);
     const hasSetInitialTime = useRef(false);
+    const autoPlayAttempted = useRef(false);
 
     // Control functions for YouTube iframe
     const postMessageToYouTube = (action: string, value?: string) => {

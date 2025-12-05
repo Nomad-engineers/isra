@@ -1,17 +1,5 @@
 "use client";
-
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
 import { Loader2, UserCircle, Phone, Lock } from "lucide-react";
 
 interface WebinarAccessModalProps {
@@ -25,11 +13,10 @@ export function WebinarAccessModal({
   open,
   onAuthenticated,
 }: WebinarAccessModalProps) {
-  const { toast } = useToast();
-
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const verifyGuestAuth = async (
     guestName: string,
@@ -37,110 +24,101 @@ export function WebinarAccessModal({
   ): Promise<boolean> => {
     try {
       const response = await fetch(
-        `https://isracms.vercel.app/api/rooms/${roomId}/verify-guest`,
+        `https://isracms.vercel.app/api/rooms/${roomId}`,
         {
-          method: "POST",
+          method: "GET",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            name: guestName,
-            phone: guestPhone,
-          }),
         }
       );
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Verification failed");
+        throw new Error("Failed to fetch room data");
       }
 
-      const data = await response.json();
-      return data.verified === true;
+      const roomData = await response.json();
+
+      if (roomData.guests && Array.isArray(roomData.guests)) {
+        const guestFound = roomData.guests.some((guest: any) => {
+          const nameMatch =
+            guest.name?.toLowerCase() === guestName.toLowerCase();
+          const phoneMatch = guest.phone?.replace(/\D/g, "") === guestPhone;
+          return nameMatch && phoneMatch;
+        });
+        return guestFound;
+      }
+
+      console.warn("Guest list not found, allowing access");
+      return true;
     } catch (error) {
       console.error("Error verifying guest:", error);
       throw error;
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
+    setError("");
 
     if (!name.trim() || !phone.trim()) {
-      toast({
-        title: "Ошибка",
-        description: "Пожалуйста, заполните все поля",
-        variant: "destructive",
-      });
+      setError("Пожалуйста, заполните все поля");
       return;
     }
 
     setLoading(true);
 
     try {
-      // Проверяем гостя через API
-      const isVerified = await verifyGuestAuth(name.trim(), phone.trim());
+      const cleanPhone = phone.replace(/\D/g, "");
+
+      console.log("Аутентификация гостя:", {
+        name: name.trim(),
+        phone: cleanPhone,
+        formattedPhone: phone,
+      });
+
+      const isVerified = await verifyGuestAuth(name.trim(), cleanPhone);
 
       if (!isVerified) {
-        toast({
-          title: "Ошибка аутентификации",
-          description:
-            "Не удалось подтвердить ваши данные. Проверьте имя и номер телефона.",
-          variant: "destructive",
-        });
+        setError(
+          "Не удалось подтвердить ваши данные. Проверьте имя и номер телефона."
+        );
         setLoading(false);
         return;
       }
 
-      // Сохраняем данные в localStorage
-      localStorage.setItem("user_name", name.trim());
-      localStorage.setItem("user_phone", phone.trim());
+      onAuthenticated(name.trim(), cleanPhone);
 
-      toast({
-        title: "Успешно!",
-        description: "Вход выполнен успешно",
-        variant: "default",
-      });
-
-      // Вызываем callback с данными пользователя
-      onAuthenticated(name.trim(), phone.trim());
+      try {
+        sessionStorage.setItem(
+          `webinar_auth_${roomId}`,
+          JSON.stringify({
+            name: name.trim(),
+            phone: cleanPhone,
+            timestamp: Date.now(),
+          })
+        );
+      } catch (e) {
+        console.error("Failed to save auth data:", e);
+      }
     } catch (error) {
       console.error("Authentication error:", error);
-      toast({
-        title: "Ошибка",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Произошла ошибка при входе. Попробуйте еще раз.",
-        variant: "destructive",
-      });
-    } finally {
+      setError("Произошла ошибка при проверке данных. Попробуйте снова.");
       setLoading(false);
     }
   };
 
   const formatPhoneNumber = (value: string) => {
-    // Убираем все нечисловые символы
     const numbers = value.replace(/\D/g, "");
-
-    // Ограничиваем до 11 цифр
     const limited = numbers.slice(0, 11);
 
-    // Форматируем номер
     if (limited.length === 0) return "";
     if (limited.length <= 1) return `+${limited}`;
     if (limited.length <= 4) return `+${limited[0]} (${limited.slice(1)}`;
     if (limited.length <= 7)
       return `+${limited[0]} (${limited.slice(1, 4)}) ${limited.slice(4)}`;
     if (limited.length <= 9)
-      return `+${limited[0]} (${limited.slice(1, 4)}) ${limited.slice(
-        4,
-        7
-      )}-${limited.slice(7)}`;
-    return `+${limited[0]} (${limited.slice(1, 4)}) ${limited.slice(
-      4,
-      7
-    )}-${limited.slice(7, 9)}-${limited.slice(9, 11)}`;
+      return `+${limited[0]} (${limited.slice(1, 4)}) ${limited.slice(4, 7)}-${limited.slice(7)}`;
+    return `+${limited[0]} (${limited.slice(1, 4)}) ${limited.slice(4, 7)}-${limited.slice(7, 9)}-${limited.slice(9, 11)}`;
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -148,95 +126,99 @@ export function WebinarAccessModal({
     setPhone(formatted);
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !loading && name.trim() && phone.trim()) {
+      handleSubmit();
+    }
+  };
+
+  if (!open) return null;
+
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent
-        className="sm:max-w-[425px] bg-isra-dark border-white/10"
-        onInteractOutside={(e) => e.preventDefault()}
-        onEscapeKeyDown={(e) => e.preventDefault()}
-      >
-        <DialogHeader>
-          <div className="mx-auto w-12 h-12 bg-isra-primary/20 rounded-full flex items-center justify-center mb-4">
-            <Lock className="h-6 w-6 text-isra-primary" />
+    <div className="fixed inset-0 z-50 bg-black flex items-center justify-center p-4">
+      <div className="relative w-full max-w-md mx-4 bg-gradient-to-b from-gray-900 to-black border border-gray-800 rounded-2xl shadow-2xl">
+        <div className="p-8">
+          <div className="flex items-center justify-center w-16 h-16 mx-auto mb-6 bg-gray-800 rounded-full">
+            <Lock className="w-8 h-8 text-gray-300" />
           </div>
-          <DialogTitle className="text-2xl font-bold text-white text-center">
+
+          <h2 className="text-2xl font-bold text-center text-white mb-2">
             Вход в вебинар
-          </DialogTitle>
-          <DialogDescription className="text-gray-400 text-center">
+          </h2>
+          <p className="text-center text-gray-400 mb-8 text-sm">
             Для доступа к вебинару введите ваши данные, указанные при
             регистрации
-          </DialogDescription>
-        </DialogHeader>
+          </p>
 
-        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-          <div className="space-y-2">
-            <Label htmlFor="name" className="text-white">
-              Имя и Фамилия
-            </Label>
-            <div className="relative">
-              <UserCircle className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <Input
-                id="name"
-                type="text"
-                placeholder="Введите ваше имя"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                disabled={loading}
-                className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-gray-400"
-                required
-                autoFocus
-              />
+          <div className="space-y-5">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Имя и Фамилия
+              </label>
+              <div className="relative">
+                <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <input
+                  type="text"
+                  placeholder="Иван Иванов"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  disabled={loading}
+                  className="w-full pl-10 pr-4 py-3 bg-gray-900 border border-gray-800 rounded-lg text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-700 focus:border-transparent disabled:opacity-50 transition"
+                  autoFocus
+                />
+              </div>
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="phone" className="text-white">
-              Номер телефона
-            </Label>
-            <div className="relative">
-              <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="+7 (___) ___-__-__"
-                value={phone}
-                onChange={handlePhoneChange}
-                disabled={loading}
-                className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-gray-400"
-                required
-              />
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Номер телефона
+              </label>
+              <p className="text-xs text-gray-500 mb-2">
+                Введите номер телефона, указанный при регистрации
+              </p>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <input
+                  type="tel"
+                  placeholder="+7 (999) 999-99-99"
+                  value={phone}
+                  onChange={handlePhoneChange}
+                  onKeyPress={handleKeyPress}
+                  disabled={loading}
+                  className="w-full pl-10 pr-4 py-3 bg-gray-900 border border-gray-800 rounded-lg text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-700 focus:border-transparent disabled:opacity-50 transition"
+                />
+              </div>
             </div>
-            <p className="text-xs text-gray-400">
-              Введите номер телефона, указанный при регистрации
-            </p>
-          </div>
 
-          <div className="pt-2">
-            <Button
-              type="submit"
+            {error && (
+              <div className="p-4 bg-red-900/20 border border-red-800 rounded-lg">
+                <p className="text-sm text-red-400">{error}</p>
+              </div>
+            )}
+
+            <button
+              onClick={handleSubmit}
               disabled={loading || !name.trim() || !phone.trim()}
-              className="w-full gradient-primary"
-              size="lg"
+              className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="w-5 h-5 animate-spin" />
                   Проверка данных...
                 </>
               ) : (
                 <>Войти в вебинар</>
               )}
-            </Button>
+            </button>
           </div>
 
-          <div className="pt-4 border-t border-white/10">
-            <p className="text-xs text-gray-400 text-center">
-              Если у вас возникли проблемы со входом, обратитесь к организатору
-              вебинара
-            </p>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+          <p className="mt-6 text-xs text-center text-gray-500">
+            Если у вас возникли проблемы со входом, обратитесь к организатору
+            вебинара
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }

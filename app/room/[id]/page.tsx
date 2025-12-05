@@ -91,7 +91,7 @@ export default function WebinarRoomPage({
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [webinarStarted, setWebinarStarted] = useState(false);
   const [videoStartTime, setVideoStartTime] = useState(0);
-
+  const [shouldAutoPlay, setShouldAutoPlay] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [webinarSettings, setWebinarSettings] = useState({
@@ -288,22 +288,10 @@ export default function WebinarRoomPage({
           return;
         }
 
-        // 5. Если не владелец, проверяем сохраненные данные гостя
-        const storedName = localStorage.getItem("user_name");
-        const storedPhone = localStorage.getItem("user_phone");
-
-        if (storedName && storedPhone) {
-          // Есть сохраненные данные, используем их
-          setUserName(storedName);
-          setUserPhone(storedPhone);
-          setLoading(false);
-          setLoadingHistory(false);
-        } else {
-          // Нет сохраненных данных, показываем модальное окно аутентификации
-          setNeedsAuth(true);
-          setLoading(false);
-          setLoadingHistory(false);
-        }
+        // 5. Если не владелец, показываем модальное окно аутентификации для гостя
+        setNeedsAuth(true);
+        setLoading(false);
+        setLoadingHistory(false);
       } catch (error) {
         console.error("Error fetching webinar:", error);
         setLoading(false);

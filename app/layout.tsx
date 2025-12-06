@@ -44,10 +44,10 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <ThemeProvider
-          defaultTheme="dark"
+          defaultTheme="system"
           storageKey="isra-theme"
           attribute="class"
-          enableSystem={false}
+          enableSystem={true}
         >
           
             {children}

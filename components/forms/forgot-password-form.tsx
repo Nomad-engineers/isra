@@ -62,10 +62,10 @@ export function ForgotPasswordForm({ onSubmit, loading = false, onBackToLogin }:
         </div>
 
         <div className="space-y-2">
-          <h2 className="text-2xl font-bold text-white">Проверьте свою электронную почту</h2>
+          <h2 className="text-2xl font-bold text-foreground">Проверьте свою электронную почту</h2>
           <p className="text-muted-foreground">
             Мы отправили ссылку для сброса пароля на адрес<br />
-            <span className="font-medium text-white">{submittedEmail}</span>
+            <span className="font-medium text-foreground">{submittedEmail}</span>
           </p>
         </div>
 

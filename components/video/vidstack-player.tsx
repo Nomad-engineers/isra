@@ -1,14 +1,24 @@
 "use client";
 
 import {
-  useState,
   useRef,
-  useEffect,
   useImperativeHandle,
   forwardRef,
+  useCallback,
+  useState,
+  useEffect,
 } from "react";
-import { Play, Pause, Square } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import {
+  MediaPlayer,
+  MediaProvider,
+  Poster,
+  type MediaPlayerInstance,
+} from "@vidstack/react";
+import {
+  DefaultVideoLayout,
+  defaultLayoutIcons,
+} from "@vidstack/react/player/layouts/default";
+import { Play } from "lucide-react";
 
 interface VidstackPlayerProps {
   src?: string;
@@ -32,477 +42,283 @@ export interface VidstackPlayerRef {
   setCurrentTime: (time: number) => void;
 }
 
+// Extract YouTube video ID from various URL formats
+function getYoutubeVideoId(url: string): string | null {
+  if (!url) return null;
+
+  // Handle various YouTube URL formats
+  const regexPatterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/|youtube\.com\/e\/|youtube\.com\/user\/[^/]+\/\?v=)([^#&?\n]+)/,
+    /^([a-zA-Z0-9_-]{11})$/, // Direct video ID
+  ];
+
+  for (const regex of regexPatterns) {
+    const match = url.match(regex);
+    if (match && match[1] && match[1].length === 11) {
+      return match[1];
+    }
+  }
+
+  // Try extracting from standard watch URL
+  const urlParams = new URLSearchParams(url.split("?")[1] || "");
+  const vParam = urlParams.get("v");
+  if (vParam && vParam.length === 11) {
+    return vParam;
+  }
+
+  return null;
+}
+
+// Convert URL to Vidstack-compatible source
+function getVidstackSource(url: string): string {
+  if (!url) {
+    return "https://stream.mux.com/v69RSHhFelSm4701snP22dYz2jICy4E4FUyk02rW4gxRM.m3u8";
+  }
+
+  // Check if it's a YouTube URL
+  if (url.includes("youtube.com") || url.includes("youtu.be")) {
+    const videoId = getYoutubeVideoId(url);
+    if (videoId) {
+      // Vidstack uses youtube/VIDEO_ID format
+      return `youtube/${videoId}`;
+    }
+  }
+
+  // Return as-is for other URLs (mp4, webm, hls, etc.)
+  return url;
+}
+
+// Play overlay component with animation
+function PlayOverlay({
+  onPlay,
+  poster,
+}: {
+  onPlay: () => void;
+  poster?: string;
+}) {
+  return (
+    <div
+      className="absolute inset-0 z-50 flex flex-col items-center justify-center cursor-pointer bg-black/60 backdrop-blur-sm transition-all duration-300"
+      onClick={onPlay}
+      style={{
+        backgroundImage: poster ? `url(${poster})` : undefined,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
+      {/* Dark overlay on top of poster */}
+      <div className="absolute inset-0 bg-black/50" />
+
+      {/* Content */}
+      <div className="relative z-10 flex flex-col items-center gap-6">
+        {/* Animated Play Button */}
+        <div className="relative">
+          {/* Pulsing rings */}
+          <div className="absolute inset-0 animate-ping-slow rounded-full bg-primary/30" />
+          <div
+            className="absolute inset-0 animate-ping-slower rounded-full bg-primary/20"
+            style={{ animationDelay: "0.5s" }}
+          />
+
+          {/* Main button */}
+          <button
+            className="relative flex items-center justify-center w-24 h-24 md:w-32 md:h-32 rounded-full bg-gradient-to-br from-primary to-primary/80 shadow-2xl shadow-primary/50 hover:scale-110 transition-transform duration-300 group"
+            onClick={(e) => {
+              e.stopPropagation();
+              onPlay();
+            }}
+          >
+            <Play className="w-10 h-10 md:w-14 md:h-14 text-white fill-white ml-1 group-hover:scale-110 transition-transform" />
+          </button>
+        </div>
+
+        {/* Text labels with animation */}
+        <div className="flex flex-col items-center gap-2 text-center px-4">
+          {/* Kazakh text */}
+          <p className="text-white text-lg md:text-xl font-semibold animate-fade-in-up">
+          Вебинарды көру үшін басыңыз
+          </p>
+          {/* Russian text */}
+          <p className="text-white/80 text-base md:text-lg animate-fade-in-up-delay">
+          Нажмите, чтобы смотреть вебинар
+          </p>
+        </div>
+
+        {/* Live indicator */}
+        <div className="flex items-center gap-2 animate-fade-in-up-delay-2">
+          <span className="relative flex h-3 w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+          </span>
+          <span className="text-red-400 font-bold text-sm uppercase tracking-wider">
+            Live • Тікелей эфир
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
   (
     {
       src,
       poster,
       title = "Video Player",
-      autoPlay = true,
+      // autoPlay not used - always show overlay first
       muted = true,
       controls = true,
       aspectRatio = "16/9",
-      showCustomControls = false,
       onPlayStateChange,
       startTime = 0,
     },
     ref
   ) => {
-    const [isPlaying, setIsPlaying] = useState(autoPlay);
-    const [isStopped, setIsStopped] = useState(false);
-    const videoRef = useRef<HTMLVideoElement>(null);
-    const iframeRef = useRef<HTMLIFrameElement>(null);
-    const hasSetInitialTime = useRef(false);
+    const playerRef = useRef<MediaPlayerInstance>(null);
+    const [isCurrentlyPlaying, setIsCurrentlyPlaying] = useState(false);
+    // Always show overlay on load - user must click to start watching
+    const [showPlayOverlay, setShowPlayOverlay] = useState(true);
 
-    // Control functions for YouTube iframe
-    const postMessageToYouTube = (action: string, value?: string) => {
-      if (iframeRef.current && iframeRef.current.contentWindow) {
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({
-            event: "command",
-            func: action,
-            args: value ? [value] : [],
-          }),
-          "*"
-        );
+    // Convert source
+    const videoSource = getVidstackSource(src || "");
+
+    // Determine source type for styling - only HLS/DASH have quality selection in Vidstack
+    const isHLS = src?.includes(".m3u8");
+    const isDASH = src?.includes(".mpd");
+    const hasQualityOptions = isHLS || isDASH;
+
+    // Handle play overlay click
+    const handlePlayOverlayClick = useCallback(() => {
+      setShowPlayOverlay(false);
+      // Start playback
+      if (playerRef.current) {
+        playerRef.current.play().catch(() => {
+          console.log("Autoplay blocked by browser policy");
+        });
       }
-    };
+    }, []);
 
-    const handlePlay = () => {
-      setIsPlaying(true);
-      setIsStopped(false);
-
-      if (videoRef.current) {
-        videoRef.current.play();
-      } else if (iframeRef.current) {
-        postMessageToYouTube("playVideo");
-      }
-
+    // Handle play state changes
+    const handlePlay = useCallback(() => {
+      setIsCurrentlyPlaying(true);
+      setShowPlayOverlay(false);
       onPlayStateChange?.(true);
-    };
+    }, [onPlayStateChange]);
 
-    const handlePause = () => {
-      setIsPlaying(false);
-
-      if (videoRef.current) {
-        videoRef.current.pause();
-      } else if (iframeRef.current) {
-        postMessageToYouTube("pauseVideo");
-      }
-
+    const handlePause = useCallback(() => {
+      setIsCurrentlyPlaying(false);
       onPlayStateChange?.(false);
-    };
+    }, [onPlayStateChange]);
 
-    const handleStop = () => {
-      setIsPlaying(false);
-      setIsStopped(true);
-
-      if (videoRef.current) {
-        videoRef.current.pause();
-        videoRef.current.currentTime = 0;
-      } else if (iframeRef.current) {
-        postMessageToYouTube("stopVideo");
-      }
-
+    const handleEnded = useCallback(() => {
+      setIsCurrentlyPlaying(false);
       onPlayStateChange?.(false);
-    };
+    }, [onPlayStateChange]);
 
-    const getCurrentTime = () => {
-      if (videoRef.current) {
-        return videoRef.current.currentTime;
+    // Set initial time when loaded
+    const handleCanPlay = useCallback(() => {
+      if (startTime > 0 && playerRef.current) {
+        playerRef.current.currentTime = startTime;
       }
-      return 0;
-    };
-
-    const setCurrentTime = (time: number) => {
-      if (videoRef.current) {
-        videoRef.current.currentTime = time;
-      } else if (iframeRef.current) {
-        postMessageToYouTube("seekTo", time.toString());
-      }
-    };
+    }, [startTime]);
 
     // Expose methods via ref
     useImperativeHandle(
       ref,
       () => ({
-        play: handlePlay,
-        pause: handlePause,
-        stop: handleStop,
-        isPlaying: () => isPlaying,
-        getCurrentTime,
-        setCurrentTime,
+        play: () => {
+          setShowPlayOverlay(false);
+          playerRef.current?.play();
+        },
+        pause: () => {
+          playerRef.current?.pause();
+        },
+        stop: () => {
+          if (playerRef.current) {
+            playerRef.current.pause();
+            playerRef.current.currentTime = 0;
+          }
+        },
+        isPlaying: () => isCurrentlyPlaying,
+        getCurrentTime: () => playerRef.current?.currentTime || 0,
+        setCurrentTime: (time: number) => {
+          if (playerRef.current) {
+            playerRef.current.currentTime = time;
+          }
+        },
       }),
-      [isPlaying]
+      [isCurrentlyPlaying]
     );
 
-    // Handle video events for HTML5 video
+    // Set up event listeners
     useEffect(() => {
-      const video = videoRef.current;
-      if (!video) return;
+      const player = playerRef.current;
+      if (!player) return;
 
-      const handlePlayEvent = () => {
-        setIsPlaying(true);
-        onPlayStateChange?.(true);
-      };
-      const handlePauseEvent = () => {
-        setIsPlaying(false);
-        onPlayStateChange?.(false);
-      };
-      const handleEndedEvent = () => {
-        setIsPlaying(false);
-        setIsStopped(true);
-        onPlayStateChange?.(false);
-      };
-
-      const handleLoadedMetadata = () => {
-        if (!hasSetInitialTime.current && startTime > 0) {
-          video.currentTime = startTime;
-          hasSetInitialTime.current = true;
-          if (autoPlay) {
-            video.play().catch(console.error);
-          }
-        }
-      };
-
-      video.addEventListener("play", handlePlayEvent);
-      video.addEventListener("pause", handlePauseEvent);
-      video.addEventListener("ended", handleEndedEvent);
-      video.addEventListener("loadedmetadata", handleLoadedMetadata);
+      player.addEventListener("play", handlePlay);
+      player.addEventListener("pause", handlePause);
+      player.addEventListener("ended", handleEnded);
+      player.addEventListener("can-play", handleCanPlay);
 
       return () => {
-        video.removeEventListener("play", handlePlayEvent);
-        video.removeEventListener("pause", handlePauseEvent);
-        video.removeEventListener("ended", handleEndedEvent);
-        video.removeEventListener("loadedmetadata", handleLoadedMetadata);
+        player.removeEventListener("play", handlePlay);
+        player.removeEventListener("pause", handlePause);
+        player.removeEventListener("ended", handleEnded);
+        player.removeEventListener("can-play", handleCanPlay);
       };
-    }, [onPlayStateChange, startTime, autoPlay]);
-
-    // Extract YouTube video ID from URL
-    const getYoutubeVideoId = (url: string) => {
-      if (!url) return null;
-
-      const regExp =
-        /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
-      const match = url.match(regExp);
-      return match && match[7].length === 11 ? match[7] : null;
-    };
-
-    // Handle YouTube URLs
-    if (src && (src.includes("youtube.com") || src.includes("youtu.be"))) {
-      const videoId = getYoutubeVideoId(src);
-      if (!videoId) {
-        return (
-          <div
-            className={`w-full h-full bg-black rounded-lg overflow-hidden flex items-center justify-center`}
-            style={{ aspectRatio }}
-          >
-            <div className="text-white text-center">
-              <p>Invalid YouTube URL</p>
-            </div>
-          </div>
-        );
-      }
-
-      const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=${autoPlay ? "1" : "0"}&mute=${muted ? "1" : "0"}&controls=${controls && !showCustomControls ? "1" : "0"}&rel=0&modestbranding=1&showinfo=0&iv_load_policy=3&disablekb=1&enablejsapi=1&cc_load_policy=0&hl=en&playlist=${videoId}&loop=1&fs=0&autohide=1&widgetid=1${startTime > 0 ? `&start=${Math.floor(startTime)}` : ""}`;
-
-      return (
-        <div
-          className={`w-full h-full bg-black rounded-lg overflow-hidden relative`}
-          style={{ aspectRatio }}
-        >
-          <style jsx>{`
-            /* Hide YouTube video title and all related elements */
-            iframe[src*="youtube.com"] {
-              pointer-events: none;
-            }
-
-            /* Hide title overlays and branding */
-            .ytp-title-text,
-            .ytp-title,
-            .ytp-title-channel,
-            .ytp-impression-link,
-            .ytp-chrome-top,
-            .ytp-chrome-bottom,
-            .ytp-show-cards-title,
-            .ytp-videowall-still-info,
-            .ytp-branding,
-            .ytp-branding-img,
-            .ytp-watermark,
-            .ytp-watermark-text {
-              display: none !important;
-              opacity: 0 !important;
-              visibility: hidden !important;
-            }
-
-            /* Hide "More videos" and recommendations */
-            .ytp-pause-overlay,
-            .ytp-recommendations,
-            .ytp-suggestion,
-            .ytp-suggestion-set,
-            .ytp-upnext,
-            .ytp-endscreen,
-            .ytp-endscreen-content,
-            .ytp-related-on-error-overlay,
-            .ytp-player-content,
-            .ytp-related-container {
-              display: none !important;
-              opacity: 0 !important;
-              visibility: hidden !important;
-            }
-
-            /* Hide buttons and interactive elements */
-            .ytp-button,
-            .ytp-next-button,
-            .ytp-prev-button,
-            .ytp-menu-button,
-            .ytp-share-button,
-            .ytp-button.ytp-overflow-button,
-            .ytp-button.ytp-settings-button {
-              display: none !important;
-              opacity: 0 !important;
-              visibility: hidden !important;
-            }
-
-            /* Hide any overlays that might contain titles or suggestions */
-            .ytp-ce-element,
-            .ytp-ce,
-            .ytp-ce-video,
-            .ytp-ce-playlist,
-            .ytp-ce-channel,
-            .ytp-autonav-endscreen,
-            .ytp-autonav-overlay {
-              display: none !important;
-              opacity: 0 !important;
-              visibility: hidden !important;
-            }
-
-            /* Hide YouTube's overlay advertisements and cards */
-            .ytp-ad-overlay,
-            .ytp-cards-button,
-            .ytp-cards-teaser,
-            .ytp-invideo-ad-clickthrough-overlay,
-            .ytp-ad-message-overlay {
-              display: none !important;
-              opacity: 0 !important;
-              visibility: hidden !important;
-            }
-
-            /* Hide YouTube's video info and suggestions */
-            .ytp-info-panel,
-            .ytp-info-panel-content,
-            .ytp-info-panel-title,
-            .ytp-info-panel-text {
-              display: none !important;
-              opacity: 0 !important;
-              visibility: hidden !important;
-            }
-
-            /* Hide YouTube's "More videos" and end screen suggestions more aggressively */
-            .ytp-pause-overlay,
-            .ytp-related-videos,
-            .ytp-suggested-video,
-            .ytp-more-videos,
-            .ytp-video-wall,
-            .ytp-watch-later,
-            .ytp-share-options,
-            .html5-endscreen,
-            .html5-endscreen-content,
-            .ytp-endscreen-showcase,
-            .ytp-endscreen-takeover,
-            .videowall-endscreen,
-            .ytp-cards-button,
-            .ytp-cards-teaser {
-              display: none !important;
-              opacity: 0 !important;
-              visibility: hidden !important;
-              position: absolute !important;
-              left: -9999px !important;
-              top: -9999px !important;
-              width: 0 !important;
-              height: 0 !important;
-              overflow: hidden !important;
-            }
-          `}</style>
-          <iframe
-            ref={iframeRef}
-            className="w-full h-full"
-            src={embedUrl}
-            title={title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-            referrerPolicy="strict-origin-when-cross-origin"
-            style={{
-              pointerEvents: showCustomControls ? "none" : "auto",
-              WebkitUserSelect: "none",
-              userSelect: "none",
-            }}
-            onLoad={() => {
-              if (iframeRef.current) {
-                iframeRef.current.onload = () => {
-                  const hideOverlays = () => {
-                    const iframe = iframeRef.current;
-                    if (iframe && iframe.contentWindow) {
-                      try {
-                        iframe.contentWindow.postMessage(
-                          JSON.stringify({
-                            event: "command",
-                            func: "hideAnnotations",
-                            args: [],
-                          }),
-                          "*"
-                        );
-                      } catch (e) {
-                        // Expected due to cross-origin
-                      }
-                    }
-                  };
-
-                  const monitorSuggestions = () => {
-                    const suggestionSelectors = [
-                      ".ytp-pause-overlay",
-                      ".ytp-related-videos",
-                      ".ytp-suggested-video",
-                      ".ytp-more-videos",
-                      ".ytp-video-wall",
-                      ".html5-endscreen",
-                      ".ytp-endscreen-showcase",
-                      ".videowall-endscreen",
-                      '[class*="endscreen"]',
-                      '[class*="suggestion"]',
-                      '[class*="related"]',
-                    ];
-
-                    suggestionSelectors.forEach((selector) => {
-                      try {
-                        const elements = document.querySelectorAll(selector);
-                        elements.forEach((el) => {
-                          const htmlEl = el as HTMLElement;
-                          if (htmlEl && htmlEl.style.display !== "none") {
-                            htmlEl.style.display = "none";
-                            htmlEl.style.opacity = "0";
-                            htmlEl.style.visibility = "hidden";
-                            htmlEl.style.position = "absolute";
-                            htmlEl.style.left = "-9999px";
-                            htmlEl.style.top = "-9999px";
-                          }
-                        });
-                      } catch (e) {
-                        // Ignore errors
-                      }
-                    });
-                  };
-
-                  setTimeout(hideOverlays, 1000);
-                  setTimeout(hideOverlays, 3000);
-                  setTimeout(hideOverlays, 5000);
-
-                  setTimeout(monitorSuggestions, 2000);
-                  setInterval(monitorSuggestions, 5000);
-                };
-              }
-            }}
-          />
-          <div
-            className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-black via-black/90 to-transparent z-20 pointer-events-none"
-            style={{ height: "20%" }}
-          />
-          <div
-            className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/90 to-transparent z-20 pointer-events-none"
-            style={{
-              height: showCustomControls ? "60px" : "25%",
-              display: "block",
-            }}
-          />
-          <div
-            className="absolute bottom-0 left-0 right-0 bg-black z-25 pointer-events-none"
-            style={{
-              height: showCustomControls ? "24px" : "40px",
-              display: "block",
-            }}
-          />
-          <div className="absolute top-0 right-0 bottom-0 w-12 bg-gradient-to-l from-black via-black/60 to-transparent z-20 pointer-events-none" />
-
-          {showCustomControls && (
-            <div className="absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-sm p-4 z-30 pointer-events-none">
-              <div className="flex items-center gap-2 pointer-events-auto">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={isPlaying ? handlePause : handlePlay}
-                  className="h-8 w-8 p-0"
-                >
-                  {isPlaying ? (
-                    <Pause className="h-4 w-4" />
-                  ) : (
-                    <Play className="h-4 w-4" />
-                  )}
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleStop}
-                  className="h-8 w-8 p-0"
-                >
-                  <Square className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // Handle direct video URLs with HTML5 video
-    const videoSource = src && src.match(/\.(mp4|webm|ogg|mov)$/i) ? src : null;
-
-    const finalSource =
-      videoSource ||
-      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+    }, [handlePlay, handlePause, handleEnded, handleCanPlay]);
 
     return (
       <div
-        className={`w-full h-full bg-black rounded-lg overflow-hidden relative`}
+        className={`w-full h-full bg-black rounded-lg overflow-hidden vidstack-live-player relative ${
+          !hasQualityOptions ? "vidstack-no-quality" : ""
+        }`}
         style={{ aspectRatio }}
       >
-        <video
-          ref={videoRef}
-          className="w-full h-full"
-          title={title}
-          src={finalSource}
-          poster={poster}
-          crossOrigin=""
-          playsInline
-          autoPlay={autoPlay}
-          muted={muted}
-          controls={controls && !showCustomControls}
-        />
-        {showCustomControls && (
-          <div className="absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-sm p-4">
-            <div className="flex items-center gap-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={isPlaying ? handlePause : handlePlay}
-                className="h-8 w-8 p-0"
-              >
-                {isPlaying ? (
-                  <Pause className="h-4 w-4" />
-                ) : (
-                  <Play className="h-4 w-4" />
-                )}
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleStop}
-                className="h-8 w-8 p-0"
-              >
-                <Square className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+        {/* Play overlay - shown until user clicks (only if not autoPlay) */}
+        {showPlayOverlay && (
+          <PlayOverlay onPlay={handlePlayOverlayClick} poster={poster} />
         )}
+
+        <MediaPlayer
+          ref={playerRef}
+          title={title}
+          src={videoSource}
+          poster={poster}
+          viewType="video"
+          streamType="live"
+          logLevel="warn"
+          crossOrigin
+          playsInline
+          autoPlay={false} // Always start paused, user clicks overlay to play
+          muted={muted}
+          className="w-full h-full"
+        >
+          <MediaProvider>
+            {poster && <Poster className="vds-poster" alt={title} />}
+          </MediaProvider>
+          {controls && (
+            <DefaultVideoLayout
+              icons={defaultLayoutIcons}
+              // Disable playback rate (speed control) - only 1x available
+              playbackRates={[1]}
+              // Hide unnecessary menu items - keep Quality visible
+              slots={{
+                // Keep playbackMenuLoop null to hide loop checkbox
+                playbackMenuLoop: null,
+                // Remove accessibility menu items
+                accessibilityMenuItemsStart: null,
+                accessibilityMenuItemsEnd: null,
+                // Remove audio menu items
+                audioMenuItemsStart: null,
+                audioMenuItemsEnd: null,
+                // Remove captions menu items (subtitles)
+                captionsMenuItemsStart: null,
+                captionsMenuItemsEnd: null,
+              }}
+            />
+          )}
+        </MediaPlayer>
       </div>
     );
   }

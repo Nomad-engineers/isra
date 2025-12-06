@@ -28,7 +28,7 @@ export default function NotFound() {
 
       {/* Main content */}
       <div className="relative z-10 w-full max-w-2xl">
-        <Card className="card-glass border-isra/20 backdrop-blur-xl shadow-2xl">
+        <Card className="backdrop-blur-xl shadow-2xl">
           <CardContent className="p-8 md:p-12 text-center space-y-8">
             {/* 404 Number */}
             <div className="relative">
@@ -75,7 +75,7 @@ export default function NotFound() {
 
             {/* Action buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-              <Button asChild size="lg" className="gradient-primary shadow-lg shadow-isra-primary/25">
+              <Button asChild size="lg" className="shadow-lg shadow-primary/25">
                 <Link href="/rooms" className="flex items-center gap-2">
                   <Home className="w-4 h-4" />
                   Вернуться на главную
@@ -92,15 +92,15 @@ export default function NotFound() {
 
         {/* Quick links */}
         <div className="mt-8 flex justify-center gap-6 text-sm text-muted-foreground/60 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
-          <Link href="/rooms" className="hover:text-isra-cyan transition-colors duration-200">
+          <Link href="/rooms" className="hover:text-primary transition-colors duration-200">
             Главная
           </Link>
           <span>•</span>
-          <Link href="/support" className="hover:text-isra-cyan transition-colors duration-200">
+          <Link href="/support" className="hover:text-primary transition-colors duration-200">
             Поддержка
           </Link>
           <span>•</span>
-          <Link href="/help" className="hover:text-isra-cyan transition-colors duration-200">
+          <Link href="/help" className="hover:text-primary transition-colors duration-200">
             Помощь
           </Link>
         </div>

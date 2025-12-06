@@ -18,19 +18,19 @@ export function AuthLayout({
   showHomeLink = true
 }: AuthLayoutProps) {
   return (
-    <div className="min-h-screen bg-isra-dark dark flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Header */}
       <header className="border-b border-border">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center space-x-4">
               {showHomeLink && (
-                <Link href="/" className="text-xl font-bold text-white hover:text-primary">
+                <Link href="/" className="text-xl font-bold text-primary hover:text-primary/80">
                   ISRA
                 </Link>
               )}
             </div>
-            {/* <ThemeToggle /> */}
+            <ThemeToggle />
           </div>
         </div>
       </header>
@@ -40,7 +40,7 @@ export function AuthLayout({
         <div className="w-full max-w-md">
           {title && (
             <div className="mb-8 text-center">
-              <h1 className="text-3xl font-bold text-white mb-2">{title}</h1>
+              <h1 className="text-3xl font-bold text-foreground mb-2">{title}</h1>
               {subtitle && (
                 <p className="text-muted-foreground">{subtitle}</p>
               )}
@@ -58,13 +58,13 @@ export function AuthLayout({
               © 2025 ISRA. All rights reserved.
             </div>
             <div className="flex space-x-6 text-sm">
-              <Link href="/privacy" className="text-muted-foreground hover:text-white">
+              <Link href="/privacy" className="text-muted-foreground hover:text-foreground">
                 Privacy Policy
               </Link>
-              <Link href="/terms" className="text-muted-foreground hover:text-white">
+              <Link href="/terms" className="text-muted-foreground hover:text-foreground">
                 Terms of Service
               </Link>
-              <Link href="/support" className="text-muted-foreground hover:text-white">
+              <Link href="/support" className="text-muted-foreground hover:text-foreground">
                 Support
               </Link>
             </div>

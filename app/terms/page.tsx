@@ -1,282 +1,338 @@
 "use client";
 
 import Link from "next/link";
-import { Rubik } from "next/font/google";
+import { Scale, ArrowLeft, Users, Shield, AlertTriangle, Ban, FileCheck, HelpCircle, Mail } from "lucide-react";
 
-const rubik = Rubik({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
-export default function PrivacyPolicyPage() {
+export default function TermsOfServicePage() {
   return (
-    <div className="max-w-6xl mx-auto py-10 px-4">
-      <h1 className="text-3xl font-bold mb-6">
-        Политика конфиденциальности и обработки персональных данных
-      </h1>
-
-      <div className="not-prose text-basefont-[Rubik] font-semibold">
-        <p>
-          Настоящая политика конфиденциальности и обработки персональных данных
-          (далее — Политика) регулирует порядок обработки и использования
-          персональных и иных данных сайта isra.kz, который принадлежит и
-          управляется ИП Shyrak (далее — Оператор). Действующая редакция
-          настоящей Политики постоянно доступна для ознакомления и размещена в
-          сети Интернет по адресу:{" "}
-          <a href="#" className="text-sky-400">
-            https://isra.kz/policy
-          </a>
-        </p>
-
-        <h2 className="py-5 font-extrabold text-lg">1. ТЕРМИНЫ</h2>
-        <p className="py-2">
-          1.1. Сайт — сайт, расположенный в сети Интернет по адресу isra.kz. Все
-          исключительные права на Сайт и его отдельные элементы (включая
-          программное обеспечение, дизайн) принадлежат Оператору в полном
-          объеме. Передача исключительных прав Пользователю не является
-          предметом настоящей Политики.
-        </p>
-        <p className="py-2">1.2. Пользователь — лицо, использующее Сайт.</p>
-        <p>
-          1.3. Законодательство — действующее законодательство Республики
-          Казахстан.
-        </p>
-        <p className="py-2">
-          1.4. Персональные данные — персональные данные Пользователя, которые
-          Пользователь предоставляет самостоятельно при регистрации или в
-          процессе использования функционала Сайта.
-        </p>
-        <p className="py-2">
-          1.5. Данные — иные данные о Пользователе (не входящие в понятие
-          Персональных данных).
-        </p>
-        <p className="py-2">
-          1.6. Регистрация — заполнение Пользователем Регистрационной формы,
-          расположенной на Сайте, путем указания необходимых сведений.
-        </p>
-        <p className="py-2">
-          1.7. Регистрационная форма — форма, расположенная на Сайте, которую
-          Пользователь должен заполнить для возможности использования сайта в
-          полном объеме.
-        </p>
-        <p className="py-2">
-          1.8. Услуга(и) — услуги, предоставляемые Оператором, включая
-          онлайн-вебинары.
-        </p>
-
-        <h2 className="py-5 font-extrabold text-lg">
-          2. СБОР И ОБРАБОТКА ПЕРСОНАЛЬНЫХ ДАННЫХ
-        </h2>
-        <p className="py-2">
-          2.1. Оператор собирает и хранит только те Персональные данные, которые
-          необходимы для оказания Услуг и взаимодействия с Пользователем.
-        </p>
-        <p className="py-2">
-          2.2. Персональные данные могут использоваться для:
-        </p>
-        <ul className="p-2">
-          <li className="py-1">оказания Услуг Пользователю;</li>
-          <li className="py-1">идентификации Пользователя;</li>
-          <li className="py-1">взаимодействия с Пользователем;</li>
-          <li className="py-1">
-            направления рекламных материалов и уведомлений;
-          </li>
-          <li className="py-1">проведения статистических исследований.</li>
-        </ul>
-
-        <p className="py-2">2.3. Оператор обрабатывает в том числе:</p>
-        <ul className="p-2">
-          <li className="py-1">фамилию, имя, отчество;</li>
-          <li className="py-1">адрес электронной почты;</li>
-          <li className="py-1">номер телефона.</li>
-        </ul>
-
-        <p className="py-2">
-          2.4. Пользователю запрещается указывать персональные данные третьих
-          лиц без подтверждённого разрешения.
-        </p>
-
-        <p className="py-2">
-          2.5. Файлы cookie — используются для идентификации браузера,
-          сохранения настроек и отслеживания трендов активности.
-        </p>
-
-        <p className="py-2">
-          2.6. Информация из журналов — автоматически собираемые данные (IP, тип
-          браузера, язык, время запроса, cookie).
-        </p>
-
-        <p className="py-2">
-          2.7. Сообщения пользователей — могут сохраняться для улучшения
-          качества обслуживания.
-        </p>
-
-        <h2 className="py-5 font-extrabold text-lg">
-          {" "}
-          3. ПОРЯДОК ОБРАБОТКИ ДАННЫХ
-        </h2>
-        <p className="py-2">
-          {" "}
-          3.1. Оператор использует данные согласно Закону РК.
-        </p>
-        <p className="py-2">
-          3.2. Конфиденциальность данных обеспечивается, за исключением случаев,
-          когда данные являются общедоступными.
-        </p>
-        <p className="py-2">
-          3.3. Оператор может хранить данные на серверах вне Республики
-          Казахстан.
-        </p>
-        <p className="py-2">3.4. Передача данных без согласия возможна:</p>
-        <ul className="p-2">
-          <li>государственным органам по мотивированному запросу;</li>
-          <li>в иных случаях, предусмотренных законодательством.</li>
-        </ul>
-
-        <p>3.5. Передача данных третьим лицам возможна при:</p>
-        <ul className="p-2">
-          <li>согласии Пользователя;</li>
-          <li>необходимости оказания Услуг.</li>
-        </ul>
-
-        <p className="py-2">
-          3.6. Обработка данных осуществляется автоматически.
-        </p>
-
-        <p className="py-2">3.7. Оператор использует данные для:</p>
-        <ul className="p-2">
-          <li>предоставления услуг;</li>
-          <li>исследований и улучшения сервиса;</li>
-          <li>технической поддержки;</li>
-          <li>разработки новых функций.</li>
-        </ul>
-
-        <p className="py-2">
-          3.8. Если цели обработки меняются — требуется предварительное согласие
-          Пользователя.
-        </p>
-
-        <h2 className="py-5 font-extrabold text-lg">
-          4. ЗАЩИТА ПЕРСОНАЛЬНЫХ ДАННЫХ
-        </h2>
-        <p className="py-2">
-          4.1. Оператор принимает необходимые технические и организационные меры
-          для защиты данных.
-        </p>
-
-        <p className="py-2"> 4.3. Меры защиты включают:</p>
-        <ul className="p-2">
-          <li>внутренние проверки хранения и обработки данных;</li>
-          <li>защиту от несанкционированного доступа;</li>
-          <li>
-            ограничение доступа сотрудников, обязанных соблюдать
-            конфиденциальность.
-          </li>
-        </ul>
-
-        <h2 className="py-5 font-extrabold text-lg">
-          5. ПЕРЕДАЧА ПЕРСОНАЛЬНЫХ ДАННЫХ
-        </h2>
-        <p>
-          5.1. Оператор может передать личную информацию другим компаниям или
-          лицам, не относящимся к isra.kz, в следующих особых обстоятельствах:
-        </p>
-        <ul className="p-2">
-          <li className="p-2">
-            С целью обработки личной информации от имени isra.kz нашими
-            дочерними предприятиями, аффилированными компаниями и надежными
-            предприятиями или лицами;
-          </li>
-          <li className="p-2">
-            Если раскрытие подобной информации необходимо для соблюдения
-            законодательства, выполнения судебного решения, обеспечения
-            соблюдения Условий предоставления услуг или защиты прав,
-            собственности или безопасности isra.kz, пользователей и
-            общественности;
-          </li>
-          <li className="p-2">
-            В случае слияния, приобретения или продажи активов компании.
-          </li>
-        </ul>
-        <p className="py-2">
-          5.2. Оператор может предоставлять третьим лицам некоторую сводную
-          информацию неличного характера, которая не служит для идентификации
-          пользователей
-        </p>
-
-        <h2 className="py-5 font-extrabold text-lg">
-          6. ИСПОЛЬЗОВАНИЕ ФИНАНСОВОЙ ИНФОРМАЦИИ
-        </h2>
-        <p>
-          6.1. Финансовая информация (например, данные счета в банке)
-          используется Оператором исключительно для предоставления счета на
-          оплату заказанных услуг.
-        </p>
-        <p className="py-2">
-          6.2. В случае если Пользователь расплачивается за услуги с помощью
-          банковской карты, информация о ней может быть перенаправлена
-          провайдеру кредитной карты для осуществления платежа.
-        </p>
-        <p className="py-2">
-          6.3. Разглашение финансовой информации может осуществляться только
-          если этого требуют судебные или аудиторские органы в случаях,
-          предусмотренных законодательством.
-        </p>
-
-        <h2 className="py-5 font-extrabold text-lg">
-          7. ИЗМЕНЕНИЕ И УДАЛЕНИЕ ИНФОРМАЦИИ
-        </h2>
-        <p>
-          7.1. Пользователь может в любое время изменить (обновить, дополнить)
-          предоставленную им личную информацию или её часть, воспользовавшись
-          функцией редактирования данных в персональном разделе Сайта.
-        </p>
-        <p className="py-2">
-          {" "}
-          7.2 Пользователь также может удалить предоставленную им в рамках
-          определенной учетной записи личную информацию, связавшись с
-          Администрацией Сайта по адресу электронной почты shyrak.trz@gmail.com
-          При этом удаление аккаунта может повлечь невозможность использования
-          некоторых Услуг Сайта.
-        </p>
-
-        <h2 className="py-5 font-extrabold text-lg">8. ИЗМЕНЕНИЕ ПОЛИТИКИ</h2>
-        <p>
-          Обратите внимание, что политика конфиденциальности может периодически
-          изменяться. Без Вашего согласия Ваши права, гарантированные настоящей
-          политикой конфиденциальности, не могут быть сокращены, и мы полагаем,
-          что большинство изменений будут незначительными. Тем не менее, все
-          изменения политики конфиденциальности публикуются на этой странице, а
-          если эти изменения значительны, мы обеспечиваем их широкое освещение,
-          включая, например, уведомления по электронной почте. Версию настоящей
-          политики конфиденциальности можно определить по дате, указанной вверху
-          страницы.
-        </p>
-
-        <h2 className="py-5 font-extrabold text-lg">9. ОСУЩЕСТВЛЕНИЕ</h2>
-        <p>
-          isra.kz регулярно проверяет соответствие своей работы данной Политике
-          конфиденциальности, Пользовательскому соглашению, Оферте и Правилам
-          возврата. (link) Если у Вас есть вопросы о политике конфиденциальности
-          или о том, как isra.kz управляет личной информацией, свяжитесь с нами
-          через этот сайт. Согласно нашим правилам, при получении письменного
-          запроса, isra.kz обязана связаться с отправителем для решения данного
-          вопроса. Все вопросы о передаче личных данных, которые isra.kz и
-          Пользователь не могут решить самостоятельно, решаются с помощью
-          соответствующих контролирующих органов, включая местные органы по
-          защите данных.
-        </p>
+    <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] via-[#121212] to-[#0a0a0a]">
+      {/* Decorative background elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-600/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-cyan-500/5 rounded-full blur-3xl" />
       </div>
 
-      <footer className="mt-16 text-sm text-gray-500 border-t pt-6">
-        <nav className="flex gap-4 flex-wrap">
-          <Link href="/policy">Политика конфиденциальности</Link>
-          <Link href="/legal">Реквизиты</Link>
-          <Link href="/oferta">Договор публичной оферты</Link>
-          <Link href="/payment">Процедура оплаты</Link>
-        </nav>
-        <p className="mt-4">© 2025 isra.kz —</p>
-      </footer>
+      <div className="relative max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        {/* Back button */}
+        <Link 
+          href="/" 
+          className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-8 group"
+        >
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          На главную
+        </Link>
+
+        {/* Header */}
+        <header className="mb-12">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-600/20 to-indigo-800/20 border border-indigo-500/20">
+              <Scale className="w-8 h-8 text-indigo-400" />
+            </div>
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-bold text-white">
+                Правила пользования
+              </h1>
+              <p className="text-gray-400 text-sm mt-1">Terms of Service</p>
+            </div>
+          </div>
+          <p className="text-gray-300 leading-relaxed">
+            Настоящие правила регулируют использование сервиса{" "}
+            <ExternalLink href="https://isra.kz">Isra.kz</ExternalLink> — платформы для проведения 
+            вебинаров и автовебинаров. Используя наш сервис, вы соглашаетесь с данными правилами.
+          </p>
+        </header>
+
+        {/* Important Notice */}
+        <div className="mb-10 p-6 rounded-2xl bg-gradient-to-br from-indigo-500/10 to-indigo-600/5 border border-indigo-500/20">
+          <p className="text-gray-300">
+            Для полного ознакомления с юридическими условиями, пожалуйста, прочитайте также{" "}
+            <Link href="/contract" className="text-indigo-400 hover:text-indigo-300">Публичную оферту</Link> и{" "}
+            <Link href="/privacy" className="text-cyan-400 hover:text-cyan-300">Политику конфиденциальности</Link>.
+          </p>
+        </div>
+
+        {/* Main Content */}
+        <div className="space-y-10">
+          {/* Section 1 */}
+          <Section icon={<Users className="w-5 h-5" />} number="1" title="Общие положения">
+            <Paragraph number="1.1">
+              Сервис Isra.kz предоставляет возможность проведения онлайн-вебинаров и автовебинаров 
+              для физических и юридических лиц.
+            </Paragraph>
+            <Paragraph number="1.2">
+              Регистрируясь на сайте, вы подтверждаете, что достигли 18-летнего возраста или действуете 
+              от имени юридического лица, уполномочены принимать данные условия.
+            </Paragraph>
+            <Paragraph number="1.3">
+              Администрация оставляет за собой право изменять настоящие правила без предварительного 
+              уведомления. Актуальная версия всегда доступна на данной странице.
+            </Paragraph>
+          </Section>
+
+          {/* Section 2 */}
+          <Section icon={<FileCheck className="w-5 h-5" />} number="2" title="Использование сервиса">
+            <Paragraph number="2.1">
+              <Strong>Регистрация:</Strong> Для использования сервиса необходимо создать учетную запись, 
+              указав достоверные данные.
+            </Paragraph>
+            <Paragraph number="2.2">
+              <Strong>Учетная запись:</Strong> Вы несете полную ответственность за безопасность своего 
+              аккаунта и все действия, совершенные с его использованием.
+            </Paragraph>
+            <Paragraph number="2.3">
+              <Strong>Один аккаунт:</Strong> Создание нескольких учетных записей с целью получения 
+              дополнительных тестовых периодов запрещено.
+            </Paragraph>
+            
+            <div className="mt-6 p-5 rounded-xl bg-gradient-to-br from-[#1a1a1a] to-[#151515] border border-white/5">
+              <h4 className="text-white font-semibold mb-3">Возможности сервиса:</h4>
+              <ul className="space-y-2">
+                <FeatureItem>Создание до 10 виртуальных комнат для вебинаров</FeatureItem>
+                <FeatureItem>Проведение автовебинаров по расписанию</FeatureItem>
+                <FeatureItem>Организация чатов между участниками</FeatureItem>
+                <FeatureItem>Отображение баннеров и интерактивных элементов</FeatureItem>
+                <FeatureItem>Запись и воспроизведение сценариев</FeatureItem>
+                <FeatureItem>Аналитика активности участников</FeatureItem>
+              </ul>
+            </div>
+          </Section>
+
+          {/* Section 3 */}
+          <Section icon={<Ban className="w-5 h-5" />} number="3" title="Запрещенные действия">
+            <p className="text-gray-300 mb-4">
+              При использовании сервиса запрещается:
+            </p>
+            
+            <div className="space-y-3">
+              <ProhibitedItem text="Публикация материалов, нарушающих законодательство Республики Казахстан" />
+              <ProhibitedItem text="Использование нецензурных выражений и оскорбительного контента" />
+              <ProhibitedItem text="Нарушение авторских и смежных прав третьих лиц" />
+              <ProhibitedItem text="Распространение спама и вредоносного программного обеспечения" />
+              <ProhibitedItem text="Попытки несанкционированного доступа к системе" />
+              <ProhibitedItem text="Использование сервиса для мошеннических действий" />
+              <ProhibitedItem text="Перепродажа услуг без участия в партнерской программе" />
+              <ProhibitedItem text="Любые действия, наносящие ущерб репутации сервиса" />
+            </div>
+          </Section>
+
+          {/* Section 4 */}
+          <Section icon={<AlertTriangle className="w-5 h-5" />} number="4" title="Ответственность и ограничения">
+            <Paragraph number="4.1">
+              <Strong>Ответственность пользователя:</Strong> Вы несете полную ответственность за контент, 
+              который публикуете и распространяете через сервис.
+            </Paragraph>
+            <Paragraph number="4.2">
+              <Strong>Ограничение ответственности:</Strong> Сервис не несет ответственности за сбои 
+              в работе сторонних сервисов (хостинг, YouTube, почтовые службы и т.д.).
+            </Paragraph>
+            <Paragraph number="4.3">
+              <Strong>Техническое обслуживание:</Strong> Администрация может проводить технические работы, 
+              временно ограничивая доступ к сервису.
+            </Paragraph>
+            <Paragraph number="4.4">
+              <Strong>Блокировка:</Strong> При нарушении правил аккаунт может быть заблокирован 
+              временно или навсегда без предварительного уведомления.
+            </Paragraph>
+          </Section>
+
+          {/* Section 5 */}
+          <Section icon={<Shield className="w-5 h-5" />} number="5" title="Защита данных">
+            <Paragraph number="5.1">
+              Мы серьезно относимся к защите ваших персональных данных. Подробная информация 
+              содержится в нашей{" "}
+              <Link href="/privacy" className="text-cyan-400 hover:text-cyan-300">
+                Политике конфиденциальности
+              </Link>.
+            </Paragraph>
+            <Paragraph number="5.2">
+              Мы используем файлы cookie для улучшения работы сервиса. Подробнее читайте в{" "}
+              <Link href="/cookies" className="text-pink-400 hover:text-pink-300">
+                Политике Cookie
+              </Link>.
+            </Paragraph>
+            <Paragraph number="5.3">
+              Ваши учетные данные (логин, пароль) должны храниться в тайне. При подозрении на 
+              несанкционированный доступ немедленно сообщите нам.
+            </Paragraph>
+          </Section>
+
+          {/* Section 6 */}
+          <Section icon={<Scale className="w-5 h-5" />} number="6" title="Оплата и возврат">
+            <Paragraph number="6.1">
+              Услуги предоставляются на условиях предоплаты. Тарифы и цены указаны в разделе{" "}
+              <Link href="/tariffs" className="text-indigo-400 hover:text-indigo-300">Тарифы</Link>.
+            </Paragraph>
+            <Paragraph number="6.2">
+              Подробная информация о процедуре оплаты доступна на странице{" "}
+              <Link href="/payment" className="text-green-400 hover:text-green-300">Процедура оплаты</Link>.
+            </Paragraph>
+            <Paragraph number="6.3">
+              Условия возврата средств описаны в{" "}
+              <Link href="/refund" className="text-orange-400 hover:text-orange-300">Политике возврата</Link>.
+            </Paragraph>
+          </Section>
+
+          {/* Section 7 */}
+          <Section icon={<HelpCircle className="w-5 h-5" />} number="7" title="Техническая поддержка">
+            <Paragraph number="7.1">
+              Техническая поддержка предоставляется через электронную почту и раздел помощи на сайте.
+            </Paragraph>
+            <Paragraph number="7.2">
+              Время ответа зависит от загруженности службы поддержки и сложности вопроса.
+            </Paragraph>
+            <Paragraph number="7.3">
+              При обращении в поддержку, пожалуйста, предоставляйте максимально полную информацию о проблеме.
+            </Paragraph>
+          </Section>
+
+          {/* Section 8 */}
+          <Section icon={<FileCheck className="w-5 h-5" />} number="8" title="Заключительные положения">
+            <Paragraph number="8.1">
+              Настоящие правила вступают в силу с момента регистрации на сайте.
+            </Paragraph>
+            <Paragraph number="8.2">
+              Все споры решаются путем переговоров, а при невозможности достижения согласия — 
+              в судебном порядке по законодательству Республики Казахстан.
+            </Paragraph>
+            <Paragraph number="8.3">
+              Для получения полной юридической информации ознакомьтесь с{" "}
+              <Link href="/contract" className="text-purple-400 hover:text-purple-300">Публичной офертой</Link>.
+            </Paragraph>
+          </Section>
+
+          {/* Contact */}
+          <div className="p-6 rounded-2xl bg-gradient-to-br from-[#1e1e1e] to-[#161616] border border-white/5">
+            <div className="flex items-center gap-3 mb-4">
+              <Mail className="w-5 h-5 text-indigo-400" />
+              <h3 className="text-lg font-semibold text-white">Контакты</h3>
+            </div>
+            <p className="text-gray-300 mb-3">
+              По всем вопросам, связанным с использованием сервиса, обращайтесь:
+            </p>
+            <a 
+              href="mailto:shyrak.trz@gmail.com" 
+              className="text-cyan-400 hover:text-cyan-300 transition-colors"
+            >
+              shyrak.trz@gmail.com
+            </a>
+          </div>
+
+          {/* Related Documents */}
+          <div className="p-6 rounded-2xl bg-gradient-to-br from-[#1e1e1e] to-[#161616] border border-white/5">
+            <h3 className="text-lg font-semibold text-white mb-4">Связанные документы</h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <DocumentLink href="/contract" title="Публичная оферта" color="purple" />
+              <DocumentLink href="/privacy" title="Политика конфиденциальности" color="cyan" />
+              <DocumentLink href="/payment" title="Процедура оплаты" color="green" />
+              <DocumentLink href="/refund" title="Политика возврата" color="orange" />
+              <DocumentLink href="/cookies" title="Политика Cookie" color="pink" />
+              <DocumentLink href="/company" title="Реквизиты компании" color="amber" />
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <footer className="mt-16 pt-8 border-t border-white/10">
+          <nav className="flex flex-wrap gap-4 mb-6">
+            <Link href="/privacy" className="text-gray-400 hover:text-cyan-400 transition-colors text-sm">
+              Политика конфиденциальности
+            </Link>
+            <Link href="/terms" className="text-indigo-400 text-sm">
+              Правила пользования
+            </Link>
+            <Link href="/contract" className="text-gray-400 hover:text-purple-400 transition-colors text-sm">
+              Публичная оферта
+            </Link>
+            <Link href="/refund" className="text-gray-400 hover:text-orange-400 transition-colors text-sm">
+              Правила возврата
+            </Link>
+            <Link href="/cookies" className="text-gray-400 hover:text-pink-400 transition-colors text-sm">
+              Политика Cookie
+            </Link>
+          </nav>
+          <p className="text-gray-500 text-sm">© 2025 isra.kz — Все права защищены</p>
+        </footer>
+      </div>
     </div>
+  );
+}
+
+// Component helpers
+function Section({ icon, number, title, children }: { icon: React.ReactNode; number: string; title: string; children: React.ReactNode }) {
+  return (
+    <section className="scroll-mt-8">
+      <h2 className="flex items-center gap-3 text-xl font-bold text-white mb-6">
+        <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600/30 to-indigo-800/30 border border-indigo-500/20 text-indigo-400">
+          {icon}
+        </span>
+        <span className="text-gray-500 font-mono text-sm mr-1">{number}.</span>
+        {title}
+      </h2>
+      <div className="space-y-4">{children}</div>
+    </section>
+  );
+}
+
+function Paragraph({ number, children }: { number: string; children: React.ReactNode }) {
+  return (
+    <p className="text-gray-300 leading-relaxed">
+      <span className="text-gray-500 font-mono text-sm mr-2">{number}</span>
+      {children}
+    </p>
+  );
+}
+
+function Strong({ children }: { children: React.ReactNode }) {
+  return <strong className="text-white font-semibold">{children}</strong>;
+}
+
+function ExternalLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <a 
+      href={href} 
+      target="_blank" 
+      rel="noopener noreferrer" 
+      className="text-cyan-400 hover:text-cyan-300 transition-colors"
+    >
+      {children}
+    </a>
+  );
+}
+
+function FeatureItem({ children }: { children: React.ReactNode }) {
+  return (
+    <li className="text-gray-400 flex items-start gap-2">
+      <span className="text-green-400 mt-0.5">✓</span>
+      {children}
+    </li>
+  );
+}
+
+function ProhibitedItem({ text }: { text: string }) {
+  return (
+    <div className="flex items-start gap-3 p-3 rounded-lg bg-red-500/5 border border-red-500/10">
+      <span className="text-red-400 mt-0.5">✕</span>
+      <p className="text-gray-300">{text}</p>
+    </div>
+  );
+}
+
+function DocumentLink({ href, title, color }: { href: string; title: string; color: string }) {
+  const colors: Record<string, string> = {
+    purple: "hover:text-purple-400",
+    cyan: "hover:text-cyan-400",
+    green: "hover:text-green-400",
+    orange: "hover:text-orange-400",
+    pink: "hover:text-pink-400",
+    amber: "hover:text-amber-400"
+  };
+  
+  return (
+    <Link 
+      href={href} 
+      className={`p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-gray-300 ${colors[color]}`}
+    >
+      {title}
+    </Link>
   );
 }

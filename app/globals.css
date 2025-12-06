@@ -1,85 +1,71 @@
 @import "tailwindcss";
 
+/* Vidstack Player Styles */
+@import '@vidstack/react/player/styles/default/theme.css';
+@import '@vidstack/react/player/styles/default/layouts/video.css';
+
 @layer base {
   :root {
-    /* Light theme - сохранен для совместимости */
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    /* Light theme - мягкая, комфортная для глаз */
+    --background: 220 20% 97%;       /* Мягкий серо-голубой фон */
+    --foreground: 220 15% 20%;       /* Темно-серый текст (не чисто черный) */
+    --card: 0 0% 100%;               /* Белые карточки */
+    --card-foreground: 220 15% 20%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 277 84% 66%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 0 0% 3.9%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 187 100% 50%;
-    --accent-foreground: 0 0% 3.9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 277 84% 66%;
+    --popover-foreground: 220 15% 20%;
+    --primary: 271 70% 55%;          /* Мягкий фиолетовый */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 15% 93%;        /* Светло-серый */
+    --secondary-foreground: 220 15% 30%;
+    --muted: 220 15% 93%;
+    --muted-foreground: 220 10% 45%; /* Приглушенный серый */
+    --accent: 190 80% 45%;           /* Мягкий циан */
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 15% 88%;
+    --input: 220 15% 93%;
+    --ring: 271 70% 55%;
     --radius: 0.5rem;
+
+    /* Light theme specific colors */
+    --primary-light: 271 70% 60%;
+    --primary-dark: 271 70% 45%;
   }
 
-  /* ISRA.kz Dark Theme - Exact Color Scheme */
+  /* ISRA.kz Dark Theme - Комфортная для глаз */
   .dark {
-    /* Background Colors */
-    --background: 240 10% 7%;
-    /* #121212 */
-    --foreground: 0 0% 100%;
-    /* #FFFFFF */
-    --card: 240 10% 12%;
-    /* #1E1E1E */
-    --card-foreground: 0 0% 100%;
-    /* #FFFFFF */
-    --popover: 240 10% 12%;
-    /* #1E1E1E */
-    --popover-foreground: 0 0% 100%;
-    /* #FFFFFF */
+    /* Background Colors - чуть светлее и теплее */
+    --background: 230 15% 11%;       /* Мягкий темно-серый с легким синим оттенком */
+    --foreground: 220 15% 92%;       /* Не чисто белый, мягкий светло-серый */
+    --card: 230 12% 16%;             /* Карточки чуть светлее фона */
+    --card-foreground: 220 15% 92%;
+    --popover: 230 12% 16%;
+    --popover-foreground: 220 15% 92%;
 
-    /* Primary Colors (Purple) */
-    --primary: 277 84% 66%;
-    /* #7B2FF7 */
+    /* Primary Colors (Purple) - чуть мягче */
+    --primary: 271 70% 60%;          /* Мягкий фиолетовый */
     --primary-foreground: 0 0% 100%;
-    /* #FFFFFF */
-    --primary-light: 277 84% 70%;
-    /* #8A3FFC */
-    --primary-dark: 277 84% 50%;
-    /* #6A1B9A */
+    --primary-light: 271 70% 65%;
+    --primary-dark: 271 70% 50%;
 
     /* Secondary Colors */
-    --secondary: 240 10% 12%;
-    /* #1E1E1E */
-    --secondary-foreground: 0 0% 100%;
-    /* #FFFFFF */
-    --muted: 240 8% 15%;
-    /* rgba(30, 30, 30, 0.8) */
-    --muted-foreground: 0 0% 88%;
-    /* #E0E0E0 */
+    --secondary: 230 12% 18%;
+    --secondary-foreground: 220 15% 92%;
+    --muted: 230 10% 20%;
+    --muted-foreground: 220 10% 70%; /* Мягкий серый для второстепенного текста */
 
     /* Accent Colors */
-    --accent: 187 100% 50%;
-    /* #00D4FF (Cyan) */
+    --accent: 190 80% 50%;           /* Циан */
     --accent-foreground: 0 0% 100%;
-    /* #FFFFFF */
-    --accent-pink: 0 100% 71%;
-    /* #FF6B6B */
+    --accent-pink: 350 80% 65%;      /* Мягкий розовый */
 
     /* Other Colors */
-    --destructive: 0 72% 51%;
-    /* Similar to red */
+    --destructive: 0 65% 55%;
     --destructive-foreground: 0 0% 100%;
-    /* #FFFFFF */
-    --border: 240 10% 18%;
-    /* rgba(123, 47, 247, 0.3) */
-    --input: 240 10% 12%;
-    /* #1E1E1E */
-    --ring: 277 84% 66%;
-    /* #7B2FF7 */
+    --border: 230 10% 22%;           /* Чуть заметные границы */
+    --input: 230 12% 18%;
+    --ring: 271 70% 60%;
   }
 }
 
@@ -97,181 +83,177 @@
 
 @layer utilities {
   .gradient-primary {
-    background: linear-gradient(135deg, #7b2ff7 0%, #6a1b9a 100%);
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-dark)) 100%);
   }
 
   .gradient-background {
-    background: linear-gradient(135deg, #121212 0%, #1e1e1e 100%);
+    background: linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--card)) 100%);
   }
 
   .card-glass {
-    background: rgba(30, 30, 30, 0.8);
+    background: hsl(var(--card) / 0.8);
     backdrop-filter: blur(10px);
   }
 
   .text-gradient-accent {
-    background: linear-gradient(135deg, #00d4ff 0%, #ff6b6b 100%);
+    background: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--accent-pink, 350 80% 65%)) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  /* ISRA.kz Color Scheme Utilities */
+  /* Theme-aware Color Utilities */
   .bg-isra-dark {
-    background-color: #121212;
+    background-color: hsl(var(--background));
   }
 
   .bg-isra-darker {
-    background-color: #0a0a0a;
+    background-color: hsl(var(--background));
   }
 
   .bg-isra-medium {
-    background-color: #1e1e1e;
+    background-color: hsl(var(--card));
   }
 
   .text-isra-primary {
-    color: #ffffff;
+    color: hsl(var(--foreground));
   }
 
   .text-isra-secondary {
-    color: #f5f5f5;
+    color: hsl(var(--foreground) / 0.9);
   }
 
   .text-isra-muted {
-    color: #e0e0e0;
+    color: hsl(var(--muted-foreground));
   }
 
   .text-isra-purple-main {
-    color: #7b2ff7;
+    color: hsl(var(--primary));
   }
 
   .text-isra-purple-light {
-    color: #8a3ffc;
+    color: hsl(var(--primary-light));
   }
 
   .text-isra-purple-dark {
-    color: #6a1b9a;
+    color: hsl(var(--primary-dark));
   }
 
   .text-isra-cyan {
-    color: #00d4ff;
+    color: hsl(var(--accent));
   }
 
   .text-isra-pink {
-    color: #ff6b6b;
+    color: hsl(var(--accent-pink, 350 80% 65%));
   }
 
   .bg-isra-purple-main {
-    background-color: #7b2ff7;
+    background-color: hsl(var(--primary));
   }
 
   .bg-isra-purple-light {
-    background-color: #8a3ffc;
+    background-color: hsl(var(--primary-light));
   }
 
   .bg-isra-purple-dark {
-    background-color: #6a1b9a;
+    background-color: hsl(var(--primary-dark));
   }
 
   .bg-isra-cyan {
-    background-color: #00d4ff;
+    background-color: hsl(var(--accent));
   }
 
   .bg-isra-pink {
-    background-color: #ff6b6b;
+    background-color: hsl(var(--accent-pink, 350 80% 65%));
   }
 
   /* Hover states */
   .hover\:bg-isra-purple-light:hover {
-    background-color: #8a3ffc;
+    background-color: hsl(var(--primary-light));
   }
 
   /* Fix for tabs purple color */
   .tab-active-purple[data-state="active"] {
-    color: #7b2ff7 !important;
+    color: hsl(var(--primary)) !important;
   }
 
   /* Glass morphism for dropdown menus */
   .dropdown-glass {
-    background: rgba(18, 18, 18, 0.9);
-    /* #121212 with 90% opacity */
+    background: hsl(var(--background) / 0.95);
     backdrop-filter: blur(12px);
-    box-shadow: 0 10px 40px rgba(123, 47, 247, 0.1);
-    /* Purple shadow with 10% opacity */
+    box-shadow: 0 10px 40px hsl(var(--primary) / 0.1);
   }
 
   /* Alternative with medium background */
   .dropdown-glass-medium {
-    background: rgba(30, 30, 30, 0.85);
-    /* #1E1E1E with 85% opacity */
+    background: hsl(var(--card) / 0.9);
     backdrop-filter: blur(10px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 32px hsl(var(--background) / 0.3);
   }
 }
 
-/* Прямые стили для темной темы */
-.dark body {
-  background: #121212;
-  color: #ffffff;
+/* Базовые стили (использую CSS переменные) */
+body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.dark .bg-background {
-  background-color: #121212 !important;
+.bg-background {
+  background-color: hsl(var(--background)) !important;
 }
 
-.dark .bg-card {
-  background-color: #1e1e1e !important;
+.bg-card {
+  background-color: hsl(var(--card)) !important;
 }
 
-.dark .text-foreground {
-  color: #ffffff !important;
+.text-foreground {
+  color: hsl(var(--foreground)) !important;
 }
 
-.dark .text-muted-foreground {
-  color: #e0e0e0 !important;
+.text-muted-foreground {
+  color: hsl(var(--muted-foreground)) !important;
 }
 
-.dark .bg-primary {
-  background-color: #7b2ff7 !important;
+.bg-primary {
+  background-color: hsl(var(--primary)) !important;
 }
 
-.dark .text-primary {
-  color: #7b2ff7 !important;
+.text-primary {
+  color: hsl(var(--primary)) !important;
 }
 
-.dark .bg-secondary {
-  background-color: #1e1e1e !important;
+.bg-secondary {
+  background-color: hsl(var(--secondary)) !important;
 }
 /* ==============================================
-   DateTime Input - FORCE WHITE (Final Fix)
+   DateTime Input - Theme-aware
    ============================================== */
 
 .datetime-input-wrapper input[type="datetime-local"] {
-  color-scheme: dark !important;
-  color: #ffffff !important;
+  color: hsl(var(--foreground)) !important;
 }
 
 .datetime-input-wrapper
   input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-  filter: invert(1) !important;
   cursor: pointer !important;
   opacity: 1 !important;
 }
 
-.datetime-input-wrapper input[type="datetime-local"]::-webkit-datetime-edit {
-  color: #ffffff !important;
+.dark .datetime-input-wrapper input[type="datetime-local"] {
+  color-scheme: dark !important;
 }
 
+.dark .datetime-input-wrapper
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) !important;
+}
+
+.datetime-input-wrapper input[type="datetime-local"]::-webkit-datetime-edit,
 .datetime-input-wrapper
-  input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper {
-  color: #ffffff !important;
-}
-
+  input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper,
 .datetime-input-wrapper
-  input[type="datetime-local"]::-webkit-datetime-edit-text {
-  color: #ffffff !important;
-}
-
+  input[type="datetime-local"]::-webkit-datetime-edit-text,
 .datetime-input-wrapper
   input[type="datetime-local"]::-webkit-datetime-edit-month-field,
 .datetime-input-wrapper
@@ -282,31 +264,297 @@
   input[type="datetime-local"]::-webkit-datetime-edit-hour-field,
 .datetime-input-wrapper
   input[type="datetime-local"]::-webkit-datetime-edit-minute-field {
-  color: #ffffff !important;
+  color: hsl(var(--foreground)) !important;
 }
 
-input[type="datetime-local"] {
-  color-scheme: #ffffff !important;
+.dark input[type="datetime-local"] {
+  color-scheme: dark !important;
 }
 
-input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   filter: invert(1) !important;
 }
+
+/* ==============================================
+   Vidstack Player - Custom Styles (Auto-Webinar Live Mode)
+   ============================================== */
+
+/* Vidstack player aspect ratio */
+.media-player[data-view-type="video"] {
+  aspect-ratio: 16 / 9;
+}
+
+/* Vidstack video layout brand color */
+.vds-video-layout {
+  --video-brand: hsl(var(--primary));
+}
+
+/* ===== LIVE MODE STYLES - Hide all seek/time controls ===== */
+
+/* Hide playback speed controls */
+.vds-speed-slider,
+.vds-menu-items [data-value="speed"],
+[data-part="speed"],
+.vds-menu button[aria-label*="Speed"],
+.vds-menu button[aria-label*="скорость"],
+.vds-menu button[aria-label*="Скорость"],
+.vds-playback-rate-menu,
+.vds-settings-menu [data-part="speed"],
+[data-media-menu-item="speed"],
+.vds-menu-item[data-value="speed"],
+.vds-playback-rate-button {
+  display: none !important;
+}
+
+/* Hide speed option from menu */
+.vds-menu-items .vds-menu-item:has([data-value="speed"]),
+.vds-menu-items .vds-menu-item:has(.vds-speed-slider) {
+  display: none !important;
+}
+
+/* ===== SETTINGS MENU - Show only Quality (inside Playback) ===== */
+
+/* 
+ * Quality is inside Playback menu, so we need to:
+ * 1. Keep Playback menu visible
+ * 2. Hide Speed and Loop sections inside it
+ * 3. Hide other menus (Accessibility, Audio, Captions)
+ */
+
+/* Hide Speed section inside Playback menu */
+.vidstack-live-player .vds-speed-menu-section,
+.vidstack-live-player .vds-menu-section:has(.vds-speed-slider),
+.vidstack-live-player .vds-speed-slider {
+  display: none !important;
+}
+
+/* Hide Loop checkbox inside Playback menu */
+.vidstack-live-player .vds-loop-menu-checkbox,
+.vidstack-live-player .vds-menu-section:has([data-part="loop"]),
+.vidstack-live-player [data-part="loop"],
+.vidstack-live-player .vds-menu-checkbox[aria-label*="Loop"],
+.vidstack-live-player .vds-menu-checkbox[aria-label*="Повтор"] {
+  display: none !important;
+}
+
+/* Hide Accessibility menu completely */
+.vidstack-live-player .vds-accessibility-menu,
+.vidstack-live-player [data-media-menu="accessibility"],
+.vidstack-live-player .vds-menu-section:has(.vds-accessibility-menu),
+.vidstack-live-player button[aria-label*="Accessibility"],
+.vidstack-live-player button[aria-label*="accessibility"],
+.vidstack-live-player button[aria-label*="Доступность"],
+.vidstack-live-player button[aria-label*="доступность"] {
+  display: none !important;
+}
+
+/* Hide Audio menu (not needed) */
+.vidstack-live-player .vds-audio-menu,
+.vidstack-live-player [data-media-menu="audio"],
+.vidstack-live-player button[aria-label*="Audio"],
+.vidstack-live-player button[aria-label*="Аудио"] {
+  display: none !important;
+}
+
+/* Hide Captions/Subtitles menu */
+.vidstack-live-player .vds-captions-menu,
+.vidstack-live-player [data-media-menu="captions"],
+.vidstack-live-player button[aria-label*="Captions"],
+.vidstack-live-player button[aria-label*="Субтитры"],
+.vidstack-live-player button[aria-label*="субтитры"] {
+  display: none !important;
+}
+
+/* Rename Playback menu label to "Quality" via CSS (optional styling) */
+.vidstack-live-player .vds-playback-menu .vds-menu-button {
+  /* Keep visible for Quality access */
+}
+
+/* Make sure Quality section is visible inside Playback menu */
+.vidstack-live-player .vds-quality-menu-section {
+  display: block !important;
+}
+
+/* Style the quality slider/radio group */
+.vidstack-live-player .vds-quality-slider,
+.vidstack-live-player .vds-quality-radio-group {
+  display: flex !important;
+}
+
+/* ===== Hide settings gear for sources without quality options (YouTube, mp4) ===== */
+.vidstack-no-quality .vds-settings-menu,
+.vidstack-no-quality .vds-menu-button[aria-label*="Settings"],
+.vidstack-no-quality .vds-menu-button[aria-label*="Настройки"],
+.vidstack-no-quality button[aria-label*="Settings"],
+.vidstack-no-quality button[aria-label*="Настройки"] {
+  display: none !important;
+}
+
+/* Hide timeline/progress bar for live webinar mode */
+.vidstack-live-player .vds-time-slider,
+.vidstack-live-player .vds-slider[data-media-slider="time"],
+.vidstack-live-player [data-media-time-slider],
+.vidstack-live-player .vds-time-group,
+.vidstack-live-player .vds-time,
+.vidstack-live-player .vds-time-divider,
+.vidstack-live-player .vds-duration,
+.vidstack-live-player .vds-current-time {
+  display: none !important;
+}
+
+/* Hide seek buttons */
+.vidstack-live-player .vds-seek-button,
+.vidstack-live-player [data-media-seek-button],
+.vidstack-live-player button[aria-label*="Seek"],
+.vidstack-live-player button[aria-label*="seek"],
+.vidstack-live-player button[aria-label*="Перемотать"],
+.vidstack-live-player button[aria-label*="перемотать"] {
+  display: none !important;
+}
+
+/* Hide chapters menu (related to timeline) */
+.vidstack-live-player .vds-chapters-menu,
+.vidstack-live-player [data-media-chapters-menu] {
+  display: none !important;
+}
+
+/* Disable seeking via keyboard */
+.vidstack-live-player [data-media-player] {
+  --media-seekable: 0;
+}
+
+/* Style the LIVE indicator */
+.vidstack-live-player .vds-live-button {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.vidstack-live-player .vds-live-button::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  margin-right: 6px;
+  animation: live-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.1);
+  }
+}
+
+/* Custom scrollbar - Theme-aware */
 .custom-scroll::-webkit-scrollbar {
   width: 8px;
 }
 
 .custom-scroll::-webkit-scrollbar-track {
-  background: #1a1a1a;
+  background: hsl(var(--muted));
   border-radius: 10px;
 }
 
 .custom-scroll::-webkit-scrollbar-thumb {
-  background: #555;
+  background: hsl(var(--muted-foreground) / 0.3);
   border-radius: 10px;
 }
 
 .custom-scroll::-webkit-scrollbar-thumb:hover {
-  background: #777;
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Smooth theme transition */
+* {
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+/* ==============================================
+   Vidstack Player - Play Overlay Animations
+   ============================================== */
+
+/* Slow ping animation for play button rings */
+@keyframes ping-slow {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes ping-slower {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+.animate-ping-slow {
+  animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.animate-ping-slower {
+  animation: ping-slower 2.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Fade in up animations for text */
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+}
+
+.animate-fade-in-up-delay {
+  animation: fade-in-up 0.6s ease-out 0.2s forwards;
+  opacity: 0;
+}
+
+.animate-fade-in-up-delay-2 {
+  animation: fade-in-up 0.6s ease-out 0.4s forwards;
+  opacity: 0;
+}
+
+/* Glow effect for play button */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.5), 0 0 40px hsl(var(--primary) / 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px hsl(var(--primary) / 0.7), 0 0 60px hsl(var(--primary) / 0.4);
+  }
+}
+
+.vidstack-live-player .relative button.rounded-full {
+  animation: glow-pulse 2s ease-in-out infinite;
 }
 

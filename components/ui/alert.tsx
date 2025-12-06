@@ -4,15 +4,15 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const alertVariants = cva(
-  "relative w-full rounded-lg border px-4 py-3 text-sm [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-white [&>svg~*]:pl-7",
+  "relative w-full rounded-lg border px-4 py-3 text-sm [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground [&>svg~*]:pl-7",
   {
     variants: {
       variant: {
-        default: "bg-isra-medium/80 text-white border-isra/50",
+        default: "bg-card text-card-foreground border-border",
         destructive:
-          "bg-red-900/80 text-red-200 border-red-500/30 [&>svg]:text-red-400",
-        warning: "bg-yellow-900/80 text-yellow-200 border-yellow-500/30 [&>svg]:text-yellow-400",
-        success: "bg-green-900/80 text-green-200 border-green-500/30 [&>svg]:text-green-400",
+          "bg-red-50 dark:bg-red-900/80 text-red-800 dark:text-red-200 border-red-200 dark:border-red-500/30 [&>svg]:text-red-600 dark:[&>svg]:text-red-400",
+        warning: "bg-yellow-50 dark:bg-yellow-900/80 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-500/30 [&>svg]:text-yellow-600 dark:[&>svg]:text-yellow-400",
+        success: "bg-green-50 dark:bg-green-900/80 text-green-800 dark:text-green-200 border-green-200 dark:border-green-500/30 [&>svg]:text-green-600 dark:[&>svg]:text-green-400",
       },
     },
     defaultVariants: {

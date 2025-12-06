@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Vidstack Player Styles */
+@import '@vidstack/react/player/styles/default/theme.css';
+@import '@vidstack/react/player/styles/default/layouts/video.css';
+
 @layer base {
   :root {
     /* Light theme - мягкая, комфортная для глаз */
@@ -271,6 +275,182 @@ body {
   filter: invert(1) !important;
 }
 
+/* ==============================================
+   Vidstack Player - Custom Styles (Auto-Webinar Live Mode)
+   ============================================== */
+
+/* Vidstack player aspect ratio */
+.media-player[data-view-type="video"] {
+  aspect-ratio: 16 / 9;
+}
+
+/* Vidstack video layout brand color */
+.vds-video-layout {
+  --video-brand: hsl(var(--primary));
+}
+
+/* ===== LIVE MODE STYLES - Hide all seek/time controls ===== */
+
+/* Hide playback speed controls */
+.vds-speed-slider,
+.vds-menu-items [data-value="speed"],
+[data-part="speed"],
+.vds-menu button[aria-label*="Speed"],
+.vds-menu button[aria-label*="скорость"],
+.vds-menu button[aria-label*="Скорость"],
+.vds-playback-rate-menu,
+.vds-settings-menu [data-part="speed"],
+[data-media-menu-item="speed"],
+.vds-menu-item[data-value="speed"],
+.vds-playback-rate-button {
+  display: none !important;
+}
+
+/* Hide speed option from menu */
+.vds-menu-items .vds-menu-item:has([data-value="speed"]),
+.vds-menu-items .vds-menu-item:has(.vds-speed-slider) {
+  display: none !important;
+}
+
+/* ===== SETTINGS MENU - Show only Quality (inside Playback) ===== */
+
+/* 
+ * Quality is inside Playback menu, so we need to:
+ * 1. Keep Playback menu visible
+ * 2. Hide Speed and Loop sections inside it
+ * 3. Hide other menus (Accessibility, Audio, Captions)
+ */
+
+/* Hide Speed section inside Playback menu */
+.vidstack-live-player .vds-speed-menu-section,
+.vidstack-live-player .vds-menu-section:has(.vds-speed-slider),
+.vidstack-live-player .vds-speed-slider {
+  display: none !important;
+}
+
+/* Hide Loop checkbox inside Playback menu */
+.vidstack-live-player .vds-loop-menu-checkbox,
+.vidstack-live-player .vds-menu-section:has([data-part="loop"]),
+.vidstack-live-player [data-part="loop"],
+.vidstack-live-player .vds-menu-checkbox[aria-label*="Loop"],
+.vidstack-live-player .vds-menu-checkbox[aria-label*="Повтор"] {
+  display: none !important;
+}
+
+/* Hide Accessibility menu completely */
+.vidstack-live-player .vds-accessibility-menu,
+.vidstack-live-player [data-media-menu="accessibility"],
+.vidstack-live-player .vds-menu-section:has(.vds-accessibility-menu),
+.vidstack-live-player button[aria-label*="Accessibility"],
+.vidstack-live-player button[aria-label*="accessibility"],
+.vidstack-live-player button[aria-label*="Доступность"],
+.vidstack-live-player button[aria-label*="доступность"] {
+  display: none !important;
+}
+
+/* Hide Audio menu (not needed) */
+.vidstack-live-player .vds-audio-menu,
+.vidstack-live-player [data-media-menu="audio"],
+.vidstack-live-player button[aria-label*="Audio"],
+.vidstack-live-player button[aria-label*="Аудио"] {
+  display: none !important;
+}
+
+/* Hide Captions/Subtitles menu */
+.vidstack-live-player .vds-captions-menu,
+.vidstack-live-player [data-media-menu="captions"],
+.vidstack-live-player button[aria-label*="Captions"],
+.vidstack-live-player button[aria-label*="Субтитры"],
+.vidstack-live-player button[aria-label*="субтитры"] {
+  display: none !important;
+}
+
+/* Rename Playback menu label to "Quality" via CSS (optional styling) */
+.vidstack-live-player .vds-playback-menu .vds-menu-button {
+  /* Keep visible for Quality access */
+}
+
+/* Make sure Quality section is visible inside Playback menu */
+.vidstack-live-player .vds-quality-menu-section {
+  display: block !important;
+}
+
+/* Style the quality slider/radio group */
+.vidstack-live-player .vds-quality-slider,
+.vidstack-live-player .vds-quality-radio-group {
+  display: flex !important;
+}
+
+/* ===== Hide settings gear for sources without quality options (YouTube, mp4) ===== */
+.vidstack-no-quality .vds-settings-menu,
+.vidstack-no-quality .vds-menu-button[aria-label*="Settings"],
+.vidstack-no-quality .vds-menu-button[aria-label*="Настройки"],
+.vidstack-no-quality button[aria-label*="Settings"],
+.vidstack-no-quality button[aria-label*="Настройки"] {
+  display: none !important;
+}
+
+/* Hide timeline/progress bar for live webinar mode */
+.vidstack-live-player .vds-time-slider,
+.vidstack-live-player .vds-slider[data-media-slider="time"],
+.vidstack-live-player [data-media-time-slider],
+.vidstack-live-player .vds-time-group,
+.vidstack-live-player .vds-time,
+.vidstack-live-player .vds-time-divider,
+.vidstack-live-player .vds-duration,
+.vidstack-live-player .vds-current-time {
+  display: none !important;
+}
+
+/* Hide seek buttons */
+.vidstack-live-player .vds-seek-button,
+.vidstack-live-player [data-media-seek-button],
+.vidstack-live-player button[aria-label*="Seek"],
+.vidstack-live-player button[aria-label*="seek"],
+.vidstack-live-player button[aria-label*="Перемотать"],
+.vidstack-live-player button[aria-label*="перемотать"] {
+  display: none !important;
+}
+
+/* Hide chapters menu (related to timeline) */
+.vidstack-live-player .vds-chapters-menu,
+.vidstack-live-player [data-media-chapters-menu] {
+  display: none !important;
+}
+
+/* Disable seeking via keyboard */
+.vidstack-live-player [data-media-player] {
+  --media-seekable: 0;
+}
+
+/* Style the LIVE indicator */
+.vidstack-live-player .vds-live-button {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.vidstack-live-player .vds-live-button::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  margin-right: 6px;
+  animation: live-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.1);
+  }
+}
+
 /* Custom scrollbar - Theme-aware */
 .custom-scroll::-webkit-scrollbar {
   width: 8px;
@@ -293,5 +473,88 @@ body {
 /* Smooth theme transition */
 * {
   transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+/* ==============================================
+   Vidstack Player - Play Overlay Animations
+   ============================================== */
+
+/* Slow ping animation for play button rings */
+@keyframes ping-slow {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes ping-slower {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+.animate-ping-slow {
+  animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.animate-ping-slower {
+  animation: ping-slower 2.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Fade in up animations for text */
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+}
+
+.animate-fade-in-up-delay {
+  animation: fade-in-up 0.6s ease-out 0.2s forwards;
+  opacity: 0;
+}
+
+.animate-fade-in-up-delay-2 {
+  animation: fade-in-up 0.6s ease-out 0.4s forwards;
+  opacity: 0;
+}
+
+/* Glow effect for play button */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.5), 0 0 40px hsl(var(--primary) / 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px hsl(var(--primary) / 0.7), 0 0 60px hsl(var(--primary) / 0.4);
+  }
+}
+
+.vidstack-live-player .relative button.rounded-full {
+  animation: glow-pulse 2s ease-in-out infinite;
 }
 

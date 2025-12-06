@@ -247,7 +247,7 @@ export function ModeratorsSection({ moderators, loading }: ModeratorsSectionProp
                       <span className="text-muted-foreground">Активность</span>
                       <span className="text-green-600 font-medium">Высокая</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-1 mt-1">
+                    <div className="w-full bg-muted rounded-full h-1 mt-1">
                       <div className="bg-green-500 h-1 rounded-full" style={{ width: '85%' }}></div>
                     </div>
                   </div>

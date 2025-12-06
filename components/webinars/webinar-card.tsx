@@ -21,27 +21,27 @@ const statusConfig = {
   draft: {
     label: 'Черновик',
     variant: 'secondary' as const,
-    className: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
+    className: 'bg-muted text-muted-foreground border-border',
   },
   scheduled: {
     label: 'Запланирован',
     variant: 'blue' as const,
-    className: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+    className: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
   },
   active: {
     label: 'Активный',
     variant: 'green' as const,
-    className: 'bg-green-500/10 text-green-400 border-green-500/20 animate-pulse',
+    className: 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20 animate-pulse',
   },
   ended: {
     label: 'Завершен',
     variant: 'secondary' as const,
-    className: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
+    className: 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20',
   },
   cancelled: {
     label: 'Отменен',
     variant: 'destructive' as const,
-    className: 'bg-red-500/10 text-red-400 border-red-500/20',
+    className: 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20',
   },
 }
 
@@ -63,12 +63,12 @@ export function WebinarCard({ webinar, onView, onEdit, onDelete, onCopyLink, onS
   return (
     <Card
       className={cn(
-        'w-full card-glass transition-all duration-300 hover:shadow-lg hover:shadow-isra-primary/10 hover:-translate-y-1 group'
+        'w-full transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1 group'
       )}
     >
       <CardHeader className='pb-3'>
         <CardTitle className='flex justify-between items-start gap-2'>
-          <span className='text-lg leading-tight font-semibold text-foreground line-clamp-2 group-hover:text-isra-primary transition-colors cursor-default'>
+          <span className='text-lg leading-tight font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors cursor-default'>
             {webinar.title}
           </span>
           <div className='flex items-center gap-2 flex-shrink-0'>
@@ -76,8 +76,8 @@ export function WebinarCard({ webinar, onView, onEdit, onDelete, onCopyLink, onS
               {statusInfo.label}
             </Badge>
             {webinar.active ? (
-              <Badge variant='outline' className='text-green-400 border-green-400/50 bg-green-500/10 animate-pulse'>
-                <div className="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5 animate-pulse" />
+              <Badge variant='outline' className='text-green-600 dark:text-green-400 border-green-500/50 bg-green-500/10 animate-pulse'>
+                <div className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5 animate-pulse" />
                 В прямом эфире
               </Badge>
             ) : webinar.scheduledAt ? (
@@ -86,11 +86,11 @@ export function WebinarCard({ webinar, onView, onEdit, onDelete, onCopyLink, onS
                 Запланирован
               </Badge>
             ) : webinar.tags && webinar.tags.length > 0 ? (
-              <Badge variant='outline' className='text-isra-cyan border-isra-cyan/50 bg-isra-cyan/10'>
+              <Badge variant='outline' className='text-primary border-primary/50 bg-primary/10'>
                 {webinar.tags[0]}
               </Badge>
             ) : (
-              <Badge variant='outline' className='text-gray-400 border-gray-400/50 bg-gray-500/10'>
+              <Badge variant='outline' className='text-muted-foreground border-border bg-muted'>
                 <FileText className='w-3 h-3 mr-1' />
                 Черновик
               </Badge>
@@ -100,7 +100,7 @@ export function WebinarCard({ webinar, onView, onEdit, onDelete, onCopyLink, onS
                 <Button
                   variant='ghost'
                   size='sm'
-                  className='h-8 w-8 p-0 hover:bg-isra-medium/30 hover:text-isra-primary transition-colors'
+                  className='h-8 w-8 p-0 hover:bg-muted hover:text-primary transition-colors'
                 >
                   <MoreHorizontal className='h-4 w-4' />
                 </Button>
@@ -171,11 +171,11 @@ export function WebinarCard({ webinar, onView, onEdit, onDelete, onCopyLink, onS
 
           {participantInfo && (
             <div className='flex items-center gap-2 text-muted-foreground'>
-              <Users className='h-4 w-4 text-isra-cyan' />
+              <Users className='h-4 w-4 text-primary' />
               <span className="text-sm font-medium">
                 {participantInfo.current}/{participantInfo.max}
               </span>
-              <div className='flex-1 bg-isra-medium/50 rounded-full h-2 overflow-hidden'>
+              <div className='flex-1 bg-muted rounded-full h-2 overflow-hidden'>
                 <div
                   className={cn(
                     'h-full transition-all duration-500 rounded-full',
@@ -183,7 +183,7 @@ export function WebinarCard({ webinar, onView, onEdit, onDelete, onCopyLink, onS
                       ? 'bg-red-500'
                       : participantInfo.percentage >= 70
                       ? 'bg-orange-500'
-                      : 'bg-gradient-to-r from-isra-cyan to-isra-primary'
+                      : 'bg-gradient-to-r from-primary to-purple-500'
                   )}
                   style={{ width: `${participantInfo.percentage}%` }}
                 />
@@ -207,7 +207,7 @@ export function WebinarCard({ webinar, onView, onEdit, onDelete, onCopyLink, onS
           </div>
         )}
 
-        <div className='flex justify-between text-xs text-muted-foreground pt-3 border-t border-isra/30'>
+        <div className='flex justify-between text-xs text-muted-foreground pt-3 border-t border-border'>
           <span className="hover:text-foreground transition-colors">
             Создан: {formatDate(webinar.createdAt)}
           </span>

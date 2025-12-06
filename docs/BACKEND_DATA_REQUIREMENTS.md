@@ -204,3 +204,4 @@ Query params: `page`, `limit`, `search`
 ## Контакт
 
 По вопросам интеграции обращаться к frontend команде.
+

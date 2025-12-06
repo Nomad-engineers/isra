@@ -44,12 +44,12 @@ export default function TariffsPage() {
     }
 
     return (
-      <div className='mb-8 p-6 bg-gradient-to-r from-purple-900/20 to-pink-900/20 rounded-xl border border-purple-500/30'>
+      <div className='mb-8 p-6 bg-gradient-to-r from-primary/10 to-purple-500/10 dark:from-primary/20 dark:to-purple-900/20 rounded-xl border border-primary/30'>
         <div className='flex items-center justify-between'>
           <div className='flex items-center gap-3'>
-            <CheckCircle className='w-5 h-5 text-green-400' />
+            <CheckCircle className='w-5 h-5 text-green-500' />
             <span className='text-lg font-semibold'>Ваш текущий тариф:</span>
-            <span className='text-xl font-bold text-purple-400'>{currentPlan.name}</span>
+            <span className='text-xl font-bold text-primary'>{currentPlan.name}</span>
             {planStatus && (
               <Badge className={statusColors[planStatus as keyof typeof statusColors]}>
                 {statusLabels[planStatus as keyof typeof statusLabels]}
@@ -57,7 +57,7 @@ export default function TariffsPage() {
             )}
           </div>
           {planEndDate && (
-            <div className='text-sm text-gray-400'>
+            <div className='text-sm text-muted-foreground'>
               Действует до: {new Date(planEndDate).toLocaleDateString('ru-RU')}
             </div>
           )}
@@ -106,26 +106,26 @@ export default function TariffsPage() {
             <h1 className='text-4xl font-bold text-foreground'>Баланс и тариф</h1>
           </div>
 
-        <div className='bg-gradient-to-r from-gray-900 via-gray-900 to-gray-800 rounded-2xl p-8 border border-gray-700 shadow-2xl backdrop-blur-sm'>
+        <div className='bg-card rounded-2xl p-8 border border-border shadow-xl'>
             <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6'>
               <div className='space-y-3'>
-                <div className='text-sm font-medium text-gray-400 uppercase tracking-wide'>Текущий баланс</div>
+                <div className='text-sm font-medium text-muted-foreground uppercase tracking-wide'>Текущий баланс</div>
                 <div className='flex items-baseline gap-3'>
-                  <span className='text-5xl font-bold bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent'>
+                  <span className='text-5xl font-bold bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent'>
                     0 ₸
                   </span>
-                  <span className='text-lg text-gray-500'>/ мес</span>
+                  <span className='text-lg text-muted-foreground'>/ мес</span>
                 </div>
-                <div className='text-sm text-gray-400 flex items-center gap-2'>
+                <div className='text-sm text-muted-foreground flex items-center gap-2'>
                   <div className='w-2 h-2 bg-yellow-500 rounded-full'></div>
                   {currentPlan ? `Тариф: ${currentPlan.name}` : 'Не указан'}
                 </div>
               </div>
               <div className='flex gap-3'>
-                <button className='px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-xl font-semibold text-foreground transition-all duration-300 transform hover:scale-105 hover:shadow-lg shadow-blue-600/20'>
+                <button className='px-8 py-4 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-700 rounded-xl font-semibold text-white transition-all duration-300 transform hover:scale-105 hover:shadow-lg'>
                   Пополнить
                 </button>
-                <button className='px-6 py-4 bg-gray-800 hover:bg-gray-700 rounded-xl font-medium text-gray-300 transition-all duration-300 border border-gray-600'>
+                <button className='px-6 py-4 bg-muted hover:bg-muted/80 rounded-xl font-medium text-foreground transition-all duration-300 border border-border'>
                   История
                 </button>
               </div>
@@ -146,7 +146,7 @@ export default function TariffsPage() {
         <div className='mb-20'>
           <div className='text-center mb-12'>
             <h2 className='text-3xl font-bold text-foreground mb-4'>Выберите подходящий тариф</h2>
-            <p className='text-gray-400 text-lg max-w-2xl mx-auto'>
+            <p className='text-muted-foreground text-lg max-w-2xl mx-auto'>
               Гибкие тарифные планы для любых потребностей вашего бизнеса
             </p>
           </div>
@@ -164,7 +164,7 @@ export default function TariffsPage() {
         <div className='mb-20'>
           <div className='text-center mb-12'>
             <h2 className='text-3xl font-bold text-foreground mb-4'>Сравнение тарифов</h2>
-            <p className='text-gray-400 text-lg max-w-2xl mx-auto'>
+            <p className='text-muted-foreground text-lg max-w-2xl mx-auto'>
               Детальное сравнение всех возможностей каждого тарифа
             </p>
           </div>
@@ -175,7 +175,7 @@ export default function TariffsPage() {
         <div className='mb-20'>
           <div className='text-center mb-12'>
             <h2 className='text-3xl font-bold text-foreground mb-4'>Часто задаваемые вопросы</h2>
-            <p className='text-gray-400 text-lg max-w-2xl mx-auto'>Ответы на популярные вопросы о наших тарифах</p>
+            <p className='text-muted-foreground text-lg max-w-2xl mx-auto'>Ответы на популярные вопросы о наших тарифах</p>
           </div>
           <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
             {[
@@ -199,26 +199,26 @@ export default function TariffsPage() {
             ].map((faq, index) => (
               <div
                 key={index}
-                className='bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600 transition-colors duration-300'
+                className='bg-card border border-border rounded-xl p-6 hover:border-primary/50 transition-colors duration-300'
               >
                 <h3 className='text-lg font-semibold text-foreground mb-3'>{faq.question}</h3>
-                <p className='text-gray-400 leading-relaxed'>{faq.answer}</p>
+                <p className='text-muted-foreground leading-relaxed'>{faq.answer}</p>
               </div>
             ))}
           </div>
         </div>
 
         {/* CTA Section */}
-        <div className='bg-gradient-to-r from-blue-900 to-purple-900 rounded-2xl p-12 text-center mb-16 border border-blue-700/50'>
+        <div className='bg-gradient-to-r from-primary/10 to-purple-500/10 dark:from-primary/20 dark:to-purple-900/30 rounded-2xl p-12 text-center mb-16 border border-primary/20'>
           <h2 className='text-3xl font-bold text-foreground mb-4'>Остались вопросы?</h2>
-          <p className='text-blue-200 text-lg mb-8 max-w-2xl mx-auto'>
+          <p className='text-muted-foreground text-lg mb-8 max-w-2xl mx-auto'>
             Наша команда поддержки всегда готова помочь вам выбрать подходящий тариф
           </p>
           <div className='flex flex-col sm:flex-row gap-4 justify-center'>
-            <button className='px-8 py-4 bg-white text-blue-900 hover:bg-gray-100 rounded-xl font-bold transition-all duration-300 transform hover:scale-105'>
+            <button className='px-8 py-4 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl font-bold transition-all duration-300 transform hover:scale-105'>
               Связаться с поддержкой
             </button>
-            <button className='px-8 py-4 bg-transparent text-foreground hover:bg-white/10 border border-white/30 rounded-xl font-bold transition-all duration-300'>
+            <button className='px-8 py-4 bg-transparent text-foreground hover:bg-muted border border-border rounded-xl font-bold transition-all duration-300'>
               Запросить демо
             </button>
           </div>

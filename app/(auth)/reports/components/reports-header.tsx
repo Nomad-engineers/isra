@@ -71,7 +71,7 @@ export function ReportsHeader({
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
             Отчеты
           </h1>
-          <p className="text-gray-400">
+          <p className="text-muted-foreground">
             Аналитика и статистика вебинаров и пользователей
           </p>
         </div>

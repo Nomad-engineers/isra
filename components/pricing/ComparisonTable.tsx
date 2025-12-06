@@ -74,30 +74,30 @@ export function ComparisonTable({ plans }: ComparisonTableProps) {
   return (
     <>
       {/* Desktop Table */}
-      <div className="hidden lg:block bg-gradient-to-b from-gray-900 to-gray-800 rounded-2xl border border-gray-700 overflow-hidden shadow-2xl">
+      <div className="hidden lg:block bg-card rounded-2xl border border-border overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-700 bg-gradient-to-r from-gray-800 to-gray-700">
-                <th className="text-left p-6 font-bold text-gray-300 uppercase tracking-wider text-sm">Возможность</th>
+              <tr className="border-b border-border bg-muted/50">
+                <th className="text-left p-6 font-bold text-muted-foreground uppercase tracking-wider text-sm">Возможность</th>
                 {plans.map((plan, index) => (
                   <th key={plan.id} className={`text-center p-6 font-bold min-w-[140px] ${
-                    index === 1 ? 'bg-gradient-to-b from-blue-600/20 to-transparent' :
-                    index === 2 ? 'bg-gradient-to-b from-purple-600/20 to-transparent' :
+                    index === 1 ? 'bg-primary/5' :
+                    index === 2 ? 'bg-purple-500/5' :
                     ''
                   }`}>
                     <div className={`text-lg font-bold ${
-                      index === 1 ? 'text-blue-400' :
-                      index === 2 ? 'text-purple-400' :
-                      'text-white'
+                      index === 1 ? 'text-primary' :
+                      index === 2 ? 'text-purple-500' :
+                      'text-foreground'
                     }`}>{plan.name}</div>
                     <div className={`text-sm font-normal mt-1 ${
-                      index === 1 ? 'text-blue-300' :
-                      index === 2 ? 'text-purple-300' :
-                      'text-gray-400'
+                      index === 1 ? 'text-primary/80' :
+                      index === 2 ? 'text-purple-500/80' :
+                      'text-muted-foreground'
                     }`}>{plan.price}</div>
                     {plan.period && (
-                      <div className="text-xs text-gray-500 mt-1">{plan.period}</div>
+                      <div className="text-xs text-muted-foreground mt-1">{plan.period}</div>
                     )}
                   </th>
                 ))}
@@ -106,10 +106,10 @@ export function ComparisonTable({ plans }: ComparisonTableProps) {
             <tbody>
               {comparisonFeatures.map((category, categoryIndex) => (
                 <React.Fragment key={category.category}>
-                  <tr className="bg-gradient-to-r from-gray-800/50 to-gray-700/30">
+                  <tr className="bg-muted/30">
                     <td
                       colSpan={plans.length + 1}
-                      className="px-6 py-4 font-bold text-gray-200 text-sm uppercase tracking-wider"
+                      className="px-6 py-4 font-bold text-foreground text-sm uppercase tracking-wider"
                     >
                       {category.category}
                     </td>
@@ -117,13 +117,13 @@ export function ComparisonTable({ plans }: ComparisonTableProps) {
                   {category.features.map((feature, featureIndex) => (
                     <tr
                       key={`${categoryIndex}-${featureIndex}`}
-                      className="border-b border-gray-700/50 last:border-b-0 hover:bg-gray-700/20 transition-colors duration-200"
+                      className="border-b border-border/50 last:border-b-0 hover:bg-muted/20 transition-colors duration-200"
                     >
-                      <td className="p-6 text-gray-200 text-sm font-medium">{feature.name}</td>
+                      <td className="p-6 text-foreground text-sm font-medium">{feature.name}</td>
                       {feature.values.map((value, valueIndex) => (
                         <td key={valueIndex} className={`p-6 text-center ${
-                          valueIndex === 1 ? 'bg-blue-600/10' :
-                          valueIndex === 2 ? 'bg-purple-600/10' :
+                          valueIndex === 1 ? 'bg-primary/5' :
+                          valueIndex === 2 ? 'bg-purple-500/5' :
                           ''
                         }`}>
                           {typeof value === 'boolean' ? (
@@ -132,12 +132,12 @@ export function ComparisonTable({ plans }: ComparisonTableProps) {
                                 <Check className="w-4 h-4 text-white" />
                               </div>
                             ) : (
-                              <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center mx-auto">
-                                <X className="w-4 h-4 text-gray-500" />
+                              <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center mx-auto">
+                                <X className="w-4 h-4 text-muted-foreground" />
                               </div>
                             )
                           ) : (
-                            <span className="text-gray-200 text-sm font-medium inline-block px-3 py-1 bg-gray-700/50 rounded-lg">
+                            <span className="text-foreground text-sm font-medium inline-block px-3 py-1 bg-muted rounded-lg">
                               {value}
                             </span>
                           )}
@@ -155,26 +155,26 @@ export function ComparisonTable({ plans }: ComparisonTableProps) {
       {/* Mobile Cards */}
       <div className="lg:hidden space-y-6">
         {plans.map((plan, planIndex) => (
-          <div key={plan.id} className="bg-gradient-to-b from-gray-900 to-gray-800 rounded-2xl border border-gray-700 p-6 shadow-xl">
+          <div key={plan.id} className="bg-card rounded-2xl border border-border p-6 shadow-xl">
             <div className="text-center mb-6">
               <h3 className={`text-xl font-bold mb-2 ${
-                planIndex === 1 ? 'text-blue-400' :
-                planIndex === 2 ? 'text-purple-400' :
-                'text-white'
+                planIndex === 1 ? 'text-primary' :
+                planIndex === 2 ? 'text-purple-500' :
+                'text-foreground'
               }`}>{plan.name}</h3>
               <div className={`text-lg font-bold ${
-                planIndex === 1 ? 'text-blue-300' :
-                planIndex === 2 ? 'text-purple-300' :
-                'text-gray-400'
+                planIndex === 1 ? 'text-primary/80' :
+                planIndex === 2 ? 'text-purple-500/80' :
+                'text-muted-foreground'
               }`}>{plan.price}</div>
               {plan.period && (
-                <div className="text-sm text-gray-500 mt-1">{plan.period}</div>
+                <div className="text-sm text-muted-foreground mt-1">{plan.period}</div>
               )}
             </div>
             <div className="space-y-6">
               {comparisonFeatures.map((category) => (
                 <div key={category.category}>
-                  <h4 className="font-bold text-gray-200 text-sm uppercase tracking-wider mb-3">
+                  <h4 className="font-bold text-foreground text-sm uppercase tracking-wider mb-3">
                     {category.category}
                   </h4>
                   <div className="space-y-3">
@@ -182,19 +182,19 @@ export function ComparisonTable({ plans }: ComparisonTableProps) {
                       const value = feature.values[planIndex];
                       return (
                         <div key={featureIndex} className="flex items-center justify-between">
-                          <span className="text-gray-300 text-sm">{feature.name}</span>
+                          <span className="text-muted-foreground text-sm">{feature.name}</span>
                           {typeof value === 'boolean' ? (
                             value ? (
                               <div className="w-6 h-6 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center shadow-lg">
                                 <Check className="w-3 h-3 text-white" />
                               </div>
                             ) : (
-                              <div className="w-6 h-6 bg-gray-700 rounded-full flex items-center justify-center">
-                                <X className="w-3 h-3 text-gray-500" />
+                              <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center">
+                                <X className="w-3 h-3 text-muted-foreground" />
                               </div>
                             )
                           ) : (
-                            <span className="text-gray-200 text-sm font-medium inline-block px-2 py-1 bg-gray-700/50 rounded-lg">
+                            <span className="text-foreground text-sm font-medium inline-block px-2 py-1 bg-muted rounded-lg">
                               {value}
                             </span>
                           )}

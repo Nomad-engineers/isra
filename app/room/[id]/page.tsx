@@ -750,6 +750,7 @@ export default function WebinarRoomPage({
                       webinar.videoUrl ||
                       "https://www.youtube.com/watch?v=6fty5yB7bFo"
                     }
+                    roomId={roomId}
                     autoPlay={webinar.roomStarted}
                     muted={!webinarSettings.isVolumeOn}
                     controls={isOwner}

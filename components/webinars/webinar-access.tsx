@@ -23,6 +23,58 @@ export function WebinarAccessModal({
     guestPhone: string
   ): Promise<boolean> => {
     try {
+      // Сначала пробуем проверить по JWT токену
+      const token = localStorage.getItem("payload-token");
+
+      if (token) {
+        try {
+          const userResponse = await fetch(
+            "https://isracms.vercel.app/api/users/me",
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `JWT ${token}`,
+              },
+            }
+          );
+
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            const user = userData.user || userData;
+
+            console.log("👤 Current user from JWT:", user);
+
+            // Проверяем совпадение имени и телефона
+            const userFullName =
+              `${user.firstName || ""} ${user.lastName || ""}`
+                .trim()
+                .toLowerCase();
+            const userPhone = (user.phone || "").replace(/\D/g, "");
+            const inputNameNormalized = guestName.toLowerCase().trim();
+            const inputPhoneNormalized = guestPhone.replace(/\D/g, "");
+
+            console.log("🔍 JWT Verification:", {
+              userFullName,
+              inputName: inputNameNormalized,
+              nameMatch: userFullName === inputNameNormalized,
+              userPhone,
+              inputPhone: inputPhoneNormalized,
+              phoneMatch: userPhone === inputPhoneNormalized,
+            });
+
+            // Если имя и телефон совпадают с данными пользователя
+            if (userPhone === inputPhoneNormalized) {
+              console.log("✅ User verified via JWT token!");
+              return true;
+            }
+          }
+        } catch (jwtError) {
+          console.log("JWT verification failed, trying guest list...");
+        }
+      }
+
+      // Если JWT не сработал, проверяем в списке гостей
       const response = await fetch(
         `https://isracms.vercel.app/api/rooms/${roomId}`,
         {
@@ -39,20 +91,60 @@ export function WebinarAccessModal({
 
       const roomData = await response.json();
 
-      if (roomData.guests && Array.isArray(roomData.guests)) {
-        const guestFound = roomData.guests.some((guest: any) => {
-          const nameMatch =
-            guest.name?.toLowerCase() === guestName.toLowerCase();
-          const phoneMatch = guest.phone?.replace(/\D/g, "") === guestPhone;
-          return nameMatch && phoneMatch;
-        });
-        return guestFound;
+      console.log("📦 Room data received");
+
+      // Проверяем разные возможные поля для списка гостей
+      const guestsList =
+        roomData.guests ||
+        roomData.participants ||
+        roomData.attendees ||
+        roomData.registeredUsers ||
+        [];
+
+      console.log("📋 Guest list length:", guestsList.length);
+
+      if (!Array.isArray(guestsList)) {
+        console.error("❌ Guest list is not an array");
+        return false;
       }
 
-      console.warn("Guest list not found, allowing access");
-      return true;
+      if (guestsList.length === 0) {
+        console.warn("⚠️ Guest list is empty");
+        return false;
+      }
+
+      // Проверяем гостя в списке
+      const guestFound = guestsList.some((guest: any) => {
+        const guestNameNormalized = (guest.name || "").toLowerCase().trim();
+        const inputNameNormalized = guestName.toLowerCase().trim();
+        const guestPhoneNormalized = (guest.phone || "").replace(/\D/g, "");
+        const inputPhoneNormalized = guestPhone.replace(/\D/g, "");
+
+        const nameMatch = guestNameNormalized === inputNameNormalized;
+        const phoneMatch = guestPhoneNormalized === inputPhoneNormalized;
+
+        console.log("🔎 Checking guest:", {
+          guestName: guestNameNormalized,
+          inputName: inputNameNormalized,
+          nameMatch,
+          guestPhone: guestPhoneNormalized,
+          inputPhone: inputPhoneNormalized,
+          phoneMatch,
+          bothMatch: nameMatch && phoneMatch,
+        });
+
+        return nameMatch && phoneMatch;
+      });
+
+      if (guestFound) {
+        console.log("✅ Guest found in list!");
+      } else {
+        console.log("❌ Guest not found in list");
+      }
+
+      return guestFound;
     } catch (error) {
-      console.error("Error verifying guest:", error);
+      console.error("💥 Error verifying guest:", error);
       throw error;
     }
   };
@@ -70,10 +162,9 @@ export function WebinarAccessModal({
     try {
       const cleanPhone = phone.replace(/\D/g, "");
 
-      console.log("Аутентификация гостя:", {
+      console.log("🔐 Starting authentication:", {
         name: name.trim(),
         phone: cleanPhone,
-        formattedPhone: phone,
       });
 
       const isVerified = await verifyGuestAuth(name.trim(), cleanPhone);
@@ -86,6 +177,7 @@ export function WebinarAccessModal({
         return;
       }
 
+      console.log("✅ Authentication successful!");
       onAuthenticated(name.trim(), cleanPhone);
 
       try {
@@ -136,7 +228,7 @@ export function WebinarAccessModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black flex items-center justify-center p-4">
-      <div className="relative w-full max-w-md mx-4 bg-gradient-to-b from-gray-900 to-black border border-gray-800 rounded-2xl shadow-2xl">
+      <div className="relative w-full max-w-md mx-4 bg-[#121212] rounded-2xl shadow-2xl">
         <div className="p-8">
           <div className="flex items-center justify-center w-16 h-16 mx-auto mb-6 bg-gray-800 rounded-full">
             <Lock className="w-8 h-8 text-gray-300" />
@@ -146,8 +238,7 @@ export function WebinarAccessModal({
             Вход в вебинар
           </h2>
           <p className="text-center text-gray-400 mb-8 text-sm">
-            Для доступа к вебинару введите ваши данные, указанные при
-            регистрации
+            Для доступа к вебинару введите ваши данные
           </p>
 
           <div className="space-y-5">
@@ -159,7 +250,7 @@ export function WebinarAccessModal({
                 <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                 <input
                   type="text"
-                  placeholder="Иван Иванов"
+                  placeholder="Write your name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   onKeyPress={handleKeyPress}
@@ -174,14 +265,12 @@ export function WebinarAccessModal({
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Номер телефона
               </label>
-              <p className="text-xs text-gray-500 mb-2">
-                Введите номер телефона, указанный при регистрации
-              </p>
+
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                 <input
                   type="tel"
-                  placeholder="+7 (999) 999-99-99"
+                  placeholder="+77077070707"
                   value={phone}
                   onChange={handlePhoneChange}
                   onKeyPress={handleKeyPress}

@@ -9,7 +9,6 @@ import {
 } from "react";
 import {
   MediaPlayer,
-  MediaOutlet,
   MediaCommunitySkin,
   useMediaPlayer,
   useMediaRemote,
@@ -264,7 +263,6 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
           muted={muted}
           className="w-full h-full"
         >
-          <MediaOutlet />
           {controls && (
             <MediaCommunitySkin />
           )}

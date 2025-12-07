@@ -15,6 +15,7 @@ import {
 import { User, LogOut, Users, BarChart3, UserCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const navigation = [
   { name: "Вебинары", href: "/rooms", icon: Users },
@@ -77,12 +78,12 @@ export function Navigation({
   };
 
   return (
-    <nav className="bg-isra-medium/90 backdrop-blur-lg border border-isra sticky top-0 z-50">
+    <nav className="bg-card/90 backdrop-blur-lg border-b border-border sticky top-0 z-50">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <Link href="/" className="text-2xl font-bold text-white">
+              <Link href="/" className="text-2xl font-bold text-primary">
                 ISRA
               </Link>
             </div>
@@ -98,8 +99,8 @@ export function Navigation({
                     className={cn(
                       "inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200",
                       isActive
-                        ? "text-isra-purple-main bg-transparent"
-                        : "text-gray-400 hover:text-white hover:bg-isra-medium/50"
+                        ? "text-primary bg-primary/10"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
                     )}
                   >
                     <Icon className="h-4 w-4 mr-2" />
@@ -110,12 +111,13 @@ export function Navigation({
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="relative h-10 w-10 rounded-full border border-isra hover:border-isra-primary/50 transition-colors text-white"
+                  className="relative h-10 w-10 rounded-full border border-border hover:border-primary/50 transition-colors"
                 >
                   <Avatar className="h-9 w-9">
                     <AvatarImage src={avatarUrl} alt={userName} />

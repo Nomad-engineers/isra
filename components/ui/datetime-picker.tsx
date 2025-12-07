@@ -60,7 +60,7 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className="w-full justify-between bg-neutral-900 text-white border-neutral-700 "
+          className="w-full justify-between bg-card text-foreground border-border"
         >
           {value
             ? format(value, "d MMMM yyyy г., HH:mm", { locale: ru })
@@ -69,7 +69,7 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent className="p-4 w-[420px] bg-black border border-neutral-800 shadow-xl rounded-xl mt-2 pb-0">
+      <PopoverContent className="p-4 w-[420px] bg-card border border-border shadow-xl rounded-xl mt-2 pb-0">
         <div className="flex gap-4">
           {}
           <Calendar
@@ -77,18 +77,18 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
             selected={value ?? undefined}
             onSelect={(day) => day && handleSelectDate(day)}
             locale={ru}
-            className="bg-black text-white w-[250px]"
+            className="bg-card text-foreground w-[250px]"
           />
 
           {}
-          <div className="h-64 overflow-y-scroll pr-2 border-l border-neutral-800 pl-3 w-[120px] custom-scroll">
+          <div className="h-64 overflow-y-scroll pr-2 border-l border-border pl-3 w-[120px] custom-scroll">
             {times.map((time) => (
               <button
                 key={time}
                 onClick={() => handleSelectTime(time)}
                 className={cn(
-                  "block w-full text-left px-3 py-1 rounded text-white hover:bg-neutral-800",
-                  selectedTime === time && "bg-violet-600 hover:bg-violet-600"
+                  "block w-full text-left px-3 py-1 rounded text-foreground hover:bg-muted",
+                  selectedTime === time && "bg-primary text-primary-foreground hover:bg-primary"
                 )}
               >
                 {time}

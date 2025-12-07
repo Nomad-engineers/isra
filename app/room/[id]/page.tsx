@@ -471,10 +471,10 @@ export default function WebinarRoomPage({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-isra-dark via-isra-medium to-isra-dark flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
-          <Loader2 className="h-12 w-12 animate-spin text-isra-primary mx-auto" />
-          <p className="text-white text-lg">Загрузка вебинара...</p>
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
+          <p className="text-foreground text-lg">Загрузка вебинара...</p>
         </div>
       </div>
     );
@@ -482,13 +482,12 @@ export default function WebinarRoomPage({
 
   if (!webinar) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-isra-dark via-isra-medium to-isra-dark flex items-center justify-center">
-        <Card className="card-glass max-w-md">
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="max-w-md">
           <CardContent className="pt-6 text-center space-y-4">
-            <h2 className="text-2xl font-bold text-white">Вебинар не найден</h2>
+            <h2 className="text-2xl font-bold text-foreground">Вебинар не найден</h2>
             <Button
               onClick={() => router.push("/rooms")}
-              className="gradient-primary"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Вернуться к списку
@@ -500,8 +499,8 @@ export default function WebinarRoomPage({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-isra-dark via-isra-medium to-isra-dark">
-      <div className="bg-isra-dark/50 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
+    <div className="min-h-screen bg-background">
+      <div className="bg-card/80 backdrop-blur-md border-b border-border sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -509,15 +508,14 @@ export default function WebinarRoomPage({
                 variant="ghost"
                 size="sm"
                 onClick={() => router.push("/rooms")}
-                className="text-white hover:text-isra-primary"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Назад
               </Button>
 
               <div>
-                <h1 className="text-xl font-bold text-white">{webinar.name}</h1>
-                <p className="text-sm text-gray-400">
+                <h1 className="text-xl font-bold text-foreground">{webinar.name}</h1>
+                <p className="text-sm text-muted-foreground">
                   Ведущий: {webinar.speaker}
                 </p>
               </div>
@@ -525,7 +523,7 @@ export default function WebinarRoomPage({
 
             <div className="flex items-center gap-4">
               {webinar.roomStarted && (
-                <div className="flex items-center gap-2 text-white">
+                <div className="flex items-center gap-2 text-foreground">
                   <Clock className="h-4 w-4" />
                   <span className="font-mono">{duration}</span>
                 </div>
@@ -534,7 +532,6 @@ export default function WebinarRoomPage({
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-white"
                 onClick={() => setSettingsOpen(true)}
               >
                 <Settings className="h-4 w-4" />
@@ -554,21 +551,21 @@ export default function WebinarRoomPage({
       <div className="container mx-auto px-4 py-6">
         {!webinar.roomStarted ? (
           <div className="min-h-[calc(100vh-160px)] flex items-center justify-center">
-            <Card className="card-glass max-w-md w-full">
+            <Card className="max-w-md w-full">
               <CardContent className="pt-8 pb-6 text-center space-y-6">
                 <div className="space-y-4">
                   <div className="mx-auto w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center">
-                    <Clock className="h-8 w-8 text-yellow-400" />
+                    <Clock className="h-8 w-8 text-yellow-500" />
                   </div>
-                  <h2 className="text-2xl font-bold text-white">
+                  <h2 className="text-2xl font-bold text-foreground">
                     Вебинар еще не начался
                   </h2>
-                  <p className="text-gray-300 leading-relaxed">
+                  <p className="text-muted-foreground leading-relaxed">
                     Этот вебинар пока не запущен организатором. Пожалуйста,
                     подождите немного или вернитесь позже.
                   </p>
                   <div className="space-y-2">
-                    <p className="text-sm text-gray-400">
+                    <p className="text-sm text-muted-foreground">
                       {webinar.scheduledDate ? (
                         <>
                           Запланировано на:{" "}
@@ -592,7 +589,7 @@ export default function WebinarRoomPage({
                 <div className="space-y-3 pt-4">
                   <Button
                     onClick={() => router.push("/rooms")}
-                    className="gradient-primary w-full"
+                    className="w-full"
                   >
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Вернуться к списку вебинаров
@@ -600,7 +597,7 @@ export default function WebinarRoomPage({
                   <Button
                     variant="outline"
                     onClick={() => window.location.reload()}
-                    className="w-full border-white/20 text-white hover:bg-white/10"
+                    className="w-full"
                   >
                     Обновить страницу
                   </Button>
@@ -611,24 +608,24 @@ export default function WebinarRoomPage({
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-160px)]">
             {webinarSettings.showChat && (
-              <Card className="card-glass lg:col-span-1 lg:order-1 flex flex-col">
-                <div className="p-4 border-b border-white/10">
+              <Card className="lg:col-span-1 lg:order-1 flex flex-col">
+                <div className="p-4 border-b border-border">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                      <MessageSquare className="h-5 w-5 text-isra-cyan" />
+                    <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                      <MessageSquare className="h-5 w-5 text-primary" />
                       Чат
                     </h2>
                     <div className="flex items-center gap-2">
                       {isConnected ? (
-                        <div className="text-white">
+                        <div className="text-green-500">
                           <Wifi className="h-4 w-4" />
                         </div>
                       ) : (
-                        <div className="text-red-400">
+                        <div className="text-red-500">
                           <WifiOff className="h-4 w-4" />
                         </div>
                       )}
-                      <Badge variant="outline" className="text-white">
+                      <Badge variant="outline">
                         <Users className="h-3 w-3 mr-1" />
                         {onlineParticipants} онлайн
                       </Badge>
@@ -638,12 +635,12 @@ export default function WebinarRoomPage({
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                   {loadingHistory ? (
-                    <div className="text-center text-gray-400 py-8">
+                    <div className="text-center text-muted-foreground py-8">
                       <Loader2 className="h-12 w-12 mx-auto mb-3 animate-spin opacity-50" />
                       <p>Загрузка истории сообщений...</p>
                     </div>
                   ) : messages.length === 0 && events.length === 0 ? (
-                    <div className="text-center text-gray-400 py-8">
+                    <div className="text-center text-muted-foreground py-8">
                       <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-50" />
                       <p>Пока нет сообщений</p>
                       <p className="text-sm">Будьте первым, кто напишет!</p>
@@ -653,10 +650,10 @@ export default function WebinarRoomPage({
                       {messages.map((msg) => (
                         <div key={msg.id} className="space-y-1">
                           <div className="flex items-baseline gap-2">
-                            <span className="font-semibold text-isra-cyan text-sm">
+                            <span className="font-semibold text-primary text-sm">
                               {msg.username}
                             </span>
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-muted-foreground">
                               {new Date(msg.createdAt).toLocaleTimeString(
                                 "ru-RU",
                                 {
@@ -666,7 +663,7 @@ export default function WebinarRoomPage({
                               )}
                             </span>
                           </div>
-                          <p className="text-white text-sm bg-white/5 rounded-lg px-3 py-2">
+                          <p className="text-foreground text-sm bg-muted/50 rounded-lg px-3 py-2">
                             {msg.message}
                           </p>
                         </div>
@@ -677,7 +674,7 @@ export default function WebinarRoomPage({
                   <div ref={messagesEndRef} />
                 </div>
 
-                <div className="p-4 border-t border-white/10">
+                <div className="p-4 border-t border-border">
                   <div className="flex gap-2">
                     <Input
                       value={messageText}
@@ -685,12 +682,11 @@ export default function WebinarRoomPage({
                       onKeyDown={handleKeyPress}
                       placeholder="Написать сообщение..."
                       disabled={!isConnected}
-                      className="bg-white/5 border-white/10 text-white placeholder:text-gray-400 disabled:opacity-50"
+                      className="disabled:opacity-50"
                     />
                     <Button
                       onClick={handleSendMessage}
                       disabled={!messageText.trim() || !isConnected}
-                      className="gradient-primary"
                     >
                       <Send className="h-4 w-4" />
                     </Button>
@@ -700,7 +696,7 @@ export default function WebinarRoomPage({
             )}
 
             <Card
-              className={`card-glass flex flex-col lg:order-2 ${webinarSettings.showChat ? "lg:col-span-2" : "lg:col-span-3"}`}
+              className={`flex flex-col lg:order-2 ${webinarSettings.showChat ? "lg:col-span-2" : "lg:col-span-3"}`}
             >
               <CardContent className="p-0 flex-1 relative">
                 <div className="w-full h-full bg-black rounded-lg overflow-hidden">
@@ -721,11 +717,11 @@ export default function WebinarRoomPage({
               </CardContent>
 
               {webinar.description && (
-                <div className="p-4 border-t border-white/10">
-                  <h3 className="text-sm font-semibold text-white mb-2">
+                <div className="p-4 border-t border-border">
+                  <h3 className="text-sm font-semibold text-foreground mb-2">
                     О вебинаре
                   </h3>
-                  <p className="text-sm text-gray-400">{webinar.description}</p>
+                  <p className="text-sm text-muted-foreground">{webinar.description}</p>
                 </div>
               )}
             </Card>

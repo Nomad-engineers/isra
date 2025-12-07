@@ -24,19 +24,19 @@ export function StatsCard({
 }: StatsCardProps) {
   return (
     <Card className={cn(
-      "transition-all duration-200 hover:shadow-lg hover:shadow-isra-primary/10 hover:-translate-y-1 card-glass",
+      "transition-all duration-200 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1",
       className
     )}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-foreground">{title}</CardTitle>
         {Icon && (
-          <div className="p-1.5 rounded-md bg-isra-medium/50">
-            <Icon className="h-4 w-4 text-isra-primary" />
+          <div className="p-1.5 rounded-md bg-muted">
+            <Icon className="h-4 w-4 text-primary" />
           </div>
         )}
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold text-gradient-accent">{value}</div>
+        <div className="text-2xl font-bold text-primary">{value}</div>
         {description && (
           <p className="text-xs text-muted-foreground mt-1">{description}</p>
         )}

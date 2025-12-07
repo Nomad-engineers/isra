@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 /* Vidstack Player Styles */
-@import '@vidstack/react/player/styles/default/theme.css';
-@import '@vidstack/react/player/styles/default/layouts/video.css';
+@import 'vidstack/styles/defaults.css';
+@import 'vidstack/styles/community-skin/video.css';
 
 @layer base {
   :root {

@@ -9,11 +9,12 @@ import {
 } from "react";
 import {
   MediaPlayer,
-  MediaCommunitySkin,
   useMediaPlayer,
   useMediaRemote,
   useMediaStore,
+  MediaProvider,
 } from "@vidstack/react";
+import { DefaultVideoLayout, defaultLayoutIcons } from "@vidstack/react/player/layouts/default";
 import { Play } from "lucide-react";
 
 interface VidstackPlayerProps {
@@ -263,8 +264,9 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
           muted={muted}
           className="w-full h-full"
         >
+          <MediaProvider />
           {controls && (
-            <MediaCommunitySkin />
+            <DefaultVideoLayout icons={defaultLayoutIcons} />
           )}
         </MediaPlayer>
       </div>

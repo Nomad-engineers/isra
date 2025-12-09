@@ -65,7 +65,32 @@ export class RoomsApi {
 
   // Utility methods
   async start(id: string): Promise<{ roomUrl: string }> {
-    return await this.client.post<{ roomUrl: string }>(`/rooms/${id}/start`)
+    // Get the token from localStorage
+    const token = typeof window !== 'undefined' ? localStorage.getItem('payload-token') : null
+
+    if (!token) {
+      throw new Error('Authentication token is required')
+    }
+
+    // Use the Payload CMS API URL from environment configuration
+    const apiUrl = process.env.NEXT_PUBLIC_PAYLOAD_API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://isracms.vercel.app'
+
+    // Make direct fetch call with Bearer token as specified in the curl command
+    const response = await fetch(`${apiUrl}/api/rooms/start/${id}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: '',
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.message || `Failed to start webinar: ${response.status} ${response.statusText}`)
+    }
+
+    return response.json()
   }
 
   async end(id: string): Promise<void> {

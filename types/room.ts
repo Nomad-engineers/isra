@@ -1,5 +1,14 @@
 import { BaseEntity } from "./common";
 
+export interface Media {
+  id: string;
+  url: string;
+  type: string;
+  name?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface User {
   id: number;
   lastName?: string | null;
@@ -17,16 +26,37 @@ export interface User {
   }>;
 }
 
-export interface Room extends BaseEntity {
+export interface Room {
   id: string;
+  logo?: (number | null) | Media;
   name: string;
-  title?: string; // Optional for backward compatibility
-  description?: string;
   speaker: string;
-  type: "live" | "auto";
-  user: User; // User object who owns the room
-  createdAt: string;
+  user: number | User;
+  type: 'live' | 'auto';
+  scheduledDate?: string | null;
+  roomStarted?: boolean | null;
+  videoUrl?: string | null;
+  bannerUrl?: string | null;
+  showBanner?: boolean | null;
+  btnUrl?: string | null;
+  showBtn?: boolean | null;
+  showChat?: boolean | null;
+  isVolumeOn?: boolean | null;
+  startedAt?: string | null;
+  stoppedAt?: string | null;
+  description?: string | null;
   updatedAt: string;
+  createdAt: string;
+}
+
+export interface Scenario {
+  id: number;
+  username?: string | null;
+  message?: string | null;
+  seconds?: number | null;
+  room?: (string | null) | Room;
+  updatedAt: string;
+  createdAt: string;
 }
 
 export interface RoomResponse {

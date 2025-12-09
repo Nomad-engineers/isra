@@ -14,6 +14,7 @@ import { RefreshCw, Search, Calendar, FileText, Video, Loader2 } from 'lucide-re
 import { CreateWebinarModal } from '@/components/webinars/create-webinar-modal'
 import { useTokenAuth } from '@/hooks/use-token-auth'
 import { EditWebinarModal } from '@/components/webinars/edit-webinar-modal'
+import { roomsApi } from '@/api/rooms'
 import { Webinar } from '@/types/webinar'
 
 interface UserData {
@@ -439,37 +440,8 @@ export default function RoomsPage() {
     }
 
     try {
-      const token = getToken() || localStorage.getItem('payload-token')
-
-      if (!token) {
-        toast({
-          title: 'Требуется авторизация',
-          description: 'Авторизуйтесь, чтобы продолжить',
-          variant: 'destructive',
-        })
-        return
-      }
-
-      const response = await fetch(`https://isracms.vercel.app/api/rooms/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `JWT ${token}`,
-        },
-        body: JSON.stringify({
-          roomStarted: true,
-          startedAt: new Date().toISOString(),
-        }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(
-          errorData.errors?.[0]?.message || 'Failed to start webinar'
-        )
-      }
-
-      const result = await response.json()
+      // Use the roomsApi start method which integrates the curl command
+      const result = await roomsApi.start(id)
       console.log('Webinar started successfully:', result)
 
       toast({

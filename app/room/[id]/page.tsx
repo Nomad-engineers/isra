@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -58,16 +58,26 @@ interface WebinarData {
 export default function WebinarRoomPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }) {
   const router = useRouter();
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const videoPlayerRef = useRef<any>(null);
 
-  const { id: roomId } = use(params);
-
+  const [roomId, setRoomId] = useState<string>("");
   const [webinar, setWebinar] = useState<WebinarData | null>(null);
+
+  // Handle params for client component
+  useEffect(() => {
+    // In client components, params is already resolved
+    if (params && typeof params === 'object' && 'id' in params) {
+      setRoomId(params.id);
+    } else if (typeof params === 'string') {
+      // Fallback if params is just the ID string
+      setRoomId(params);
+    }
+  }, [params]);
   const [loading, setLoading] = useState(true);
   const [messageText, setMessageText] = useState("");
   const [userName, setUserName] = useState("Гость");

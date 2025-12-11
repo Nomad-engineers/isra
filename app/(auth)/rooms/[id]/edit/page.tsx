@@ -40,6 +40,10 @@ const webinarFormSchema = z.object({
       },
       { message: 'Некорректный URL' }
     ),
+  showBanner: z.boolean(),
+  showBtn: z.boolean(),
+  showChat: z.boolean(),
+  isVolumeOn: z.boolean(),
 })
 
 type WebinarFormData = z.infer<typeof webinarFormSchema>
@@ -284,6 +288,10 @@ export default function EditRoomPage() {
       datetime: '',
       description: '',
       link: '',
+      showBanner: false,
+      showBtn: false,
+      showChat: true,
+      isVolumeOn: true,
     },
   })
 
@@ -512,6 +520,10 @@ export default function EditRoomPage() {
             datetime: data.scheduledDate || '',
             description: data.description || '',
             link: data.videoUrl || '',
+            showBanner: data.showBanner ?? false,
+            showBtn: data.showBtn ?? false,
+            showChat: data.showChat ?? true,
+            isVolumeOn: data.isVolumeOn ?? true,
           })
         }
 
@@ -564,6 +576,10 @@ export default function EditRoomPage() {
         description: data.description || '',
         videoUrl: data.link || '',
         scheduledDate: data.datetime ? new Date(data.datetime).toISOString() : null,
+        showBanner: data.showBanner,
+        showBtn: data.showBtn,
+        showChat: data.showChat,
+        isVolumeOn: data.isVolumeOn,
       }
 
       console.log('Updating webinar:', roomId, updatePayload)
@@ -917,6 +933,103 @@ export default function EditRoomPage() {
                     )}
                   />
 
+                  {/* Toggle Switches Section */}
+                  <div className='space-y-4'>
+                    <h3 className='text-lg font-medium'>Настройки отображения</h3>
+
+                    {/* Show Banner Toggle */}
+                    <FormField
+                      control={roomForm.control}
+                      name='showBanner'
+                      render={({ field }) => (
+                        <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
+                          <div className='space-y-0.5'>
+                            <FormLabel className='text-base'>Показать баннер</FormLabel>
+                            <p className='text-sm text-muted-foreground'>
+                              Отображать баннер в комнате
+                            </p>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              disabled={isSubmitting}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Show Button Toggle */}
+                    <FormField
+                      control={roomForm.control}
+                      name='showBtn'
+                      render={({ field }) => (
+                        <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
+                          <div className='space-y-0.5'>
+                            <FormLabel className='text-base'>Показать кнопку</FormLabel>
+                            <p className='text-sm text-muted-foreground'>
+                              Отображать кнопку действия в комнате
+                            </p>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              disabled={isSubmitting}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Show Chat Toggle */}
+                    <FormField
+                      control={roomForm.control}
+                      name='showChat'
+                      render={({ field }) => (
+                        <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
+                          <div className='space-y-0.5'>
+                            <FormLabel className='text-base'>Показать чат</FormLabel>
+                            <p className='text-sm text-muted-foreground'>
+                              Включить чат для участников
+                            </p>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              disabled={isSubmitting}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Volume On Toggle */}
+                    <FormField
+                      control={roomForm.control}
+                      name='isVolumeOn'
+                      render={({ field }) => (
+                        <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
+                          <div className='space-y-0.5'>
+                            <FormLabel className='text-base'>Звук включен</FormLabel>
+                            <p className='text-sm text-muted-foreground'>
+                              Включить звук по умолчанию
+                            </p>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              disabled={isSubmitting}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
 
 
                   <div className='flex justify-end gap-3 pt-4'>
@@ -947,101 +1060,103 @@ export default function EditRoomPage() {
             <TabsContent value='webinar' className='mt-6'>
               <Form {...webinarForm}>
                 <form onSubmit={webinarForm.handleSubmit(onWebinarSubmit)} className='space-y-6'>
-                  {/* Title field - required */}
-                  <FormField
-                    control={webinarForm.control}
-                    name='title'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Название вебинара *</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder='Введите название вебинара'
-                            disabled={isSubmitting}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
 
-                  {/* Host name field - required */}
-                  <FormField
-                    control={webinarForm.control}
-                    name='hostName'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Имя ведущего *</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder='Введите имя ведущего'
-                            disabled={isSubmitting}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {/* Toggle Switches Section */}
+                  <div className='space-y-4'>
+                    <h3 className='text-lg font-medium'>Настройки отображения</h3>
 
-                  {/* Date and time field - optional */}
-                  <FormField
-                    control={webinarForm.control}
-                    name='datetime'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Время проведения</FormLabel>
-                        <DateTimePicker
-                          value={field.value ? new Date(field.value) : null}
-                          onChange={(date) =>
-                            field.onChange(date?.toISOString() || '')
-                          }
-                        />
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    {/* Show Banner Toggle */}
+                    <FormField
+                      control={webinarForm.control}
+                      name='showBanner'
+                      render={({ field }) => (
+                        <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
+                          <div className='space-y-0.5'>
+                            <FormLabel className='text-base'>Показать баннер</FormLabel>
+                            <p className='text-sm text-muted-foreground'>
+                              Отображать баннер в вебинаре
+                            </p>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              disabled={isSubmitting}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
 
-                  {/* Video link field */}
-                  <FormField
-                    control={webinarForm.control}
-                    name='link'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Ссылка на видео</FormLabel>
-                        <FormControl>
-                          <Input
-                            type='url'
-                            placeholder='https://example.com/video-link'
-                            disabled={isSubmitting}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    {/* Show Button Toggle */}
+                    <FormField
+                      control={webinarForm.control}
+                      name='showBtn'
+                      render={({ field }) => (
+                        <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
+                          <div className='space-y-0.5'>
+                            <FormLabel className='text-base'>Показать кнопку</FormLabel>
+                            <p className='text-sm text-muted-foreground'>
+                              Отображать кнопку действия в вебинаре
+                            </p>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              disabled={isSubmitting}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
 
-                  {/* Description field */}
-                  <FormField
-                    control={webinarForm.control}
-                    name='description'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Описание</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder='Введите описание вебинара'
-                            rows={4}
-                            disabled={isSubmitting}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    {/* Show Chat Toggle */}
+                    <FormField
+                      control={webinarForm.control}
+                      name='showChat'
+                      render={({ field }) => (
+                        <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
+                          <div className='space-y-0.5'>
+                            <FormLabel className='text-base'>Показать чат</FormLabel>
+                            <p className='text-sm text-muted-foreground'>
+                              Включить чат для участников
+                            </p>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              disabled={isSubmitting}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Volume On Toggle */}
+                    <FormField
+                      control={webinarForm.control}
+                      name='isVolumeOn'
+                      render={({ field }) => (
+                        <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
+                          <div className='space-y-0.5'>
+                            <FormLabel className='text-base'>Звук включен</FormLabel>
+                            <p className='text-sm text-muted-foreground'>
+                              Включить звук по умолчанию
+                            </p>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              disabled={isSubmitting}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
                   <div className='flex justify-end gap-3 pt-4'>
                     <Link href='/rooms'>

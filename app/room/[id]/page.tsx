@@ -58,7 +58,7 @@ interface WebinarData {
 export default function WebinarRoomPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -70,13 +70,16 @@ export default function WebinarRoomPage({
 
   // Handle params for client component
   useEffect(() => {
-    // In client components, params is already resolved
-    if (params && typeof params === 'object' && 'id' in params) {
-      setRoomId(params.id);
-    } else if (typeof params === 'string') {
-      // Fallback if params is just the ID string
-      setRoomId(params);
-    }
+    const resolveParams = async () => {
+      try {
+        const resolvedParams = await params;
+        setRoomId(resolvedParams.id);
+      } catch (error) {
+        console.error('Failed to resolve params:', error);
+      }
+    };
+
+    resolveParams();
   }, [params]);
   const [loading, setLoading] = useState(true);
   const [messageText, setMessageText] = useState("");

@@ -422,37 +422,37 @@ export default function EditRoomPage() {
           },
         })
 
-        if (!response.ok && response.status === 401) {
-          const refreshedToken = await refreshToken()
-          if (refreshedToken) {
-            const retryResponse = await fetch(`https://isracms.vercel.app/api/rooms/${roomId}`, {
-              method: 'GET',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `JWT ${refreshedToken}`,
-              },
-            })
-
-            if (retryResponse.ok) {
-              const result = await retryResponse.json()
-              processRoomData(result)
-              return
-            }
-          }
-
-          if (response.status === 404) {
-            stableToast({
-              title: 'Комната не найдена',
-              description: 'Запрошенная комната не существует',
-              variant: 'destructive',
-            })
-            router.push('/rooms')
-            return
-          }
-          throw new Error(`Failed to fetch room: ${response.status}`)
-        }
-
         if (!response.ok) {
+          if (response.status === 401) {
+            const refreshedToken = await refreshToken()
+            if (refreshedToken) {
+              const retryResponse = await fetch(`https://isracms.vercel.app/api/rooms/${roomId}`, {
+                method: 'GET',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `JWT ${refreshedToken}`,
+                },
+              })
+
+              if (retryResponse.ok) {
+                const result = await retryResponse.json()
+                processRoomData(result)
+                return
+              }
+
+              if (retryResponse.status === 404) {
+                stableToast({
+                  title: 'Комната не найдена',
+                  description: 'Запрошенная комната не существует',
+                  variant: 'destructive',
+                })
+                router.push('/rooms')
+                return
+              }
+            }
+            throw new Error(`Failed to fetch room: unauthorized`)
+          }
+
           if (response.status === 404) {
             stableToast({
               title: 'Комната не найдена',
@@ -462,6 +462,7 @@ export default function EditRoomPage() {
             router.push('/rooms')
             return
           }
+
           throw new Error(`Failed to fetch room: ${response.status}`)
         }
 

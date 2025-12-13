@@ -13,7 +13,6 @@ import { useDebounce } from '@/hooks/use-debounce'
 import { RefreshCw, Search, Calendar, FileText, Video, Loader2 } from 'lucide-react'
 import { CreateWebinarModal } from '@/components/webinars/create-webinar-modal'
 import { useTokenAuth } from '@/hooks/use-token-auth'
-import { EditWebinarModal } from '@/components/webinars/edit-webinar-modal'
 import { roomsApi } from '@/api/rooms'
 import { Webinar } from '@/types/webinar'
 
@@ -72,7 +71,6 @@ export default function RoomsPage() {
   const [userData, setUserData] = useState<UserData | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const debouncedSearch = useDebounce(searchTerm, 300)
-  const [editingWebinar, setEditingWebinar] = useState<Webinar | null>(null)
 
   // Check if user is admin
   const isAdmin = userData?.role === 'admin'
@@ -343,7 +341,8 @@ export default function RoomsPage() {
         })
         return
       }
-      setEditingWebinar(webinar)
+      // Navigate to edit page instead of opening modal
+      router.push(`/rooms/${id}/edit`)
     }
   }
 
@@ -475,12 +474,7 @@ export default function RoomsPage() {
     fetchWebinars()
   }
 
-  const handleWebinarUpdated = () => {
-    // Refresh webinars list when one is updated
-    fetchWebinars()
-    setEditingWebinar(null)
-  }
-
+  
   // Helper function to get user's display name
   const getUserDisplayName = () => {
     if (!userData) return 'Пользователь'
@@ -639,19 +633,6 @@ export default function RoomsPage() {
         </div>
       </div>
 
-      {/* Edit Webinar Modal */}
-      {editingWebinar && (
-        <EditWebinarModal
-          webinar={editingWebinar}
-          open={!!editingWebinar}
-          onOpenChange={(open) => {
-            if (!open) {
-              setEditingWebinar(null)
-              handleWebinarUpdated()
-            }
-          }}
-        />
-      )}
-    </div>
+      </div>
   )
 }

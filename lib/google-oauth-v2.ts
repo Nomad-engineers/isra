@@ -6,9 +6,23 @@ declare global {
     google: {
       accounts: {
         id: {
-          initialize: (config: any) => void
-          prompt: (notification?: any) => void
-          renderButton: (element: HTMLElement, config: any) => void
+          initialize: (config: {
+            client_id: string
+            callback?: (response: { credential: string }) => void
+            auto_select?: boolean
+            cancel_on_tap_outside?: boolean
+          }) => void
+          prompt: (notification?: unknown) => void
+          renderButton: (element: HTMLElement, config: {
+            theme?: 'outline' | 'filled_blue' | 'filled_black'
+            size?: 'large' | 'medium' | 'small'
+            text?: 'signin_with' | 'signup_with' | 'continue_with' | 'signin'
+            shape?: 'rectangular' | 'pill' | 'circle' | 'square'
+            logo_alignment?: 'left' | 'center'
+            width?: string | number
+            locale?: string
+            click_listener?: () => void
+          }) => void
         }
       }
     }
@@ -117,9 +131,6 @@ class GoogleOAuthV2 {
 
       // Use OAuth2 redirect flow (full page redirect)
       return new Promise((resolve, reject) => {
-        const timeoutId = setTimeout(() => {
-          reject(new Error('Google sign-in timed out after 60 seconds'))
-        }, 60000)
 
         // Generate state and nonce for security
         const state = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
@@ -158,7 +169,7 @@ class GoogleOAuthV2 {
   /**
    * Decode JWT token to get user information
    */
-  private decodeJWT(token: string): any {
+  private decodeJWT(token: string): { email: string; name: string; picture: string; given_name: string; family_name: string } | null {
     try {
       const base64Url = token.split('.')[1]
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')

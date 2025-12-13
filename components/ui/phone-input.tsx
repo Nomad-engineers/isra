@@ -81,7 +81,7 @@ export function PhoneInput({
 }
 
 interface FormPhoneInputProps {
-  control: any;
+  control: unknown;
   name: string;
   label?: string;
   placeholder?: string;
@@ -97,7 +97,7 @@ export function FormPhoneInput({
 }: FormPhoneInputProps) {
   return (
     <FormField
-      control={control}
+      control={control as any}
       name={name}
       render={({ field }) => (
         <FormItem>

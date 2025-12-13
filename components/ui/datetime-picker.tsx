@@ -25,7 +25,7 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
 
   const times = React.useMemo(() => {
     const result: string[] = [];
-    let start = new Date();
+    const start = new Date();
     start.setHours(0, 0, 0, 0);
 
     for (let i = 0; i < 24 * 4; i++) {

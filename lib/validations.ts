@@ -6,8 +6,6 @@ const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/;
 // Email validation regex
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Phone validation (supports international formats)
-const phoneRegex = /^\+?[\d\s-()]+$/;
 
 export const profileFormSchema = z.object({
   firstName: z.string().min(1, "Имя обязательно"),

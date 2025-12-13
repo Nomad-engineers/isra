@@ -20,7 +20,7 @@ const COOKIE_OPTIONS = {
 /**
  * Set JWT token in both localStorage (client) and cookies (server)
  */
-export function setToken(token: string, userData?: any) {
+export function setToken(token: string, userData?: { id: string; email: string; name: string }) {
   if (typeof window !== 'undefined') {
     // Client-side: localStorage
     localStorage.setItem(TOKEN_KEY, token)
@@ -60,7 +60,7 @@ export function getToken(): string | null {
 /**
  * Get user data from localStorage
  */
-export function getUser(): any | null {
+export function getUser(): { id: string; email: string; name: string } | null {
   if (typeof window !== 'undefined') {
     const userStr = localStorage.getItem(USER_KEY)
     return userStr ? JSON.parse(userStr) : null

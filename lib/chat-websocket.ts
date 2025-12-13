@@ -1,4 +1,4 @@
-import { Centrifuge } from 'centrifuge'
+import { Centrifuge, Subscription as CentrifugeSubscription } from 'centrifuge'
 
 // WebSocket сообщение от сервера
 export interface WebSocketMessage {
@@ -37,11 +37,14 @@ export interface ChatWebSocketConfig {
 // Запрос на отправку ивента
 export interface SendEventRequest {
   type: string
-  data: Record<string, any>
+  data: Record<string, unknown>
 }
 
 // Ответ от сервера при отправке ивента
-export interface SendEventResponse extends SendEventRequest {}
+export interface SendEventResponse {
+  type: string
+  data: Record<string, unknown>
+}
 
 // События WebSocket
 export interface ChatWebSocketEvents {
@@ -53,7 +56,7 @@ export interface ChatWebSocketEvents {
 
 export class ChatWebSocketManager {
   private centrifuge: Centrifuge | null = null
-  private subscription: any = null
+  private subscription: CentrifugeSubscription | null = null
   private config: ChatWebSocketConfig
   private reconnectAttempts = 0
   private maxReconnectAttempts = 5
@@ -141,15 +144,15 @@ export class ChatWebSocketManager {
       })
 
       // Обработчики событий подписки
-      this.subscription.on('publication', (ctx: any) => {
+      this.subscription.on('publication', (ctx) => {
         this.handleMessage(ctx.data)
       })
 
-      this.subscription.on('subscribed', (ctx: any) => {
+      this.subscription.on('subscribed', (ctx) => {
         console.log('Subscribed to chat channel', ctx)
       })
 
-      this.subscription.on('error', (ctx: any) => {
+      this.subscription.on('error', (ctx) => {
         console.error('Subscription error:', ctx)
         this.notifyError(new Error('Subscription error'))
         this.notifyStatusChange('error')
@@ -168,20 +171,31 @@ export class ChatWebSocketManager {
   }
 
   // Обработка входящего сообщения
-  private handleMessage(data: any): void {
+  private handleMessage(data: unknown): void {
     try {
       console.log('Chat data received:', data)
 
-      // Проверяем, что это сообщение типа newMessage
-      if (data.type === 'newMessage' && data.data) {
-        const message = data.data
-        if (this.config.onMessage) {
-          this.config.onMessage(message)
+      // Type guard to check if data has the expected structure
+      if (
+        typeof data === 'object' &&
+        data !== null &&
+        'type' in data &&
+        'data' in data &&
+        typeof data.type === 'string' &&
+        typeof data.data === 'object' &&
+        data.data !== null
+      ) {
+        // Проверяем, что это сообщение типа newMessage
+        if (data.type === 'newMessage') {
+          const messageData = data.data as WebSocketMessage['data']
+          if (this.config.onMessage) {
+            this.config.onMessage(messageData)
+          }
         }
-      }
-      // Обрабатываем кастомные ивенты
-      else if (this.config.onEvent) {
-        this.config.onEvent(data)
+        // Обрабатываем кастомные ивенты
+        else if (this.config.onEvent) {
+          this.config.onEvent(data as SendEventRequest)
+        }
       }
     } catch (error) {
       console.error('Error handling message:', error)
@@ -239,7 +253,7 @@ export class ChatWebSocketManager {
   }
 
   // Отправка сообщения в чат
-  async sendMessage(message: string): Promise<any> {
+  async sendMessage(message: string): Promise<{ success: boolean; id?: string; message?: string }> {
     if (!message.trim()) {
       throw new Error('Message cannot be empty')
     }
@@ -330,8 +344,10 @@ export class ChatWebSocketManager {
     const messages = await response.json()
 
     // Возвращаем сообщения в формате, совместимом с WebSocket сообщениями
-    return messages.map((msg: any) => ({
+    return messages.map((msg: { id: string; username: string; message: string; createdAt: string; updatedAt?: string }) => ({
       id: msg.id,
+      webinarId: this.config.roomId,
+      participantId: this.config.userIdentifier,
       username: msg.username,
       message: msg.message,
       createdAt: msg.createdAt,

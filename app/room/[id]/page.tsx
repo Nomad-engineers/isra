@@ -152,14 +152,14 @@ export default function WebinarRoomPage({
             if (event.data.showChat !== undefined) {
               setWebinarSettings((prev) => ({
                 ...prev,
-                showChat: event.data.showChat,
+                showChat: Boolean(event.data.showChat),
               }));
               console.log("Chat visibility updated:", event.data.showChat);
             }
             if (event.data.isVolumeOn !== undefined) {
               setWebinarSettings((prev) => ({
                 ...prev,
-                isVolumeOn: event.data.isVolumeOn,
+                isVolumeOn: Boolean(event.data.isVolumeOn),
               }));
               console.log("Audio volume updated:", event.data.isVolumeOn);
             }
@@ -199,12 +199,17 @@ export default function WebinarRoomPage({
               console.log("Banner button show updated:", event.data.showBtn);
             }
             if (event.data.bannerSettings) {
+              const bannerSettings = event.data.bannerSettings as {
+                text?: string;
+                show?: boolean;
+                button?: string;
+              };
               setWebinarSettings((prev) => ({
                 ...prev,
-                bannerUrl: event.data.bannerSettings.text || "",
-                showBanner: event.data.bannerSettings.show,
-                btnUrl: event.data.bannerSettings.button,
-                showBtn: !!event.data.bannerSettings.button,
+                bannerUrl: bannerSettings.text || "",
+                showBanner: Boolean(bannerSettings.show),
+                btnUrl: bannerSettings.button || "",
+                showBtn: !!bannerSettings.button,
               }));
               console.log(
                 "Banner settings updated (legacy):",
@@ -213,7 +218,7 @@ export default function WebinarRoomPage({
             }
             if (event.data.roomStarted !== undefined) {
               setWebinar((prev) =>
-                prev ? { ...prev, roomStarted: event.data.roomStarted } : null
+                prev ? { ...prev, roomStarted: Boolean(event.data.roomStarted) } : null
               );
               console.log(
                 "Webinar room status updated:",

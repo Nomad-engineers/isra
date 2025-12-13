@@ -21,7 +21,7 @@ export function formatDate(date: string | Date, format: 'short' | 'long' = 'shor
 }
 
 // Debounce
-export function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void {
+export function debounce<T extends (...args: unknown[]) => unknown>(func: T, wait: number): (...args: Parameters<T>) => void {
   let timeout: NodeJS.Timeout
   return (...args: Parameters<T>) => {
     clearTimeout(timeout)
@@ -59,7 +59,7 @@ export const storage = {
 }
 
 // URL helpers
-export function buildUrl(base: string, params: Record<string, any>): string {
+export function buildUrl(base: string, params: Record<string, string | number | boolean | undefined | null>): string {
   const url = new URL(base)
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {

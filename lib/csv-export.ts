@@ -29,13 +29,13 @@ export function exportToCSV(data: ReportData[], options: ExportOptions) {
 
   // Filter by selected fields
   const filteredData = processedData.map(item => {
-    const filtered: Record<string, any> = {}
+    const filtered: Record<string, string | number | boolean> = {}
     if (options.fields.length === 0) {
       return item
     }
     options.fields.forEach(field => {
-      if ((item as any)[field] !== undefined) {
-        filtered[field] = (item as any)[field]
+      if ((item as Record<string, unknown>)[field] !== undefined) {
+        filtered[field] = (item as Record<string, unknown>)[field] as string | number | boolean
       }
     })
     return filtered

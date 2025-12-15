@@ -34,7 +34,6 @@
 |------|-----|---------------|
 | `welcome_message` | textarea | roomFormSchema + Room Tab |
 | `redirect_url` | url | roomFormSchema + Room Tab |
-| `youtube_id` | text | roomFormSchema + Room Tab |
 | `timezone` | select | roomFormSchema + Room Tab |
 | `language` | select | roomFormSchema + Room Tab |
 
@@ -129,7 +128,6 @@ banners: z.array(z.object({
 1. **roomFormSchema** - добавить:
    - `welcome_message`
    - `redirect_url`
-   - `youtube_id`
    - `timezone`
 
 2. **Room Tab UI** - добавить поля после `description`
@@ -269,7 +267,7 @@ components/
 | # | Задача | Важность |
 |---|--------|----------|
 | 1 | Добавить текстовые поля в вкладку "Вебинар" | 🔴 Высокая |
-| 2 | welcome_message, redirect_url, youtube_id | 🔴 Высокая |
+| 2 | welcome_message, redirect_url, timezone | 🔴 Высокая |
 | 3 | Кнопки (массив до 3) | 🟡 Средняя |
 | 4 | Баннеры (массив до 5) | 🟡 Средняя |
 | 5 | Вкладка модерации | 🟡 Средняя |

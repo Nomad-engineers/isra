@@ -167,8 +167,8 @@ export default function RoomsPage() {
               return fetchWebinars(retryCount + 1)
             }
           }
-        } catch (refreshError) {
-          console.error('Token refresh failed:', refreshError)
+        } catch {
+          // Token refresh failed silently
         }
       }
 
@@ -185,8 +185,7 @@ export default function RoomsPage() {
         // No need for additional filtering based on user role
         setWebinars(convertedWebinars)
       }
-    } catch (error) {
-      console.error('Webinars fetch error:', error)
+    } catch {
       toast({
         title: 'Ошибка загрузки',
         description: 'Не удалось загрузить список вебинаров',
@@ -247,8 +246,8 @@ export default function RoomsPage() {
                 return fetchUserData(retryCount + 1)
               }
             }
-          } catch (refreshError) {
-            console.error('Token refresh failed:', refreshError)
+          } catch {
+            // Token refresh failed silently
           }
         }
 
@@ -265,8 +264,6 @@ export default function RoomsPage() {
           throw new Error('No user data received')
         }
       } catch (error) {
-        console.error('User data fetch error:', error)
-
         if (
           error instanceof Error &&
           (error.message.includes('401') ||
@@ -323,7 +320,6 @@ export default function RoomsPage() {
   }
 
   const handleOpen = (id: string) => {
-    console.log('Open webinar:', id)
     router.push(`/room/${id}`)
   }
 
@@ -383,8 +379,7 @@ export default function RoomsPage() {
 
       // Refresh webinars list
       fetchWebinars()
-    } catch (error) {
-      console.error('Delete error:', error)
+    } catch {
       toast({
         title: 'Ошибка удаления',
         description: 'Не удалось удалить вебинар',
@@ -440,8 +435,7 @@ export default function RoomsPage() {
 
     try {
       // Use the roomsApi start method which integrates the curl command
-      const result = await roomsApi.start(id)
-      console.log('Webinar started successfully:', result)
+      await roomsApi.start(id)
 
       toast({
         title: 'Вебинар запущен',
@@ -457,7 +451,6 @@ export default function RoomsPage() {
       }, 1000)
 
     } catch (error) {
-      console.error('Start webinar error:', error)
       toast({
         title: 'Ошибка запуска',
         description:

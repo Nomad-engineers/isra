@@ -40,8 +40,13 @@ export class RoomsApi {
 
   // Webinar stats methods
   async getWebinarStats(id: string): Promise<WebinarRoomStats> {
+    // Prevent API call with empty ID
+    if (!id) {
+      return { onlineParticipants: 0, totalParticipants: 0 }
+    }
+
     const chatApiUrl = process.env.NEXT_PUBLIC_CHAT_API_URL || 'http://144.76.109.45:8089'
-    const token = localStorage.getItem('payload-token')
+    const token = typeof window !== 'undefined' ? localStorage.getItem('payload-token') : null
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',

@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useRef,
   useImperativeHandle,
   forwardRef,
   useCallback,
@@ -9,13 +10,19 @@ import {
 } from "react";
 import {
   MediaPlayer,
-  useMediaPlayer,
-  useMediaRemote,
-  useMediaStore,
   MediaProvider,
+  Poster,
+  type MediaPlayerInstance,
 } from "@vidstack/react";
-import { DefaultVideoLayout, defaultLayoutIcons } from "@vidstack/react/player/layouts/default";
+import {
+  DefaultVideoLayout,
+  defaultLayoutIcons,
+} from "@vidstack/react/player/layouts/default";
 import { Play } from "lucide-react";
+
+// Vidstack CSS imports - REQUIRED for player to render correctly
+import "@vidstack/react/player/styles/default/theme.css";
+import "@vidstack/react/player/styles/default/layouts/video.css";
 
 interface VidstackPlayerProps {
   src?: string;
@@ -171,9 +178,7 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
     },
     ref
   ) => {
-    const player = useMediaPlayer();
-    const remote = useMediaRemote();
-    const mediaStore = useMediaStore();
+    const playerRef = useRef<MediaPlayerInstance>(null);
     const [isCurrentlyPlaying, setIsCurrentlyPlaying] = useState(false);
     // Always show overlay on load - user must click to start watching
     const [showPlayOverlay, setShowPlayOverlay] = useState(true);
@@ -188,32 +193,45 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
 
     // Handle play overlay click
     const handlePlayOverlayClick = useCallback(() => {
+      // Hide overlay first
       setShowPlayOverlay(false);
-      // Start playback
-      try {
-        remote.play();
-      } catch (error) {
-        console.log("Autoplay blocked by browser policy", error);
+      
+      // Start playback - the player should already be mounted
+      const player = playerRef.current;
+      if (player) {
+        // Use requestAnimationFrame to ensure DOM is updated
+        requestAnimationFrame(() => {
+          player.play().catch(() => {
+            // Autoplay might be blocked, but overlay is already hidden
+            // User can click the native play button
+          });
+        });
       }
-    }, [remote]);
+    }, []);
 
-    // Set initial time when loaded and can play
-    useEffect(() => {
-      if (startTime > 0 && mediaStore.canPlay) {
-        remote.seek(startTime);
-      }
-    }, [startTime, mediaStore.canPlay, remote]);
+    // Handle play state changes
+    const handlePlay = useCallback(() => {
+      setIsCurrentlyPlaying(true);
+      setShowPlayOverlay(false);
+      onPlayStateChange?.(true);
+    }, [onPlayStateChange]);
 
-    // Handle play state changes and notify parent
-    useEffect(() => {
-      if (mediaStore.playing !== isCurrentlyPlaying) {
-        setIsCurrentlyPlaying(mediaStore.playing);
-        if (mediaStore.playing) {
-          setShowPlayOverlay(false);
-        }
-        onPlayStateChange?.(mediaStore.playing);
+    const handlePause = useCallback(() => {
+      setIsCurrentlyPlaying(false);
+      onPlayStateChange?.(false);
+    }, [onPlayStateChange]);
+
+    const handleEnded = useCallback(() => {
+      setIsCurrentlyPlaying(false);
+      onPlayStateChange?.(false);
+    }, [onPlayStateChange]);
+
+    // Set initial time when loaded
+    const handleCanPlay = useCallback(() => {
+      if (startTime > 0 && playerRef.current) {
+        playerRef.current.currentTime = startTime;
       }
-    }, [mediaStore.playing, isCurrentlyPlaying, onPlayStateChange]);
+    }, [startTime]);
 
     // Expose methods via ref
     useImperativeHandle(
@@ -221,25 +239,50 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
       () => ({
         play: () => {
           setShowPlayOverlay(false);
-          remote.play();
+          if (playerRef.current) {
+            playerRef.current.play().catch(() => {
+              // Autoplay might be blocked
+            });
+          }
         },
         pause: () => {
-          remote.pause();
+          playerRef.current?.pause();
         },
         stop: () => {
-          remote.pause();
-          remote.seek(0);
+          if (playerRef.current) {
+            playerRef.current.pause();
+            playerRef.current.currentTime = 0;
+          }
         },
         isPlaying: () => isCurrentlyPlaying,
-        getCurrentTime: () => mediaStore.currentTime || 0,
+        getCurrentTime: () => playerRef.current?.currentTime || 0,
         setCurrentTime: (time: number) => {
-          remote.seek(time);
+          if (playerRef.current) {
+            playerRef.current.currentTime = time;
+          }
         },
       }),
-      [isCurrentlyPlaying, remote, mediaStore]
+      [isCurrentlyPlaying]
     );
 
-    
+    // Set up event listeners
+    useEffect(() => {
+      const player = playerRef.current;
+      if (!player) return;
+
+      player.addEventListener("play", handlePlay);
+      player.addEventListener("pause", handlePause);
+      player.addEventListener("ended", handleEnded);
+      player.addEventListener("can-play", handleCanPlay);
+
+      return () => {
+        player.removeEventListener("play", handlePlay);
+        player.removeEventListener("pause", handlePause);
+        player.removeEventListener("ended", handleEnded);
+        player.removeEventListener("can-play", handleCanPlay);
+      };
+    }, [handlePlay, handlePause, handleEnded, handleCanPlay]);
+
     return (
       <div
         className={`w-full h-full bg-black rounded-lg overflow-hidden vidstack-live-player relative ${
@@ -253,8 +296,10 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
         )}
 
         <MediaPlayer
+          ref={playerRef}
           title={title}
           src={videoSource}
+          poster={poster}
           viewType="video"
           streamType="live"
           logLevel="warn"
@@ -264,9 +309,29 @@ const VidstackPlayer = forwardRef<VidstackPlayerRef, VidstackPlayerProps>(
           muted={muted}
           className="w-full h-full"
         >
-          <MediaProvider />
+          <MediaProvider>
+            {poster && <Poster className="vds-poster" alt={title} />}
+          </MediaProvider>
           {controls && (
-            <DefaultVideoLayout icons={defaultLayoutIcons} />
+            <DefaultVideoLayout
+              icons={defaultLayoutIcons}
+              // Disable playback rate (speed control) - only 1x available
+              playbackRates={[1]}
+              // Hide unnecessary menu items - keep Quality visible
+              slots={{
+                // Keep playbackMenuLoop null to hide loop checkbox
+                playbackMenuLoop: null,
+                // Remove accessibility menu items
+                accessibilityMenuItemsStart: null,
+                accessibilityMenuItemsEnd: null,
+                // Remove audio menu items
+                audioMenuItemsStart: null,
+                audioMenuItemsEnd: null,
+                // Remove captions menu items (subtitles)
+                captionsMenuItemsStart: null,
+                captionsMenuItemsEnd: null,
+              }}
+            />
           )}
         </MediaPlayer>
       </div>

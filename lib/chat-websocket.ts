@@ -92,9 +92,10 @@ export class ChatWebSocketManager {
     }
   }
 
-  // Уведомление об ошибке
-  private notifyError(error: Error): void {
-    console.error('Chat WebSocket Error:', error)
+  // Уведомление об ошибке (silent in production)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private notifyError(_error: Error): void {
+    // Errors are handled by status change notifications
   }
 
   // Подключение к WebSocket
@@ -114,25 +115,21 @@ export class ChatWebSocketManager {
       })
 
       // Обработчики событий Centrifuge
-      this.centrifuge.on('connecting', (ctx) => {
-        console.log('Connecting to Centrifugo...', ctx)
+      this.centrifuge.on('connecting', () => {
         this.notifyStatusChange('connecting')
       })
 
-      this.centrifuge.on('connected', (ctx) => {
-        console.log('Connected to Centrifugo', ctx)
+      this.centrifuge.on('connected', () => {
         this.notifyStatusChange('connected')
         this.reconnectAttempts = 0 // Сбрасываем счетчик попыток
       })
 
-      this.centrifuge.on('disconnected', (ctx) => {
-        console.log('Disconnected from Centrifugo', ctx)
+      this.centrifuge.on('disconnected', () => {
         this.notifyStatusChange('disconnected')
         this.attemptReconnect()
       })
 
-      this.centrifuge.on('error', (ctx) => {
-        console.error('Centrifuge error:', ctx)
+      this.centrifuge.on('error', () => {
         this.notifyError(new Error('Centrifuge connection error'))
         this.notifyStatusChange('error')
       })
@@ -148,12 +145,11 @@ export class ChatWebSocketManager {
         this.handleMessage(ctx.data)
       })
 
-      this.subscription.on('subscribed', (ctx) => {
-        console.log('Subscribed to chat channel', ctx)
+      this.subscription.on('subscribed', () => {
+        // Successfully subscribed to chat channel
       })
 
-      this.subscription.on('error', (ctx) => {
-        console.error('Subscription error:', ctx)
+      this.subscription.on('error', () => {
         this.notifyError(new Error('Subscription error'))
         this.notifyStatusChange('error')
       })
@@ -163,7 +159,6 @@ export class ChatWebSocketManager {
       this.centrifuge.connect()
 
     } catch (error) {
-      console.error('Failed to connect to chat:', error)
       this.notifyError(error instanceof Error ? error : new Error('Connection failed'))
       this.notifyStatusChange('error')
       this.attemptReconnect()
@@ -173,8 +168,6 @@ export class ChatWebSocketManager {
   // Обработка входящего сообщения
   private handleMessage(data: unknown): void {
     try {
-      console.log('Chat data received:', data)
-
       // Type guard to check if data has the expected structure
       if (
         typeof data === 'object' &&
@@ -198,7 +191,6 @@ export class ChatWebSocketManager {
         }
       }
     } catch (error) {
-      console.error('Error handling message:', error)
       this.notifyError(error instanceof Error ? error : new Error('Message handling error'))
     }
   }
@@ -211,8 +203,6 @@ export class ChatWebSocketManager {
 
     this.reconnectAttempts++
     const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1) // Экспоненциальный бэк-офф
-
-    console.log(`Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`)
 
     setTimeout(() => {
       if (!this.isDestroyed) {

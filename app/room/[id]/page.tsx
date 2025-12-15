@@ -74,8 +74,8 @@ export default function WebinarRoomPage({
       try {
         const resolvedParams = await params;
         setRoomId(resolvedParams.id);
-      } catch (error) {
-        console.error('Failed to resolve params:', error);
+      } catch {
+        // Silent fail - roomId will remain empty
       }
     };
 
@@ -112,7 +112,6 @@ export default function WebinarRoomPage({
     sendMessage,
     sendEvent,
     loadMessages,
-    error: chatError,
   } = useChatWebSocket({
     roomId,
     userIdentifier: userPhone,
@@ -124,11 +123,8 @@ export default function WebinarRoomPage({
     if (userPhone && userName) {
       setLoadingHistory(true);
       loadMessages()
-        .then(() => {
-          console.log("Chat history loaded successfully");
-        })
-        .catch((error) => {
-          console.error("Failed to load chat history:", error);
+        .catch(() => {
+          // Silent fail - chat history will be empty
         })
         .finally(() => {
           setLoadingHistory(false);
@@ -137,16 +133,8 @@ export default function WebinarRoomPage({
   }, [userPhone, userName, loadMessages]);
 
   useEffect(() => {
-    if (chatError) {
-      console.error("Chat error:", chatError);
-    }
-  }, [chatError]);
-
-  useEffect(() => {
     if (events.length > 0) {
       events.forEach((event) => {
-        console.log("Received event:", event.type, event.data);
-
         switch (event.type) {
           case "event":
             if (event.data.showChat !== undefined) {
@@ -154,49 +142,42 @@ export default function WebinarRoomPage({
                 ...prev,
                 showChat: Boolean(event.data.showChat),
               }));
-              console.log("Chat visibility updated:", event.data.showChat);
             }
             if (event.data.isVolumeOn !== undefined) {
               setWebinarSettings((prev) => ({
                 ...prev,
                 isVolumeOn: Boolean(event.data.isVolumeOn),
               }));
-              console.log("Audio volume updated:", event.data.isVolumeOn);
             }
             if (event.data.muted !== undefined) {
               setWebinarSettings((prev) => ({
                 ...prev,
                 isVolumeOn: !event.data.muted,
               }));
-              console.log("Audio mute updated (legacy):", event.data.muted);
             }
             if (event.data.bannerUrl !== undefined) {
               setWebinarSettings((prev) => ({
                 ...prev,
                 bannerUrl: event.data.bannerUrl,
               }));
-              console.log("Banner URL updated:", event.data.bannerUrl);
             }
             if (event.data.showBanner !== undefined) {
               setWebinarSettings((prev) => ({
                 ...prev,
                 showBanner: event.data.showBanner,
               }));
-              console.log("Banner show updated:", event.data.showBanner);
             }
             if (event.data.btnUrl !== undefined) {
               setWebinarSettings((prev) => ({
                 ...prev,
                 btnUrl: event.data.btnUrl,
               }));
-              console.log("Banner button URL updated:", event.data.btnUrl);
             }
             if (event.data.showBtn !== undefined) {
               setWebinarSettings((prev) => ({
                 ...prev,
                 showBtn: event.data.showBtn,
               }));
-              console.log("Banner button show updated:", event.data.showBtn);
             }
             if (event.data.bannerSettings) {
               const bannerSettings = event.data.bannerSettings as {
@@ -211,32 +192,21 @@ export default function WebinarRoomPage({
                 btnUrl: bannerSettings.button || "",
                 showBtn: !!bannerSettings.button,
               }));
-              console.log(
-                "Banner settings updated (legacy):",
-                event.data.bannerSettings
-              );
             }
             if (event.data.roomStarted !== undefined) {
               setWebinar((prev) =>
                 prev ? { ...prev, roomStarted: Boolean(event.data.roomStarted) } : null
               );
-              console.log(
-                "Webinar room status updated:",
-                event.data.roomStarted
-              );
             }
             break;
 
           default:
-            toast({
-              title: `Получен ивент: ${event.type}`,
-              description: JSON.stringify(event.data, null, 2),
-              variant: "default",
-            });
+            // Handle unknown event types silently
+            break;
         }
       });
     }
-  }, [events, toast]);
+  }, [events]);
 
   useEffect(() => {
     const fetchWebinarAndValidate = async () => {
@@ -269,8 +239,7 @@ export default function WebinarRoomPage({
         setWebinar(webinarData);
 
         await handleGuestAuth();
-      } catch (error) {
-        console.error("Error fetching webinar:", error);
+      } catch {
         setLoading(false);
         setLoadingHistory(false);
 
@@ -349,13 +318,14 @@ export default function WebinarRoomPage({
 
   // Function to fetch webinar stats
   const fetchWebinarStats = async () => {
+    if (!roomId) return; // Don't fetch if no roomId
+    
     try {
       const stats = await roomsApi.getWebinarStats(roomId);
       setOnlineParticipants(stats.onlineParticipants);
-      setViewerCount(stats.onlineParticipants); // Update viewer count to match online participants
-    } catch (error) {
-      console.error("Failed to fetch webinar stats:", error);
-      // Keep using mock data if API fails
+      setViewerCount(stats.onlineParticipants);
+    } catch {
+      // Silent fail - keep using current data
     }
   };
 
@@ -377,8 +347,7 @@ export default function WebinarRoomPage({
       await sendMessage(messageText);
       setMessageText("");
       setTimeout(scrollToBottom, 100);
-    } catch (error) {
-      console.error("Failed to send message:", error);
+    } catch {
       toast({
         title: "Ошибка отправки",
         description: "Не удалось отправить сообщение",
@@ -395,13 +364,13 @@ export default function WebinarRoomPage({
   };
 
   useEffect(() => {
+    if (!roomId) return; // Don't start fetching until roomId is available
+    
     // Fetch stats immediately
     fetchWebinarStats();
 
     // Set up interval to fetch stats every 10 seconds
-    const interval = setInterval(() => {
-      fetchWebinarStats();
-    }, 10000);
+    const interval = setInterval(fetchWebinarStats, 10000);
 
     // Set initial viewer count as fallback
     if (viewerCount === 0) {
@@ -409,7 +378,7 @@ export default function WebinarRoomPage({
     }
 
     return () => clearInterval(interval);
-  }, [roomId]);
+  }, [roomId, viewerCount]);
 
   const handlePlayVideo = () => {
     if (videoPlayerRef.current && webinar?.startedAt) {
@@ -477,8 +446,7 @@ export default function WebinarRoomPage({
           variant: "default",
         });
       }
-    } catch (error) {
-      console.error("Failed to handle webinar state change:", error);
+    } catch {
       toast({
         title: "Ошибка",
         description: "Не удалось изменить состояние вебинара",

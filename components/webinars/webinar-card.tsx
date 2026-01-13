@@ -45,7 +45,15 @@ const statusConfig = {
   },
 }
 
-export function WebinarCard({ webinar, onView, onEdit, onDelete, onCopyLink, onStartWebinar, actions }: WebinarCardProps) {
+export function WebinarCard({
+  webinar,
+  onView,
+  onEdit,
+  onDelete,
+  onCopyLink,
+  onStartWebinar,
+  actions,
+}: WebinarCardProps) {
   const statusInfo = statusConfig[webinar.status] || statusConfig.draft
 
   const getParticipantInfo = () => {
@@ -76,9 +84,11 @@ export function WebinarCard({ webinar, onView, onEdit, onDelete, onCopyLink, onS
               {statusInfo.label}
             </Badge>
             {webinar.active ? (
-              <Badge variant='outline' className='text-green-600 dark:text-green-400 border-green-500/50 bg-green-500/10 animate-pulse'>
-                <div className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5 animate-pulse" />
-                В прямом эфире
+              <Badge
+                variant='outline'
+                className='text-green-600 dark:text-green-400 border-green-500/50 bg-green-500/10 animate-pulse'
+              >
+                <div className='w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5 animate-pulse' />В прямом эфире
               </Badge>
             ) : webinar.scheduledAt ? (
               <Badge variant='blue' className='text-xs px-2 py-1'>
@@ -125,7 +135,10 @@ export function WebinarCard({ webinar, onView, onEdit, onDelete, onCopyLink, onS
                   </DropdownMenuItem>
                 )}
                 {onStartWebinar && !webinar.roomStarted && (
-                  <DropdownMenuItem onClick={() => onStartWebinar(webinar.id)} className="text-green-600 focus:text-green-600">
+                  <DropdownMenuItem
+                    onClick={() => onStartWebinar(webinar.id)}
+                    className='text-green-600 focus:text-green-600'
+                  >
                     <Play className='h-4 w-4 mr-2' />
                     Старт вебинара
                   </DropdownMenuItem>
@@ -172,7 +185,7 @@ export function WebinarCard({ webinar, onView, onEdit, onDelete, onCopyLink, onS
           {participantInfo && (
             <div className='flex items-center gap-2 text-muted-foreground'>
               <Users className='h-4 w-4 text-primary' />
-              <span className="text-sm font-medium">
+              <span className='text-sm font-medium'>
                 {participantInfo.current}/{participantInfo.max}
               </span>
               <div className='flex-1 bg-muted rounded-full h-2 overflow-hidden'>
@@ -182,8 +195,8 @@ export function WebinarCard({ webinar, onView, onEdit, onDelete, onCopyLink, onS
                     participantInfo.percentage >= 90
                       ? 'bg-red-500'
                       : participantInfo.percentage >= 70
-                      ? 'bg-orange-500'
-                      : 'bg-gradient-to-r from-primary to-purple-500'
+                        ? 'bg-orange-500'
+                        : 'bg-gradient-to-r from-primary to-purple-500'
                   )}
                   style={{ width: `${participantInfo.percentage}%` }}
                 />
@@ -208,12 +221,8 @@ export function WebinarCard({ webinar, onView, onEdit, onDelete, onCopyLink, onS
         )}
 
         <div className='flex justify-between text-xs text-muted-foreground pt-3 border-t border-border'>
-          <span className="hover:text-foreground transition-colors">
-            Создан: {formatDate(webinar.createdAt)}
-          </span>
-          <span className="hover:text-foreground transition-colors">
-            Обновлен: {formatDate(webinar.updatedAt)}
-          </span>
+          <span className='hover:text-foreground transition-colors'>Создан: {formatDate(webinar.createdAt)}</span>
+          <span className='hover:text-foreground transition-colors'>Обновлен: {formatDate(webinar.updatedAt)}</span>
         </div>
       </CardContent>
     </Card>

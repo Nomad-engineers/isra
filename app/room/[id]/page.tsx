@@ -593,8 +593,39 @@ export default function WebinarRoomPage({
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-160px)]">
+            <Card
+              className={`flex flex-col order-1 lg:order-2 ${webinarSettings.showChat ? "lg:col-span-2" : "lg:col-span-3"}`}
+            >
+              <CardContent className="p-0 flex-1 relative">
+                <div className="w-full h-full bg-black rounded-lg overflow-hidden">
+                  <VidstackPlayer
+                    ref={videoPlayerRef}
+                    src={
+                      webinar.videoUrl ||
+                      "https://www.youtube.com/watch?v=6fty5yB7bFo"
+                    }
+                    autoPlay={webinar.roomStarted}
+                    muted={!webinarSettings.isVolumeOn}
+                    controls={true}
+                    aspectRatio="16/9"
+                    startTime={videoStartTime}
+                    onPlayStateChange={handleVideoStateChange}
+                  />
+                </div>
+              </CardContent>
+
+              {webinar.description && (
+                <div className="p-4 border-t border-border">
+                  <h3 className="text-sm font-semibold text-foreground mb-2">
+                    О вебинаре
+                  </h3>
+                  <p className="text-sm text-muted-foreground">{webinar.description}</p>
+                </div>
+              )}
+            </Card>
+
             {webinarSettings.showChat && (
-              <Card className="lg:col-span-1 lg:order-1 flex flex-col">
+              <Card className="lg:col-span-1 order-2 lg:order-1 flex flex-col">
                 <div className="p-4 border-b border-border">
                   <div className="flex items-center justify-between">
                     <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
@@ -680,37 +711,6 @@ export default function WebinarRoomPage({
                 </div>
               </Card>
             )}
-
-            <Card
-              className={`flex flex-col lg:order-2 ${webinarSettings.showChat ? "lg:col-span-2" : "lg:col-span-3"}`}
-            >
-              <CardContent className="p-0 flex-1 relative">
-                <div className="w-full h-full bg-black rounded-lg overflow-hidden">
-                  <VidstackPlayer
-                    ref={videoPlayerRef}
-                    src={
-                      webinar.videoUrl ||
-                      "https://www.youtube.com/watch?v=6fty5yB7bFo"
-                    }
-                    autoPlay={webinar.roomStarted}
-                    muted={!webinarSettings.isVolumeOn}
-                    controls={true}
-                    aspectRatio="16/9"
-                    startTime={videoStartTime}
-                    onPlayStateChange={handleVideoStateChange}
-                  />
-                </div>
-              </CardContent>
-
-              {webinar.description && (
-                <div className="p-4 border-t border-border">
-                  <h3 className="text-sm font-semibold text-foreground mb-2">
-                    О вебинаре
-                  </h3>
-                  <p className="text-sm text-muted-foreground">{webinar.description}</p>
-                </div>
-              )}
-            </Card>
           </div>
         )}
       </div>

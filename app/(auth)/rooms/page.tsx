@@ -102,7 +102,6 @@ export default function RoomsPage() {
       thumbnail: apiWebinar.logo || undefined,
       hostName: apiWebinar.speaker,
       currentParticipants: 0,
-      maxParticipants: 100,
       tags: [apiWebinar.type],
       createdAt: apiWebinar.createdAt,
       updatedAt: apiWebinar.updatedAt,

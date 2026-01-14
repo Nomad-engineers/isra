@@ -32,7 +32,7 @@ export function useRooms(options: UseRoomsOptions = {}) {
       setError(null);
 
       try {
-        const url = `https://isracms.vercel.app/api/rooms/my`;
+        const url = `https://dev.isra-cms.nomad-engineers.space/api/rooms/my`;
 
         // Get JWT token from localStorage
         const token = localStorage.getItem("payload-token");
@@ -110,7 +110,7 @@ export function useRooms(options: UseRoomsOptions = {}) {
       setError(null);
 
       try {
-        const url = `https://isracms.vercel.app/api/rooms/create`;
+        const url = `https://dev.isra-cms.nomad-engineers.space/api/rooms/create`;
 
         // Get JWT token from localStorage
         const token = localStorage.getItem("payload-token");
@@ -177,7 +177,7 @@ export function useRooms(options: UseRoomsOptions = {}) {
       };
 
       const response = await fetch(
-        `https://isracms.vercel.app/api/rooms/${roomId}`,
+        `https://dev.isra-cms.nomad-engineers.space/api/rooms/${roomId}`,
         {
           method: "DELETE",
           headers,

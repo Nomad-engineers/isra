@@ -338,7 +338,7 @@ export default function EditRoomPage() {
           return
         }
 
-        const response = await fetch('https://isracms.vercel.app/api/users/me', {
+        const response = await fetch('https://dev.isra-cms.nomad-engineers.space/api/users/me', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -349,7 +349,7 @@ export default function EditRoomPage() {
         if (!response.ok && response.status === 401) {
           const refreshedToken = await refreshToken()
           if (refreshedToken) {
-            const retryResponse = await fetch('https://isracms.vercel.app/api/users/me', {
+            const retryResponse = await fetch('https://dev.isra-cms.nomad-engineers.space/api/users/me', {
               method: 'GET',
               headers: {
                 'Content-Type': 'application/json',
@@ -414,7 +414,7 @@ export default function EditRoomPage() {
           return
         }
 
-        const response = await fetch(`https://isracms.vercel.app/api/rooms/${roomId}`, {
+        const response = await fetch(`https://dev.isra-cms.nomad-engineers.space/api/rooms/${roomId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -426,7 +426,7 @@ export default function EditRoomPage() {
           if (response.status === 401) {
             const refreshedToken = await refreshToken()
             if (refreshedToken) {
-              const retryResponse = await fetch(`https://isracms.vercel.app/api/rooms/${roomId}`, {
+              const retryResponse = await fetch(`https://dev.isra-cms.nomad-engineers.space/api/rooms/${roomId}`, {
                 method: 'GET',
                 headers: {
                   'Content-Type': 'application/json',
@@ -585,7 +585,7 @@ export default function EditRoomPage() {
 
       console.log('Updating webinar:', roomId, updatePayload)
 
-      const response = await fetch(`https://isracms.vercel.app/api/rooms/${roomId}`, {
+      const response = await fetch(`https://dev.isra-cms.nomad-engineers.space/api/rooms/${roomId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -688,7 +688,7 @@ export default function EditRoomPage() {
 
       console.log('Updating room:', roomId, updatePayload)
 
-      const response = await fetch(`https://isracms.vercel.app/api/rooms/${roomId}`, {
+      const response = await fetch(`https://dev.isra-cms.nomad-engineers.space/api/rooms/${roomId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

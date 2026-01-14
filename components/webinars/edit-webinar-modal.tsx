@@ -117,7 +117,7 @@ export function EditWebinarModal({
       console.log("Updating webinar:", webinar.id, updatePayload);
 
       const response = await fetch(
-        `https://isracms.vercel.app/api/rooms/${webinar.id}`,
+        `https://dev.isra-cms.nomad-engineers.space/api/rooms/${webinar.id}`,
         {
           method: "PATCH",
           headers: {

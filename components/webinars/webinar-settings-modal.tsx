@@ -88,7 +88,7 @@ export function WebinarSettingsModal({
       }
 
       const apiUrl =
-        process.env.NEXT_PUBLIC_PAYLOAD_API_URL || "https://isracms.vercel.app";
+        process.env.NEXT_PUBLIC_PAYLOAD_API_URL || "https://dev.isra-cms.nomad-engineers.space/api";
 
       // Update in database
       const response = await fetch(`${apiUrl}/api/rooms/${webinar.id}`, {

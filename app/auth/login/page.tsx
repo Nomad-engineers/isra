@@ -48,7 +48,7 @@ export default function LoginPage() {
 
       // Send idToken to backend via query parameters
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_PAYLOAD_API_URL || 'https://isracms.vercel.app'}/api/users/google?idToken=${encodeURIComponent(idToken)}`,
+        `${process.env.NEXT_PUBLIC_PAYLOAD_API_URL || 'https://dev.isra-cms.nomad-engineers.space/api'}/api/users/google?idToken=${encodeURIComponent(idToken)}`,
         {
           method: 'GET',
         }
@@ -89,7 +89,7 @@ export default function LoginPage() {
 
     try {
       // Direct API call instead of using SDK to avoid configuration issues
-      const response = await fetch('https://isracms.vercel.app/api/users/login', {
+      const response = await fetch('https://dev.isra-cms.nomad-engineers.space/api/users/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -41,7 +41,7 @@ export function AuthLayoutWrapper({ children }: AuthLayoutWrapperProps) {
 
         // Fetch user data using direct API call (same pattern as login and profile)
         const response = await fetch(
-          "https://isracms.vercel.app/api/users/me",
+          "https://dev.isra-cms.nomad-engineers.space/api/users/me",
           {
             method: "GET",
             headers: {

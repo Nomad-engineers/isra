@@ -59,6 +59,14 @@ interface ApiWebinar {
   }
 }
 
+interface RoomsResponse {
+  docs: ApiWebinar[]
+}
+
+interface UsersMeResponse {
+  user: UserData
+}
+
 export default function RoomsPage() {
   const router = useRouter()
 
@@ -139,7 +147,7 @@ export default function RoomsPage() {
         return
       }
 
-      const result = await apiFetch('/rooms/my', {
+      const result = await apiFetch<RoomsResponse>('/rooms/my', {
         headers: {
           Authorization: `JWT ${token}`,
         },
@@ -184,14 +192,14 @@ export default function RoomsPage() {
           return
         }
 
-        const result = await apiFetch('/users/me', {
+        const result = await apiFetch<UsersMeResponse>('/users/me', {
           headers: {
             Authorization: `JWT ${token}`,
           },
         })
 
         if (result && result.user) {
-          setUserData(result.user as UserData)
+          setUserData(result.user)
         } else {
           throw new Error('No user data received')
         }

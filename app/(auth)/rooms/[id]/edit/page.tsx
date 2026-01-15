@@ -183,6 +183,24 @@ interface RoomData {
   updatedAt: string
 }
 
+interface TokenRefreshResponse {
+  token: string
+}
+
+interface FileUploadResponse {
+  url: string
+}
+
+interface UsersMeResponse {
+  user: {
+    id: number
+    firstName?: string | null
+    lastName?: string | null
+    email: string
+    role: string
+  }
+}
+
 export default function EditRoomPage() {
   const router = useRouter()
   const params = useParams()
@@ -220,7 +238,7 @@ export default function EditRoomPage() {
   // Token refresh utility
   const refreshToken = useCallback(async () => {
     try {
-      const refreshData = await apiFetch('/users/refresh-token', {
+      const refreshData = await apiFetch<TokenRefreshResponse>('/users/refresh-token', {
         method: 'POST',
         body: JSON.stringify({
           refreshToken: localStorage.getItem('refresh-token'),
@@ -253,7 +271,7 @@ export default function EditRoomPage() {
         ? '/api/upload/room-logo'
         : '/api/upload/room-banner'
 
-      const result = await apiFetch(uploadEndpoint, {
+      const result = await apiFetch<FileUploadResponse>(uploadEndpoint, {
         method: 'POST',
         headers: {
           'Authorization': `JWT ${currentToken}`,
@@ -327,7 +345,7 @@ export default function EditRoomPage() {
           return
         }
 
-        const result = await apiFetch('/users/me', {
+        const result = await apiFetch<UsersMeResponse>('/users/me', {
           headers: {
             Authorization: `JWT ${currentToken}`,
           },

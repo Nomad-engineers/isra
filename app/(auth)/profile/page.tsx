@@ -69,6 +69,20 @@ interface UserData {
   updatedAt: string;
 }
 
+interface UsersMeResponse {
+  user: UserData;
+}
+
+interface RoomsResponse {
+  docs: ApiWebinar[];
+}
+
+interface AvatarUploadResponse {
+  doc: {
+    id: string;
+  };
+}
+
 interface ApiWebinar {
   id: number;
   name: string;
@@ -148,14 +162,14 @@ export default function ProfilePage() {
           return;
         }
 
-        const result = await apiFetch('/users/me', {
+        const result = await apiFetch<UsersMeResponse>('/users/me', {
           headers: {
             Authorization: `JWT ${token}`,
           },
         });
 
         if (result && result.user) {
-          const userData = result.user as UserData;
+          const userData = result.user;
           setCurrentUserId(userData.id);
 
           let firstName = userData.firstName || "";
@@ -186,7 +200,7 @@ export default function ProfilePage() {
             planCanceledAt: userData.planCanceledAt,
             isPhoneVerified: userData.isPhoneVerified || false,
           });
-        } else if (result && result.message === "Account") {
+        } else if (result && (result as any).message === "Account") {
           setProfile({
             firstName: "Тестовый",
             lastName: "Пользователь",
@@ -245,7 +259,7 @@ export default function ProfilePage() {
         return;
       }
 
-      const result = await apiFetch('/rooms', {
+      const result = await apiFetch<RoomsResponse>('/rooms', {
         headers: {
           Authorization: `JWT ${token}`,
         },
@@ -326,7 +340,7 @@ export default function ProfilePage() {
           });
 
           // Upload avatar using special endpoint (as mentor suggested)
-          const avatarResult = await apiFetch('/user-avatar', {
+          const avatarResult = await apiFetch<AvatarUploadResponse>('/user-avatar', {
             method: "POST",
             headers: {
               Authorization: `JWT ${token}`,
@@ -354,7 +368,7 @@ export default function ProfilePage() {
           });
 
           // Refetch user data to get the updated avatar
-          const userResult = await apiFetch('/users/me', {
+          const userResult = await apiFetch<UsersMeResponse>('/users/me', {
             headers: {
               Authorization: `JWT ${token}`,
             },
@@ -365,7 +379,7 @@ export default function ProfilePage() {
           // Extract avatar URL from refetched data
           let avatarUrl = profile.avatar;
           if (userResult.user && userResult.user.avatar) {
-            const avatarData = userResult.user.avatar;
+            const avatarData = userResult.user.avatar as any;
             if (typeof avatarData === "object" && avatarData.url) {
               avatarUrl = avatarData.url;
             } else if (typeof avatarData === "string") {
@@ -387,7 +401,6 @@ export default function ProfilePage() {
 
           console.log("Avatar updated successfully, new URL:", avatarUrl);
           toast.success("Аватар успешно обновлен");
-          }
         } catch (uploadError) {
           console.error("Avatar upload error:", uploadError);
           toast.error("Не удалось загрузить аватар");

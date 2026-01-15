@@ -212,7 +212,7 @@ export default function WebinarRoomPage({
   useEffect(() => {
     const fetchWebinarAndValidate = async () => {
       try {
-        const webinarData = await apiFetch(`/rooms/${roomId}`);
+        const webinarData = await apiFetch<WebinarData>(`/rooms/${roomId}`);
         setWebinar(webinarData);
 
         await handleGuestAuth();

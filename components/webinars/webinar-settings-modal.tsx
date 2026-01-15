@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
-import { BASE_URL } from "@/lib/constants";
+import { apiFetch } from "@/lib/api-fetch";
 import {
   MessageSquare,
   MessageSquareOff,
@@ -89,24 +89,15 @@ export function WebinarSettingsModal({
       }
 
       // Update in database
-      const response = await fetch(`${BASE_URL}/rooms/${webinar.id}`, {
+      await apiFetch(`/rooms/${webinar.id}`, {
         method: "PATCH",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `JWT ${token}`,
         },
         body: JSON.stringify(updates),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.errors?.[0]?.message || "Failed to update settings"
-        );
-      }
-
-      const result = await response.json();
-      console.log("Settings updated successfully:", result);
+      console.log("Settings updated successfully");
 
       // All settings will be handled via chat API events, no Centrifugo events needed
 

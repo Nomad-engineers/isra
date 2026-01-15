@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { BASE_URL } from "@/lib/constants";
+import { apiFetch } from "@/lib/api-fetch";
 
 interface PlanData {
   id: string;
@@ -148,25 +148,11 @@ export default function ProfilePage() {
           return;
         }
 
-        const response = await fetch(
-          `${BASE_URL}/users/me`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `JWT ${token}`,
-            },
-          }
-        );
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(
-            errorData.errors?.[0]?.message || "Failed to fetch user data"
-          );
-        }
-
-        const result = await response.json();
+        const result = await apiFetch('/users/me', {
+          headers: {
+            Authorization: `JWT ${token}`,
+          },
+        });
 
         if (result && result.user) {
           const userData = result.user as UserData;
@@ -259,20 +245,11 @@ export default function ProfilePage() {
         return;
       }
 
-      const response = await fetch(`${BASE_URL}/rooms`, {
-        method: "GET",
+      const result = await apiFetch('/rooms', {
         headers: {
-          "Content-Type": "application/json",
           Authorization: `JWT ${token}`,
         },
       });
-
-      if (!response.ok) {
-        console.log("Failed to fetch webinars for statistics");
-        return;
-      }
-
-      const result = await response.json();
 
       if (result && result.docs) {
         let userWebinars: ApiWebinar[] = [];
@@ -349,28 +326,14 @@ export default function ProfilePage() {
           });
 
           // Upload avatar using special endpoint (as mentor suggested)
-          const avatarResponse = await fetch(
-            `${BASE_URL}/user-avatar`,
-            {
-              method: "POST",
-              headers: {
-                Authorization: `JWT ${token}`,
-                // Do NOT set Content-Type - browser handles it with boundary
-              },
-              body: formData,
-            }
-          );
+          const avatarResult = await apiFetch('/user-avatar', {
+            method: "POST",
+            headers: {
+              Authorization: `JWT ${token}`,
+            },
+            body: formData,
+          });
 
-          console.log("Avatar upload response status:", avatarResponse.status);
-
-          if (!avatarResponse.ok) {
-            const errorText = await avatarResponse.text();
-            console.error("Avatar upload failed:", errorText);
-            toast.error("Не удалось загрузить аватар");
-            return;
-          }
-
-          const avatarResult = await avatarResponse.json();
           console.log("Avatar upload result:", avatarResult);
 
           // Extract the uploaded avatar ID
@@ -383,73 +346,47 @@ export default function ProfilePage() {
           }
 
           // Now link the avatar to the user profile
-          const linkResponse = await fetch(
-            `${BASE_URL}/users/${currentUserId}`,
-            {
-              method: "PATCH",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `JWT ${token}`,
-              },
-              body: JSON.stringify({
-                avatar: uploadedAvatarId,
-              }),
-            }
-          );
-
-          console.log("Avatar link response status:", linkResponse.status);
-
-          if (!linkResponse.ok) {
-            const errorText = await linkResponse.text();
-            console.error("Failed to link avatar to user:", errorText);
-            toast.error("Не удалось связать аватар с профилем");
-            return;
-          }
-
-          const linkResult = await linkResponse.json();
-          console.log("Avatar link result:", linkResult);
+          await apiFetch(`/users/${currentUserId}`, {
+            method: "PATCH",
+            body: JSON.stringify({
+              avatar: uploadedAvatarId,
+            }),
+          });
 
           // Refetch user data to get the updated avatar
-          const userResponse = await fetch(
-            `${BASE_URL}/users/me`,
-            {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `JWT ${token}`,
-              },
+          const userResult = await apiFetch('/users/me', {
+            headers: {
+              Authorization: `JWT ${token}`,
+            },
+          });
+
+          console.log("Refetched user data:", userResult);
+
+          // Extract avatar URL from refetched data
+          let avatarUrl = profile.avatar;
+          if (userResult.user && userResult.user.avatar) {
+            const avatarData = userResult.user.avatar;
+            if (typeof avatarData === "object" && avatarData.url) {
+              avatarUrl = avatarData.url;
+            } else if (typeof avatarData === "string") {
+              avatarUrl = avatarData;
             }
-          );
+          }
 
-          if (userResponse.ok) {
-            const userResult = await userResponse.json();
-            console.log("Refetched user data:", userResult);
+          console.log("New avatar URL extracted:", avatarUrl);
 
-            // Extract avatar URL from refetched data
-            let avatarUrl = profile.avatar;
-            if (userResult.user && userResult.user.avatar) {
-              const avatarData = userResult.user.avatar;
-              if (typeof avatarData === "object" && avatarData.url) {
-                avatarUrl = avatarData.url;
-              } else if (typeof avatarData === "string") {
-                avatarUrl = avatarData;
-              }
-            }
+          // Update profile state with new avatar
+          setProfile((prev) => {
+            const updated = {
+              ...prev,
+              avatar: avatarUrl,
+            };
+            console.log("Updating profile state with new avatar:", updated);
+            return updated;
+          });
 
-            console.log("New avatar URL extracted:", avatarUrl);
-
-            // Update profile state with new avatar
-            setProfile((prev) => {
-              const updated = {
-                ...prev,
-                avatar: avatarUrl,
-              };
-              console.log("Updating profile state with new avatar:", updated);
-              return updated;
-            });
-
-            console.log("Avatar updated successfully, new URL:", avatarUrl);
-            toast.success("Аватар успешно обновлен");
+          console.log("Avatar updated successfully, new URL:", avatarUrl);
+          toast.success("Аватар успешно обновлен");
           }
         } catch (uploadError) {
           console.error("Avatar upload error:", uploadError);
@@ -482,38 +419,12 @@ export default function ProfilePage() {
         console.log("Update payload:", updateData);
 
         // Make PATCH request to update user profile data
-        const response = await fetch(
-          `${BASE_URL}/users/${currentUserId}`,
-          {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `JWT ${token}`,
-            },
-            body: JSON.stringify(updateData),
-          }
-        );
+        await apiFetch(`/users/${currentUserId}`, {
+          method: "PATCH",
+          body: JSON.stringify(updateData),
+        });
 
-        console.log("Profile update response status:", response.status);
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Profile update error response:", errorText);
-
-          try {
-            const errorData = JSON.parse(errorText);
-            const errorMessage =
-              errorData.errors?.[0]?.message ||
-              errorData.message ||
-              "Ошибка обновления профиля";
-            throw new Error(errorMessage);
-          } catch (parseError) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-          }
-        }
-
-        const result = await response.json();
-        console.log("Profile update result:", result);
+        console.log("Profile update successful");
 
         // Update local state with new user data
         setProfile((prev) => ({

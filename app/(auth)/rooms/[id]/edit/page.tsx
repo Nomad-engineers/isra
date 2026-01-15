@@ -18,7 +18,7 @@ import { useTokenAuth } from '@/hooks/use-token-auth'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Switch } from '@/components/ui/switch'
 import { GenericImagePicker } from '@/components/ui/generic-image-picker'
-import { BASE_URL } from '@/lib/constants'
+import { apiFetch } from '@/lib/api-fetch'
 
 // Form schema with validation for webinars
 const webinarFormSchema = z.object({
@@ -220,23 +220,17 @@ export default function EditRoomPage() {
   // Token refresh utility
   const refreshToken = useCallback(async () => {
     try {
-      const refreshResponse = await fetch(`${BASE_URL}/users/refresh-token`, {
+      const refreshData = await apiFetch('/users/refresh-token', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           refreshToken: localStorage.getItem('refresh-token'),
         }),
       })
 
-      if (refreshResponse.ok) {
-        const refreshData = await refreshResponse.json()
-        if (refreshData.token) {
-          localStorage.setItem('payload-token', refreshData.token)
-          setToken(refreshData.token)
-          return refreshData.token
-        }
+      if (refreshData.token) {
+        localStorage.setItem('payload-token', refreshData.token)
+        setToken(refreshData.token)
+        return refreshData.token
       }
     } catch (error) {
       console.error('Token refresh failed:', error)
@@ -259,7 +253,7 @@ export default function EditRoomPage() {
         ? '/api/upload/room-logo'
         : '/api/upload/room-banner'
 
-      const response = await fetch(uploadEndpoint, {
+      const result = await apiFetch(uploadEndpoint, {
         method: 'POST',
         headers: {
           'Authorization': `JWT ${currentToken}`,
@@ -267,12 +261,6 @@ export default function EditRoomPage() {
         body: formData,
       })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to upload file')
-      }
-
-      const result = await response.json()
       return result.url
     } catch (error) {
       console.error(`Failed to upload ${type}:`, error)
@@ -339,42 +327,12 @@ export default function EditRoomPage() {
           return
         }
 
-        const response = await fetch(`${BASE_URL}/users/me`, {
-          method: 'GET',
+        const result = await apiFetch('/users/me', {
           headers: {
-            'Content-Type': 'application/json',
             Authorization: `JWT ${currentToken}`,
           },
         })
 
-        if (!response.ok && response.status === 401) {
-          const refreshedToken = await refreshToken()
-          if (refreshedToken) {
-            const retryResponse = await fetch(`${BASE_URL}/users/me`, {
-              method: 'GET',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `JWT ${refreshedToken}`,
-              },
-            })
-
-            if (retryResponse.ok) {
-              const result = await retryResponse.json()
-              if (result && result.user) {
-                setUserData(result.user)
-                return
-              }
-            }
-          }
-
-          throw new Error(`Failed to fetch user data: ${response.status}`)
-        }
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch user data: ${response.status}`)
-        }
-
-        const result = await response.json()
         if (result && result.user) {
           setUserData(result.user)
         }
@@ -415,59 +373,12 @@ export default function EditRoomPage() {
           return
         }
 
-        const response = await fetch(`${BASE_URL}/rooms/${roomId}`, {
-          method: 'GET',
+        const result = await apiFetch(`/rooms/${roomId}`, {
           headers: {
-            'Content-Type': 'application/json',
             Authorization: `JWT ${currentToken}`,
           },
         })
 
-        if (!response.ok) {
-          if (response.status === 401) {
-            const refreshedToken = await refreshToken()
-            if (refreshedToken) {
-              const retryResponse = await fetch(`${BASE_URL}/rooms/${roomId}`, {
-                method: 'GET',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: `JWT ${refreshedToken}`,
-                },
-              })
-
-              if (retryResponse.ok) {
-                const result = await retryResponse.json()
-                processRoomData(result)
-                return
-              }
-
-              if (retryResponse.status === 404) {
-                stableToast({
-                  title: 'Комната не найдена',
-                  description: 'Запрошенная комната не существует',
-                  variant: 'destructive',
-                })
-                router.push('/rooms')
-                return
-              }
-            }
-            throw new Error(`Failed to fetch room: unauthorized`)
-          }
-
-          if (response.status === 404) {
-            stableToast({
-              title: 'Комната не найдена',
-              description: 'Запрошенная комната не существует',
-              variant: 'destructive',
-            })
-            router.push('/rooms')
-            return
-          }
-
-          throw new Error(`Failed to fetch room: ${response.status}`)
-        }
-
-        const result = await response.json()
         processRoomData(result)
       } catch (error) {
         console.error('Room fetch error:', error)
@@ -586,24 +497,12 @@ export default function EditRoomPage() {
 
       console.log('Updating webinar:', roomId, updatePayload)
 
-      const response = await fetch(`${BASE_URL}/rooms/${roomId}`, {
+      await apiFetch(`/rooms/${roomId}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `JWT ${currentToken}`,
-        },
         body: JSON.stringify(updatePayload),
       })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(
-          errorData.errors?.[0]?.message || 'Failed to update webinar'
-        )
-      }
-
-      const result = await response.json()
-      console.log('Update successful:', result)
+      console.log('Update successful')
 
       stableToast({
         title: 'Успешно обновлено',
@@ -689,24 +588,12 @@ export default function EditRoomPage() {
 
       console.log('Updating room:', roomId, updatePayload)
 
-      const response = await fetch(`${BASE_URL}/rooms/${roomId}`, {
+      await apiFetch(`/rooms/${roomId}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `JWT ${currentToken}`,
-        },
         body: JSON.stringify(updatePayload),
       })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(
-          errorData.errors?.[0]?.message || 'Failed to update room'
-        )
-      }
-
-      const result = await response.json()
-      console.log('Update successful:', result)
+      console.log('Update successful')
 
       stableToast({
         title: 'Успешно обновлено',

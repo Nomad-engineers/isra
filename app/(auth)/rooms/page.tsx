@@ -15,7 +15,7 @@ import { CreateWebinarModal } from '@/components/webinars/create-webinar-modal'
 import { useTokenAuth } from '@/hooks/use-token-auth'
 import { roomsApi } from '@/api/rooms'
 import { Webinar } from '@/types/webinar'
-import { BASE_URL } from '@/lib/constants'
+import { apiFetch } from '@/lib/api-fetch'
 
 interface UserData {
   id: string
@@ -139,45 +139,11 @@ export default function RoomsPage() {
         return
       }
 
-      const response = await fetch(`${BASE_URL}/rooms/my`, {
-        method: 'GET',
+      const result = await apiFetch('/rooms/my', {
         headers: {
-          'Content-Type': 'application/json',
           Authorization: `JWT ${token}`,
         },
       })
-
-      // If token is expired, try to refresh it (only once)
-      if (!response.ok && response.status === 401 && retryCount === 0) {
-        try {
-          const refreshResponse = await fetch('http://localhost:3000/api/users/refresh-token', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              refreshToken: localStorage.getItem('refresh-token'),
-            }),
-          })
-
-          if (refreshResponse.ok) {
-            const refreshData = await refreshResponse.json()
-            if (refreshData.token) {
-              localStorage.setItem('payload-token', refreshData.token)
-              // Retry the original request with the new token
-              return fetchWebinars(retryCount + 1)
-            }
-          }
-        } catch {
-          // Token refresh failed silently
-        }
-      }
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch webinars: ${response.status}`)
-      }
-
-      const result = await response.json()
 
       if (result && result.docs) {
         const convertedWebinars: Webinar[] = result.docs.map(convertApiWebinar)
@@ -218,46 +184,11 @@ export default function RoomsPage() {
           return
         }
 
-        const response = await fetch(`${BASE_URL}/users/me`, {
-          method: 'GET',
+        const result = await apiFetch('/users/me', {
           headers: {
-            'Content-Type': 'application/json',
             Authorization: `JWT ${token}`,
           },
         })
-
-        // If token is expired, try to refresh it (only once)
-        if (!response.ok && response.status === 401 && retryCount === 0) {
-          try {
-            const refreshResponse = await fetch('http://localhost:3000/api/users/refresh-token', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                refreshToken: localStorage.getItem('refresh-token'),
-              }),
-            })
-
-            if (refreshResponse.ok) {
-              const refreshData = await refreshResponse.json()
-              if (refreshData.token) {
-                localStorage.setItem('payload-token', refreshData.token)
-                // Retry the original request with the new token
-                return fetchUserData(retryCount + 1)
-              }
-            }
-          } catch {
-            // Token refresh failed silently
-          }
-        }
-
-        if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.errors?.[0]?.message || `Failed to fetch user data: ${response.status}`)
-        }
-
-        const result = await response.json()
 
         if (result && result.user) {
           setUserData(result.user as UserData)
@@ -361,17 +292,12 @@ export default function RoomsPage() {
     try {
       const token = getToken()
 
-      const response = await fetch(`${BASE_URL}/rooms/${id}`, {
+      await apiFetch(`/rooms/${id}`, {
         method: 'DELETE',
         headers: {
-          'Content-Type': 'application/json',
           Authorization: `JWT ${token}`,
         },
       })
-
-      if (!response.ok) {
-        throw new Error('Failed to delete webinar')
-      }
 
       toast({
         title: 'Успешно удалено',

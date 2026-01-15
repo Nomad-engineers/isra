@@ -1,1 +1,1 @@
-export const BASE_URL = 'https://isracms.vercel.app/'
+export const BASE_URL = process.env.NEXT_PUBLIC_PAYLOAD_API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://dev.isra-cms.nomad-engineers.space/api'

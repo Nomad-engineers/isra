@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
+import { BASE_URL } from "@/lib/constants";
 import {
   MessageSquare,
   MessageSquareOff,
@@ -87,11 +88,8 @@ export function WebinarSettingsModal({
         return;
       }
 
-      const apiUrl =
-        process.env.NEXT_PUBLIC_PAYLOAD_API_URL || "https://isracms.vercel.app";
-
       // Update in database
-      const response = await fetch(`${apiUrl}/api/rooms/${webinar.id}`, {
+      const response = await fetch(`${BASE_URL}/rooms/${webinar.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

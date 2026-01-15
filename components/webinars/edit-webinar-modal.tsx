@@ -26,6 +26,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
 import { Webinar } from "@/types/webinar";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
+import { BASE_URL } from "@/lib/constants";
 
 // Form schema with validation
 const webinarFormSchema = z.object({
@@ -117,7 +118,7 @@ export function EditWebinarModal({
       console.log("Updating webinar:", webinar.id, updatePayload);
 
       const response = await fetch(
-        `https://isracms.vercel.app/api/rooms/${webinar.id}`,
+        `${BASE_URL}/rooms/${webinar.id}`,
         {
           method: "PATCH",
           headers: {

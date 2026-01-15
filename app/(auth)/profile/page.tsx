@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { BASE_URL } from "@/lib/constants";
 
 interface PlanData {
   id: string;
@@ -148,7 +149,7 @@ export default function ProfilePage() {
         }
 
         const response = await fetch(
-          "https://isracms.vercel.app/api/users/me",
+          `${BASE_URL}/users/me`,
           {
             method: "GET",
             headers: {
@@ -258,7 +259,7 @@ export default function ProfilePage() {
         return;
       }
 
-      const response = await fetch("https://isracms.vercel.app/api/rooms", {
+      const response = await fetch(`${BASE_URL}/rooms`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -349,7 +350,7 @@ export default function ProfilePage() {
 
           // Upload avatar using special endpoint (as mentor suggested)
           const avatarResponse = await fetch(
-            "https://isracms.vercel.app/api/user-avatar",
+            `${BASE_URL}/user-avatar`,
             {
               method: "POST",
               headers: {
@@ -383,7 +384,7 @@ export default function ProfilePage() {
 
           // Now link the avatar to the user profile
           const linkResponse = await fetch(
-            `https://isracms.vercel.app/api/users/${currentUserId}`,
+            `${BASE_URL}/users/${currentUserId}`,
             {
               method: "PATCH",
               headers: {
@@ -410,7 +411,7 @@ export default function ProfilePage() {
 
           // Refetch user data to get the updated avatar
           const userResponse = await fetch(
-            "https://isracms.vercel.app/api/users/me",
+            `${BASE_URL}/users/me`,
             {
               method: "GET",
               headers: {
@@ -482,7 +483,7 @@ export default function ProfilePage() {
 
         // Make PATCH request to update user profile data
         const response = await fetch(
-          `https://isracms.vercel.app/api/users/${currentUserId}`,
+          `${BASE_URL}/users/${currentUserId}`,
           {
             method: "PATCH",
             headers: {

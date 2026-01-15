@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 import { sdk } from '@/lib/sdk'
 import { setToken, isValidToken } from '@/lib/auth-utils'
 import { googleOAuthV2 as googleOAuth } from '@/lib/google-oauth-v2'
+import { BASE_URL } from '@/lib/constants'
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -48,7 +49,7 @@ export default function LoginPage() {
 
       // Send idToken to backend via query parameters
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_PAYLOAD_API_URL || 'https://isracms.vercel.app'}/api/users/google?idToken=${encodeURIComponent(idToken)}`,
+        `${BASE_URL}/users/google?idToken=${encodeURIComponent(idToken)}`,
         {
           method: 'GET',
         }
@@ -89,7 +90,7 @@ export default function LoginPage() {
 
     try {
       // Direct API call instead of using SDK to avoid configuration issues
-      const response = await fetch('https://isracms.vercel.app/api/users/login', {
+      const response = await fetch(`${BASE_URL}/users/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

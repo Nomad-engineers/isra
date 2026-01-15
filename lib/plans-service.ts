@@ -1,7 +1,8 @@
 import { ApiPlan, PlansApiResponse, Plan, UserPlanData } from '@/types/plan'
+import { BASE_URL } from '@/lib/constants'
 
 // API configuration
-const PLANS_API_URL = 'https://isracms.vercel.app/api/plans'
+const PLANS_API_URL = `${BASE_URL}/plans`
 
 /**
  * Transform API plan data to match internal Plan interface
@@ -97,7 +98,7 @@ export async function fetchPlansFromApi(): Promise<Plan[]> {
  */
 export async function fetchUserPlanData(token: string): Promise<UserPlanData | null> {
   try {
-    const response = await fetch('https://isracms.vercel.app/api/users/me', {
+    const response = await fetch(`${BASE_URL}/users/me`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

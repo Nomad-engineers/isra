@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Room, RoomResponse } from "@/types/room";
 import { Webinar } from "@/types/webinar";
 import { toast } from "sonner";
+import { BASE_URL } from "@/lib/constants";
 
 interface UseRoomsOptions {
   userId?: string | number;
@@ -32,7 +33,7 @@ export function useRooms(options: UseRoomsOptions = {}) {
       setError(null);
 
       try {
-        const url = `https://isracms.vercel.app/api/rooms/my`;
+        const url = `${BASE_URL}/rooms/my`;
 
         // Get JWT token from localStorage
         const token = localStorage.getItem("payload-token");
@@ -110,7 +111,7 @@ export function useRooms(options: UseRoomsOptions = {}) {
       setError(null);
 
       try {
-        const url = `https://isracms.vercel.app/api/rooms/create`;
+        const url = `${BASE_URL}/rooms/create`;
 
         // Get JWT token from localStorage
         const token = localStorage.getItem("payload-token");
@@ -177,7 +178,7 @@ export function useRooms(options: UseRoomsOptions = {}) {
       };
 
       const response = await fetch(
-        `https://isracms.vercel.app/api/rooms/${roomId}`,
+        `${BASE_URL}/rooms/${roomId}`,
         {
           method: "DELETE",
           headers,

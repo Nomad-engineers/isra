@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { BASE_URL } from "@/lib/constants";
 
 // Payload CMS configuration
-const PAYLOAD_API_URL =
-  process.env.PAYLOAD_API_URL || "https://isracms.vercel.app/api";
+const PAYLOAD_API_URL = process.env.PAYLOAD_API_URL || BASE_URL;
 const PAYLOAD_ADMIN_EMAIL = process.env.PAYLOAD_ADMIN_EMAIL;
 const PAYLOAD_ADMIN_PASSWORD = process.env.PAYLOAD_ADMIN_PASSWORD;
 

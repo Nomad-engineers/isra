@@ -25,6 +25,7 @@ import { WebinarSettingsModal } from "@/components/webinars/webinar-settings-mod
 import { WebinarBanner } from "@/components/webinars/webinar-banner";
 import { roomsApi } from "@/api/rooms";
 import { WebinarRoomStats } from "@/types/webinar";
+import { BASE_URL } from "@/lib/constants";
 
 interface WebinarUser {
   id: number;
@@ -212,7 +213,7 @@ export default function WebinarRoomPage({
     const fetchWebinarAndValidate = async () => {
       try {
         const webinarResponse = await fetch(
-          `https://isracms.vercel.app/api/rooms/${roomId}`
+          `${BASE_URL}/rooms/${roomId}`
         );
 
         if (!webinarResponse.ok) {

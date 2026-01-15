@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ForgotPasswordForm } from '@/components/forms/forgot-password-form'
 import { ForgotPasswordFormData } from '@/lib/validations'
 import { toast } from 'sonner'
+import { BASE_URL } from '@/lib/constants'
 
 export default function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -15,7 +16,7 @@ export default function ForgotPasswordPage() {
 
     try {
       // Direct API call instead of using SDK to avoid configuration issues
-      const response = await fetch('https://isracms.vercel.app/api/users/forgot-password', {
+      const response = await fetch(`${BASE_URL}/users/forgot-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AppLayout } from "@/components/layout/app-layout";
 import { toast } from "sonner";
+import { BASE_URL } from "@/lib/constants";
 
 interface UserData {
   id: string;
@@ -41,7 +42,7 @@ export function AuthLayoutWrapper({ children }: AuthLayoutWrapperProps) {
 
         // Fetch user data using direct API call (same pattern as login and profile)
         const response = await fetch(
-          "https://isracms.vercel.app/api/users/me",
+          `${BASE_URL}/users/me`,
           {
             method: "GET",
             headers: {

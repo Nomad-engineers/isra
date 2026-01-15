@@ -15,6 +15,7 @@ import { CreateWebinarModal } from '@/components/webinars/create-webinar-modal'
 import { useTokenAuth } from '@/hooks/use-token-auth'
 import { roomsApi } from '@/api/rooms'
 import { Webinar } from '@/types/webinar'
+import { BASE_URL } from '@/lib/constants'
 
 interface UserData {
   id: string
@@ -138,7 +139,7 @@ export default function RoomsPage() {
         return
       }
 
-      const response = await fetch('https://isracms.vercel.app/api/rooms/my', {
+      const response = await fetch(`${BASE_URL}/rooms/my`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -217,7 +218,7 @@ export default function RoomsPage() {
           return
         }
 
-        const response = await fetch('https://isracms.vercel.app/api/users/me', {
+        const response = await fetch(`${BASE_URL}/users/me`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -360,7 +361,7 @@ export default function RoomsPage() {
     try {
       const token = getToken()
 
-      const response = await fetch(`https://isracms.vercel.app/api/rooms/${id}`, {
+      const response = await fetch(`${BASE_URL}/rooms/${id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

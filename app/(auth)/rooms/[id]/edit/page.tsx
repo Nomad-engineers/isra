@@ -19,7 +19,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Switch } from '@/components/ui/switch'
 import { GenericImagePicker } from '@/components/ui/generic-image-picker'
 
-// Form schema with validation for webinars
 const webinarFormSchema = z.object({
   title: z.string().min(1, 'Название вебинара обязательно'),
   hostName: z.string().min(1, 'Имя ведущего обязательно'),
@@ -49,7 +48,6 @@ const webinarFormSchema = z.object({
 
 type WebinarFormData = z.infer<typeof webinarFormSchema>
 
-// Form schema with validation for rooms
 const roomFormSchema = z.object({
   name: z.string().min(1, 'Название комнаты обязательно'),
   speaker: z.string().min(1, 'Имя ведущего обязательно'),
@@ -207,11 +205,9 @@ export default function EditRoomPage() {
 
   const roomId = params.id as string
 
-  // Memoize stable functions to prevent unnecessary re-renders
   const stableToast = useMemo(() => toast, [toast])
   const stableGetToken = useMemo(() => getToken, [getToken])
 
-  // Utility function to get token with caching
   const getCurrentToken = useCallback(() => {
     if (token) return token
     const storedToken = localStorage.getItem('payload-token')
@@ -222,7 +218,6 @@ export default function EditRoomPage() {
     return null
   }, [token])
 
-  // Token refresh utility
   const refreshToken = useCallback(async () => {
     try {
       const refreshResponse = await fetch('http://localhost:3000/api/users/refresh-token', {
@@ -551,7 +546,6 @@ export default function EditRoomPage() {
   const data = result.doc || result
  
   
-  // Extract logo URL from relationship object or string
   let logoUrl = ''
   if (data.logo) {
     if (typeof data.logo === 'object' && data.logo.url) {
@@ -571,8 +565,6 @@ export default function EditRoomPage() {
       if (data) {
         setRoomData(data)
 
-        // Always set image previews from existing data when available
-        // This ensures images persist after save
         setLogoPreview(logoUrl)
         setBannerPreview(bannerUrl)
         
@@ -639,7 +631,6 @@ export default function EditRoomPage() {
     fetchRoomData()
   }, [userData, roomId, getCurrentToken, refreshToken, stableToast, router, isInitialLoad, webinarForm, roomForm])
 
-  // Handle webinar form submission
   const onWebinarSubmit = async (data: WebinarFormData) => {
     if (isSubmitting) return
 
@@ -712,7 +703,6 @@ export default function EditRoomPage() {
     }
   }
 
-  // Handle room form submission
   const onRoomSubmit = async (data: RoomFormData) => {
     if (isSubmitting) return
 
@@ -889,7 +879,7 @@ if (bannerUrl) {
               <TabsTrigger value='webinar'>Изменить вебинар</TabsTrigger>
             </TabsList>
 
-            {/* Room Edit Tab */}
+            
             <TabsContent value='room' className='mt-6'>
               <Form {...roomForm}>
                 <form onSubmit={roomForm.handleSubmit(onRoomSubmit)} className='space-y-6'>
@@ -1212,7 +1202,7 @@ if (bannerUrl) {
               </Form>
             </TabsContent>
 
-            {/* Webinar Edit Tab */}
+           
             <TabsContent value='webinar' className='mt-6'>
               <Form {...webinarForm}>
                 <form onSubmit={webinarForm.handleSubmit(onWebinarSubmit)} className='space-y-6'>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { FolderOpen, Loader2 } from 'lucide-react'
+import { FolderOpen, Loader2, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
@@ -29,17 +29,19 @@ export function GenericImagePicker({
 }: GenericImagePickerProps) {
   const [previewUrl, setPreviewUrl] = useState<string | undefined>(currentImage)
   const [isUploading, setIsUploading] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const dropZoneRef = useRef<HTMLDivElement>(null)
 
-  // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Обновляем previewUrl когда currentImage меняется
   useEffect(() => {
-    console.log(`[${label}] currentImage changed:`, currentImage)
     setPreviewUrl(currentImage)
   }, [currentImage, label])
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
+  const processFile = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      alert('Пожалуйста, выберите файл изображения')
+      return
+    }
 
     const reader = new FileReader()
     reader.onloadend = () => {
@@ -52,8 +54,8 @@ export function GenericImagePicker({
       setIsUploading(true)
       try {
         const uploadedUrl = await onUpload(file)
-        onUrlChange(uploadedUrl) 
-        setPreviewUrl(uploadedUrl) 
+        onUrlChange(uploadedUrl)
+        setPreviewUrl(uploadedUrl)
       } catch (error) {
         console.error('Failed to upload:', error)
       } finally {
@@ -62,15 +64,48 @@ export function GenericImagePicker({
     }
   }
 
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    await processFile(file)
+  }
+
   const handleUploadClick = () => {
     fileInputRef.current?.click()
   }
-useEffect(() => {
-    console.log(`[${label}] currentImage changed:`, currentImage)
-    if (currentImage) {
-      setPreviewUrl(currentImage)
+
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    if (dropZoneRef.current && !dropZoneRef.current.contains(e.relatedTarget as Node)) {
+      setIsDragging(false)
     }
-  }, [currentImage, label])
+  }
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+
+    const files = e.dataTransfer.files
+    if (files && files.length > 0) {
+      const file = files[0]
+      await processFile(file)
+    }
+  }
+
   return (
     <div className={cn('space-y-3', className)}>
       <Label className="text-sm font-normal text-foreground">{label}</Label>
@@ -109,36 +144,73 @@ useEffect(() => {
       </Button>
 
       <div
+        ref={dropZoneRef}
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
         className={cn(
-          "relative bg-white rounded-lg overflow-hidden border",
-          aspectRatio === 'square' ? 'w-full h-[200px]' : 'w-full h-[200px]'
+          "relative bg-white rounded-lg overflow-hidden  transition-all duration-200",
+          aspectRatio === 'square' ? 'w-full h-[200px]' : 'w-full h-[200px]',
+          isDragging 
+             ? 'ring-1 ring-primary ring-offset-2 shadow-lg shadow-primary/20 scale-[1.01]' 
+            : 'shadow-md hover:shadow-lg hover:ring-1 hover:ring-primary/30'
         )}
       >
         {previewUrl ? (
-          <img
-            src={previewUrl}
-            alt={label}
-            className="w-full h-full object-contain bg-white"
-          />
+          <>
+            <img
+              src={previewUrl}
+              alt={label}
+              className="w-full h-full object-contain bg-white"
+            />
+            {isDragging && (
+              <div className="absolute inset-0 bg-primary/10 backdrop-blur-sm flex items-center justify-center">
+                <div className="text-center text-primary">
+                  <Upload className="w-12 h-12 mx-auto mb-2 animate-bounce" />
+                  
+                </div>
+              </div>
+            )}
+          </>
         ) : (
           <div className="flex items-center justify-center h-full bg-muted/30">
-            <div className="text-center text-muted-foreground">
-              <div className="w-12 h-12 mx-auto mb-2 rounded-lg bg-muted/50 flex items-center justify-center">
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
+            {isDragging ? (
+              <div className="text-center text-primary">
+                <Upload className="w-12 h-12 mx-auto mb-2 animate-bounce" />
+                
               </div>
-              <p className="text-xs">{label}</p>
+            ) : (
+              <div className="text-center text-muted-foreground">
+                <div className="w-12 h-12 mx-auto mb-2 rounded-lg bg-muted/50 flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                </div>
+                <p className="text-xs mb-1">{label}</p>
+                <p className="text-xs text-muted-foreground/70">
+                  
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {isUploading && (
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center">
+            <div className="text-center text-white">
+              <Loader2 className="w-12 h-12 mx-auto mb-2 animate-spin" />
+            
             </div>
           </div>
         )}

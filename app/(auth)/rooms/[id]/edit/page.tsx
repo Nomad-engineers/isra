@@ -1007,8 +1007,8 @@ if (bannerUrl) {
 
                   <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                     <GenericImagePicker
-                      label='Логотип'
-                      description='Загрузите логотип для комнаты'
+                      label='Лого '
+                      
                       currentImage={logoPreview || (typeof roomData?.logo === 'string' ? roomData.logo : '') || roomData?.logoUrl || undefined}
                       onImageSelect={(file) => {
                         setLogoFile(file)
@@ -1032,8 +1032,8 @@ if (bannerUrl) {
                     />
 
                     <GenericImagePicker
-                      label='Баннер ожидания'
-                      description='Будет показан участникам до начала вебинара'
+                      label='Баннер '
+                     
                       currentImage={bannerPreview || roomData?.bannerUrl || undefined}
                       onImageSelect={(file) => {
                         setBannerFile(file)
@@ -1081,18 +1081,16 @@ if (bannerUrl) {
                     name='welcomeMessage'
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Приветственное сообщение для чата</FormLabel>
+                        <FormLabel>Сообщение для подключившихся к чату</FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder='Қайырлы кеш! Вебинарға қош келдіңіз...'
+                            placeholder='Сообщение для подключившихся к чату...'
                             rows={6}
                             disabled={isSubmitting}
                             {...field}
                           />
                         </FormControl>
-                        <p className='text-sm text-muted-foreground'>
-                          Это сообщение будет автоматически показано участникам при подключении к чату
-                        </p>
+                        
                         <FormMessage />
                       </FormItem>
                     )}
@@ -1224,10 +1222,10 @@ if (bannerUrl) {
                     name='welcomeMessage'
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Приветственное сообщение для чата</FormLabel>
+                        <FormLabel>Сообщение для подключившихся к чату</FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder='Қайырлы кеш! Вебинарға қош келдіңіз...'
+                            placeholder='Сообщение для подключившихся к чату...'
                             rows={6}
                             disabled={isSubmitting}
                             {...field}

@@ -1,1 +1,1 @@
-export const BASE_URL = 'https://isracms.vercel.app/'
+export const BASE_URL = 'https://dev.isra-cms.nomad-engineers.space/'

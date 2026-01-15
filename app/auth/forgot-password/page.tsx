@@ -15,7 +15,7 @@ export default function ForgotPasswordPage() {
 
     try {
       // Direct API call instead of using SDK to avoid configuration issues
-      const response = await fetch('https://isracms.vercel.app/api/users/forgot-password', {
+      const response = await fetch('https://dev.isra-cms.nomad-engineers.space/api/users/forgot-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

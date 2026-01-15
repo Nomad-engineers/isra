@@ -40,6 +40,7 @@ const webinarFormSchema = z.object({
       },
       { message: 'Некорректный URL' }
     ),
+  welcomeMessage: z.string().optional(),
   showBanner: z.boolean(),
   showBtn: z.boolean(),
   showChat: z.boolean(),
@@ -114,6 +115,7 @@ const roomFormSchema = z.object({
       },
       { message: 'Некорректный URL' }
     ),
+  welcomeMessage: z.string().optional(),
   showBanner: z.boolean(),
   showBtn: z.boolean(),
   showChat: z.boolean(),
@@ -141,6 +143,7 @@ interface WebinarData {
   bannerUrl: string | null
   btnUrl: string | null
   logo: string | null
+  welcomeMessage: string | null
   createdAt: string
   updatedAt: string
   user: {
@@ -171,6 +174,7 @@ interface RoomData {
   startedAt?: string | null
   stoppedAt?: string | null
   logo?: string | null | number
+  welcomeMessage?: string | null
   user: number | {
     id: number
     firstName?: string | null
@@ -196,6 +200,8 @@ export default function EditRoomPage() {
   const [userData, setUserData] = useState<any>(null)
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [bannerFile, setBannerFile] = useState<File | null>(null)
+  const [logoPreview, setLogoPreview] = useState<string>('')
+  const [bannerPreview, setBannerPreview] = useState<string>('')
   const [token, setToken] = useState<string | null>(null)
   const [isAuthenticating, setIsAuthenticating] = useState(false)
 
@@ -243,41 +249,99 @@ export default function EditRoomPage() {
     return null
   }, [])
 
-  // Helper function to upload file
-  const uploadFile = async (file: File, type: 'logo' | 'banner'): Promise<string | null> => {
+  const uploadFile = async (file: File, type: 'logo' | 'banner'): Promise<{ url: string; id: string }> => {
     try {
-      const currentToken = getCurrentToken()
-      if (!currentToken) {
-        throw new Error('No authorization token')
+      const maxSize = 5 * 1024 * 1024
+      if (file.size > maxSize) {
+        throw new Error('Размер файла не должен превышать 5MB')
       }
 
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+      if (!validTypes.includes(file.type)) {
+        throw new Error('Неподдерживаемый формат файла')
+      }
+
+      const currentToken = getCurrentToken()
+      if (!currentToken) {
+        throw new Error('Требуется авторизация')
+      }
+
+      const altText = type === 'logo' ? 'Room logo' : 'Room banner'
+      
       const formData = new FormData()
       formData.append('file', file)
+      formData.append('_payload', JSON.stringify({
+        alt: altText
+      }))
 
-      const uploadEndpoint = type === 'logo'
-        ? '/api/upload/room-logo'
-        : '/api/upload/room-banner'
+      
 
-      const response = await fetch(uploadEndpoint, {
+      const response = await fetch('https://dev.isra-cms.nomad-engineers.space/api/media', {
         method: 'POST',
         headers: {
-          'Authorization': `JWT ${currentToken}`,
+          Authorization: `JWT ${currentToken}`,
         },
         body: formData,
       })
 
       if (!response.ok) {
+        if (response.status === 401) {
+          const refreshedToken = await refreshToken()
+          if (refreshedToken) {
+            const retryFormData = new FormData()
+            retryFormData.append('file', file)
+            retryFormData.append('_payload', JSON.stringify({
+              alt: altText
+            }))
+            
+            const retryResponse = await fetch('https://dev.isra-cms.nomad-engineers.space/api/media', {
+              method: 'POST',
+              headers: {
+                Authorization: `JWT ${refreshedToken}`,
+              },
+              body: retryFormData,
+            })
+
+            if (retryResponse.ok) {
+              const result = await retryResponse.json()
+              
+              const mediaUrl = result.doc.url
+              const fullUrl = mediaUrl.startsWith('http') 
+                ? mediaUrl 
+                : `https://dev.isra-cms.nomad-engineers.space${mediaUrl}`
+              return {
+                url: fullUrl,
+                id: result.doc.id
+              }
+            }
+          }
+        }
+
         const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to upload file')
+        console.error('Upload error response:', errorData)
+        throw new Error(errorData.errors?.[0]?.message || 'Upload failed')
       }
 
       const result = await response.json()
-      return result.url
+   
+
+      const mediaUrl = result.doc.url
+      const fullUrl = mediaUrl.startsWith('http') 
+        ? mediaUrl 
+        : `https://dev.isra-cms.nomad-engineers.space${mediaUrl}`
+      
+      
+      
+      return {
+        url: fullUrl,
+        id: result.doc.id
+      }
     } catch (error) {
       console.error(`Failed to upload ${type}:`, error)
       throw error
     }
   }
+  
 
   // Initialize webinar form
   const webinarForm = useForm<WebinarFormData>({
@@ -288,6 +352,7 @@ export default function EditRoomPage() {
       datetime: '',
       description: '',
       link: '',
+      welcomeMessage: '',
       showBanner: false,
       showBtn: false,
       showChat: true,
@@ -307,6 +372,7 @@ export default function EditRoomPage() {
       bannerUrl: '',
       btnUrl: '',
       logoUrl: '',
+      welcomeMessage: '',
       showBanner: false,
       showBtn: false,
       showChat: true,
@@ -315,9 +381,9 @@ export default function EditRoomPage() {
     },
   })
 
-  // Fetch user data - optimized to run only once
+  // Fetch user data
   useEffect(() => {
-    if (isAuthenticating || userData) return // Prevent multiple authentication attempts
+    if (isAuthenticating || userData) return
 
     const fetchUserData = async () => {
       setIsAuthenticating(true)
@@ -338,7 +404,7 @@ export default function EditRoomPage() {
           return
         }
 
-        const response = await fetch('https://isracms.vercel.app/api/users/me', {
+        const response = await fetch('https://dev.isra-cms.nomad-engineers.space/api/users/me', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -349,7 +415,7 @@ export default function EditRoomPage() {
         if (!response.ok && response.status === 401) {
           const refreshedToken = await refreshToken()
           if (refreshedToken) {
-            const retryResponse = await fetch('https://isracms.vercel.app/api/users/me', {
+            const retryResponse = await fetch('https://dev.isra-cms.nomad-engineers.space/api/users/me', {
               method: 'GET',
               headers: {
                 'Content-Type': 'application/json',
@@ -392,9 +458,9 @@ export default function EditRoomPage() {
     fetchUserData()
   }, [router, userData, isAuthenticating, getCurrentToken, refreshToken, stableToast])
 
-  // Fetch room/webinar data - optimized with better dependency management
+  // Fetch room/webinar data
   useEffect(() => {
-    if (!userData || !roomId) return // Only fetch when we have userData and roomId
+    if (!userData || !roomId) return
 
     const fetchRoomData = async () => {
       try {
@@ -414,7 +480,7 @@ export default function EditRoomPage() {
           return
         }
 
-        const response = await fetch(`https://isracms.vercel.app/api/rooms/${roomId}`, {
+        const response = await fetch(`https://dev.isra-cms.nomad-engineers.space/api/rooms/${roomId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -426,7 +492,7 @@ export default function EditRoomPage() {
           if (response.status === 401) {
             const refreshedToken = await refreshToken()
             if (refreshedToken) {
-              const retryResponse = await fetch(`https://isracms.vercel.app/api/rooms/${roomId}`, {
+              const retryResponse = await fetch(`https://dev.isra-cms.nomad-engineers.space/api/rooms/${roomId}`, {
                 method: 'GET',
                 headers: {
                   'Content-Type': 'application/json',
@@ -482,14 +548,36 @@ export default function EditRoomPage() {
     }
 
     const processRoomData = (result: any) => {
-      // Handle both old format (result.doc) and new format (result directly)
-      const data = result.doc || result
+  const data = result.doc || result
+ 
+  
+  // Extract logo URL from relationship object or string
+  let logoUrl = ''
+  if (data.logo) {
+    if (typeof data.logo === 'object' && data.logo.url) {
+      logoUrl = data.logo.url.startsWith('http')
+        ? data.logo.url
+        : `https://dev.isra-cms.nomad-engineers.space${data.logo.url}`
+    } else if (typeof data.logo === 'string') {
+      logoUrl = data.logo
+    }
+  }
+  
+  const bannerUrl = data.bannerUrl || ''
+  
+
+
+      
       if (data) {
         setRoomData(data)
 
-        // Only set default tab on initial load
+        // Always set image previews from existing data when available
+        // This ensures images persist after save
+        setLogoPreview(logoUrl)
+        setBannerPreview(bannerUrl)
+        
+
         if (isInitialLoad) {
-          // Default to room tab, but switch to webinar if it's clearly a webinar type
           if (data.type === 'auto' && data.scheduledDate) {
             setActiveTab('webinar')
           } else {
@@ -498,7 +586,6 @@ export default function EditRoomPage() {
           setIsInitialLoad(false)
         }
 
-        // Check permissions
         const isAdmin = userData?.role === 'admin'
         const userId = typeof data.user === 'object' ? data.user?.id : data.user
         const isOwner = userId?.toString() === userData?.id?.toString()
@@ -513,7 +600,6 @@ export default function EditRoomPage() {
           return
         }
 
-        // Set webinar form values only if they haven't been modified by user
         if (!webinarForm.formState.isDirty) {
           webinarForm.reset({
             title: data.name || '',
@@ -521,6 +607,7 @@ export default function EditRoomPage() {
             datetime: data.scheduledDate || '',
             description: data.description || '',
             link: data.videoUrl || '',
+            welcomeMessage: data.welcomeMessage || '',
             showBanner: data.showBanner ?? false,
             showBtn: data.showBtn ?? false,
             showChat: data.showChat ?? true,
@@ -528,7 +615,6 @@ export default function EditRoomPage() {
           })
         }
 
-        // Set room form values only if they haven't been modified by user
         if (!roomForm.formState.isDirty) {
           roomForm.reset({
             name: data.name || '',
@@ -539,6 +625,7 @@ export default function EditRoomPage() {
             bannerUrl: data.bannerUrl || '',
             btnUrl: data.btnUrl || '',
             logoUrl: data.logoUrl || '',
+            welcomeMessage: data.welcomeMessage || '',
             showBanner: data.showBanner ?? false,
             showBtn: data.showBtn ?? false,
             showChat: data.showChat ?? true,
@@ -554,7 +641,7 @@ export default function EditRoomPage() {
 
   // Handle webinar form submission
   const onWebinarSubmit = async (data: WebinarFormData) => {
-    if (isSubmitting) return // Prevent multiple simultaneous submissions
+    if (isSubmitting) return
 
     setIsSubmitting(true)
 
@@ -570,22 +657,22 @@ export default function EditRoomPage() {
         return
       }
 
-      // Prepare the update payload
       const updatePayload = {
         name: data.title,
         speaker: data.hostName,
         description: data.description || '',
         videoUrl: data.link || '',
         scheduledDate: data.datetime ? new Date(data.datetime).toISOString() : null,
+        welcomeMessage: data.welcomeMessage || '',
         showBanner: data.showBanner,
         showBtn: data.showBtn,
         showChat: data.showChat,
         isVolumeOn: data.isVolumeOn,
       }
 
-      console.log('Updating webinar:', roomId, updatePayload)
+      
 
-      const response = await fetch(`https://isracms.vercel.app/api/rooms/${roomId}`, {
+      const response = await fetch(`https://dev.isra-cms.nomad-engineers.space/api/rooms/${roomId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -609,7 +696,6 @@ export default function EditRoomPage() {
         description: 'Вебинар был успешно обновлен',
       })
 
-      // Redirect back to rooms page
       router.push('/rooms')
     } catch (error) {
       console.error('Update error:', error)
@@ -628,7 +714,7 @@ export default function EditRoomPage() {
 
   // Handle room form submission
   const onRoomSubmit = async (data: RoomFormData) => {
-    if (isSubmitting) return // Prevent multiple simultaneous submissions
+    if (isSubmitting) return
 
     setIsSubmitting(true)
 
@@ -644,51 +730,73 @@ export default function EditRoomPage() {
         return
       }
 
-      // Upload files if any
-      let logoUrl = data.logoUrl || ''
-      let bannerUrl = data.bannerUrl || ''
+      let logoUrl = data.logoUrl || logoPreview || ''
+let bannerUrl = data.bannerUrl || bannerPreview || ''
+let logoId: string | null = null
 
-      try {
-        if (logoFile) {
-          const uploadedLogoUrl = await uploadFile(logoFile, 'logo')
-          logoUrl = uploadedLogoUrl || ''
-        }
-        if (bannerFile) {
-          const uploadedBannerUrl = await uploadFile(bannerFile, 'banner')
-          bannerUrl = uploadedBannerUrl || ''
-        }
-      } catch (uploadError) {
-        stableToast({
-          title: 'Ошибка загрузки файлов',
-          description:
-            uploadError instanceof Error
-              ? uploadError.message
-              : 'Не удалось загрузить изображения',
-          variant: 'destructive',
-        })
-        return
-      }
 
-      // Prepare the update payload
-      const updatePayload = {
-        name: data.name,
-        speaker: data.speaker,
-        description: data.description || '',
-        scheduledDate: data.scheduledDate ? new Date(data.scheduledDate).toISOString() : null,
-        videoUrl: data.videoUrl || '',
-        bannerUrl: bannerUrl,
-        btnUrl: data.btnUrl || '',
-        logoUrl: logoUrl,
-        showBanner: data.showBanner,
-        showBtn: data.showBtn,
-        showChat: data.showChat,
-        isVolumeOn: data.isVolumeOn,
-        type: data.type,
-      }
 
-      console.log('Updating room:', roomId, updatePayload)
+try {
+  if (logoFile) {
+    
+    const uploadResult = await uploadFile(logoFile, 'logo')
+    logoId = uploadResult.id  
+    logoUrl = uploadResult.url  
+    
+  }
+  if (bannerFile) {
+    
+    const uploadResult = await uploadFile(bannerFile, 'banner')
+    bannerUrl = uploadResult.url  
+    
+  }
+} catch (uploadError) {
+  stableToast({
+    title: 'Ошибка загрузки файлов',
+    description:
+      uploadError instanceof Error
+        ? uploadError.message
+        : 'Не удалось загрузить изображения',
+    variant: 'destructive',
+  })
+  return
+}
 
-      const response = await fetch(`https://isracms.vercel.app/api/rooms/${roomId}`, {
+      const updatePayload: any = {
+  name: data.name,
+  speaker: data.speaker,
+  description: data.description || '',
+  scheduledDate: data.scheduledDate ? new Date(data.scheduledDate).toISOString() : null,
+  videoUrl: data.videoUrl || '',
+  btnUrl: data.btnUrl || '',
+  welcomeMessage: data.welcomeMessage || '',
+  showBanner: data.showBanner,
+  showBtn: data.showBtn,
+  showChat: data.showChat,
+  isVolumeOn: data.isVolumeOn,
+  type: data.type,
+}
+
+
+if (logoId) {
+  updatePayload.logo = logoId
+ 
+}
+
+if (bannerUrl) {
+  updatePayload.bannerUrl = bannerUrl
+  
+}
+
+if (logoUrl) {
+  setLogoPreview(logoUrl)
+}
+if (bannerUrl) {
+  setBannerPreview(bannerUrl)
+}
+
+
+      const response = await fetch(`https://dev.isra-cms.nomad-engineers.space/api/rooms/${roomId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -705,15 +813,37 @@ export default function EditRoomPage() {
       }
 
       const result = await response.json()
-      console.log('Update successful:', result)
+      
+
+      const updatedData = result.doc || result
+      if (updatedData) {
+        
+        
+        setRoomData(updatedData)
+        
+        const savedLogoUrl = updatedData.logoUrl || (typeof updatedData.logo === 'string' ? updatedData.logo : '')
+        const savedBannerUrl = updatedData.bannerUrl || ''
+        
+       
+        
+        if (savedLogoUrl) {
+          setLogoPreview(savedLogoUrl)
+          roomForm.setValue('logoUrl', savedLogoUrl)
+        }
+        if (savedBannerUrl) {
+          setBannerPreview(savedBannerUrl)
+          roomForm.setValue('bannerUrl', savedBannerUrl)
+        }
+      }
 
       stableToast({
         title: 'Успешно обновлено',
         description: 'Комната была успешно обновлена',
       })
 
-      // Redirect back to rooms page
-      router.push('/rooms')
+      setTimeout(() => {
+        router.push('/rooms')
+      }, 500)
     } catch (error) {
       console.error('Update error:', error)
       stableToast({
@@ -723,7 +853,7 @@ export default function EditRoomPage() {
             ? error.message
             : 'Не удалось обновить комнату',
         variant: 'destructive',
-      })
+        })
     } finally {
       setIsSubmitting(false)
     }
@@ -763,7 +893,6 @@ export default function EditRoomPage() {
             <TabsContent value='room' className='mt-6'>
               <Form {...roomForm}>
                 <form onSubmit={roomForm.handleSubmit(onRoomSubmit)} className='space-y-6'>
-                  {/* Name field - required */}
                   <FormField
                     control={roomForm.control}
                     name='name'
@@ -782,7 +911,6 @@ export default function EditRoomPage() {
                     )}
                   />
 
-                  {/* Speaker field - required */}
                   <FormField
                     control={roomForm.control}
                     name='speaker'
@@ -801,7 +929,6 @@ export default function EditRoomPage() {
                     )}
                   />
 
-                  {/* Scheduled date field - optional */}
                   <FormField
                     control={roomForm.control}
                     name='scheduledDate'
@@ -819,7 +946,6 @@ export default function EditRoomPage() {
                     )}
                   />
 
-                  {/* Type field */}
                   <FormField
                     control={roomForm.control}
                     name='type'
@@ -841,7 +967,6 @@ export default function EditRoomPage() {
                     )}
                   />
 
-                  {/* Video URL field */}
                   <FormField
                     control={roomForm.control}
                     name='videoUrl'
@@ -861,7 +986,6 @@ export default function EditRoomPage() {
                     )}
                   />
 
-                  {/* Button URL field */}
                   <FormField
                     control={roomForm.control}
                     name='btnUrl'
@@ -881,40 +1005,58 @@ export default function EditRoomPage() {
                     )}
                   />
 
-                  {/* Logo and Banner Image Pickers in one row */}
                   <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                     <GenericImagePicker
                       label='Логотип'
                       description='Загрузите логотип для комнаты'
-                      currentImage={roomData?.logoUrl || undefined}
+                      currentImage={logoPreview || (typeof roomData?.logo === 'string' ? roomData.logo : '') || roomData?.logoUrl || undefined}
                       onImageSelect={(file) => {
                         setLogoFile(file)
-                        if (!file) {
+                        if (file) {
+                          const reader = new FileReader()
+                          reader.onloadend = () => {
+                            setLogoPreview(reader.result as string)
+                          }
+                          reader.readAsDataURL(file)
+                        } else {
+                          setLogoPreview('')
                           roomForm.setValue('logoUrl', '')
                         }
                       }}
-                      onUrlChange={(url) => roomForm.setValue('logoUrl', url)}
+                      onUrlChange={(url) => {
+                        roomForm.setValue('logoUrl', url)
+                        setLogoPreview(url)
+                      }}
                       aspectRatio='square'
                       className='w-full'
                     />
 
                     <GenericImagePicker
-                      label='Добавить баннер'
-                      description='Загрузите баннер для комнаты'
-                      currentImage={roomData?.bannerUrl || undefined}
+                      label='Баннер ожидания'
+                      description='Будет показан участникам до начала вебинара'
+                      currentImage={bannerPreview || roomData?.bannerUrl || undefined}
                       onImageSelect={(file) => {
                         setBannerFile(file)
-                        if (!file) {
+                        if (file) {
+                          const reader = new FileReader()
+                          reader.onloadend = () => {
+                            setBannerPreview(reader.result as string)
+                          }
+                          reader.readAsDataURL(file)
+                        } else {
+                          setBannerPreview('')
                           roomForm.setValue('bannerUrl', '')
                         }
                       }}
-                      onUrlChange={(url) => roomForm.setValue('bannerUrl', url)}
+                      onUrlChange={(url) => {
+                        roomForm.setValue('bannerUrl', url)
+                        setBannerPreview(url)
+                      }}
                       aspectRatio='banner'
                       className='w-full'
                     />
                   </div>
 
-                  {/* Description field */}
                   <FormField
                     control={roomForm.control}
                     name='description'
@@ -934,11 +1076,31 @@ export default function EditRoomPage() {
                     )}
                   />
 
-                  {/* Toggle Switches Section */}
+                  <FormField
+                    control={roomForm.control}
+                    name='welcomeMessage'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Приветственное сообщение для чата</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder='Қайырлы кеш! Вебинарға қош келдіңіз...'
+                            rows={6}
+                            disabled={isSubmitting}
+                            {...field}
+                          />
+                        </FormControl>
+                        <p className='text-sm text-muted-foreground'>
+                          Это сообщение будет автоматически показано участникам при подключении к чату
+                        </p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                   <div className='space-y-4'>
                     <h3 className='text-lg font-medium'>Настройки отображения</h3>
 
-                    {/* Show Banner Toggle */}
                     <FormField
                       control={roomForm.control}
                       name='showBanner'
@@ -961,7 +1123,6 @@ export default function EditRoomPage() {
                       )}
                     />
 
-                    {/* Show Button Toggle */}
                     <FormField
                       control={roomForm.control}
                       name='showBtn'
@@ -984,7 +1145,6 @@ export default function EditRoomPage() {
                       )}
                     />
 
-                    {/* Show Chat Toggle */}
                     <FormField
                       control={roomForm.control}
                       name='showChat'
@@ -1007,7 +1167,6 @@ export default function EditRoomPage() {
                       )}
                     />
 
-                    {/* Volume On Toggle */}
                     <FormField
                       control={roomForm.control}
                       name='isVolumeOn'
@@ -1030,8 +1189,6 @@ export default function EditRoomPage() {
                       )}
                     />
                   </div>
-
-
 
                   <div className='flex justify-end gap-3 pt-4'>
                     <Link href='/rooms'>
@@ -1062,11 +1219,31 @@ export default function EditRoomPage() {
               <Form {...webinarForm}>
                 <form onSubmit={webinarForm.handleSubmit(onWebinarSubmit)} className='space-y-6'>
 
-                  {/* Toggle Switches Section */}
+                  <FormField
+                    control={webinarForm.control}
+                    name='welcomeMessage'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Приветственное сообщение для чата</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder='Қайырлы кеш! Вебинарға қош келдіңіз...'
+                            rows={6}
+                            disabled={isSubmitting}
+                            {...field}
+                          />
+                        </FormControl>
+                        <p className='text-sm text-muted-foreground'>
+                          Это сообщение будет автоматически показано участникам при подключении к чату
+                        </p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                   <div className='space-y-4'>
                     <h3 className='text-lg font-medium'>Настройки отображения</h3>
 
-                    {/* Show Banner Toggle */}
                     <FormField
                       control={webinarForm.control}
                       name='showBanner'
@@ -1089,7 +1266,6 @@ export default function EditRoomPage() {
                       )}
                     />
 
-                    {/* Show Button Toggle */}
                     <FormField
                       control={webinarForm.control}
                       name='showBtn'
@@ -1112,7 +1288,6 @@ export default function EditRoomPage() {
                       )}
                     />
 
-                    {/* Show Chat Toggle */}
                     <FormField
                       control={webinarForm.control}
                       name='showChat'
@@ -1135,7 +1310,6 @@ export default function EditRoomPage() {
                       )}
                     />
 
-                    {/* Volume On Toggle */}
                     <FormField
                       control={webinarForm.control}
                       name='isVolumeOn'

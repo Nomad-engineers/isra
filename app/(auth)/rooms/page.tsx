@@ -138,7 +138,7 @@ export default function RoomsPage() {
         return
       }
 
-      const response = await fetch('https://isracms.vercel.app/api/rooms/my', {
+      const response = await fetch('https://dev.isra-cms.nomad-engineers.space/api/rooms/my', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -217,7 +217,7 @@ export default function RoomsPage() {
           return
         }
 
-        const response = await fetch('https://isracms.vercel.app/api/users/me', {
+        const response = await fetch('https://dev.isra-cms.nomad-engineers.space/api/users/me', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -360,7 +360,7 @@ export default function RoomsPage() {
     try {
       const token = getToken()
 
-      const response = await fetch(`https://isracms.vercel.app/api/rooms/${id}`, {
+      const response = await fetch(`https://dev.isra-cms.nomad-engineers.space/api/rooms/${id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { MoreHorizontal, Edit, Trash2, Eye, Copy, Calendar, Users, Clock, FileText, Play } from 'lucide-react'
+import { MoreHorizontal, Edit, Trash2, Eye, Copy, Calendar, Clock, FileText, Play } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { formatDate } from '@/lib/utils'
 import { cn } from '@/lib/utils'
@@ -48,17 +48,6 @@ const statusConfig = {
 export function WebinarCard({ webinar, onView, onEdit, onDelete, onCopyLink, onStartWebinar, actions }: WebinarCardProps) {
   const statusInfo = statusConfig[webinar.status] || statusConfig.draft
 
-  const getParticipantInfo = () => {
-    if (!webinar.maxParticipants) return null
-    const percentage = Math.round(((webinar.currentParticipants || 0) / webinar.maxParticipants) * 100)
-    return {
-      current: webinar.currentParticipants || 0,
-      max: webinar.maxParticipants,
-      percentage,
-    }
-  }
-
-  const participantInfo = getParticipantInfo()
 
   return (
     <Card
@@ -166,28 +155,6 @@ export function WebinarCard({ webinar, onView, onEdit, onDelete, onCopyLink, onS
             <div className='flex items-center gap-2 text-muted-foreground'>
               <Clock className='h-4 w-4' />
               <span>{webinar.duration} минут</span>
-            </div>
-          )}
-
-          {participantInfo && (
-            <div className='flex items-center gap-2 text-muted-foreground'>
-              <Users className='h-4 w-4 text-primary' />
-              <span className="text-sm font-medium">
-                {participantInfo.current}/{participantInfo.max}
-              </span>
-              <div className='flex-1 bg-muted rounded-full h-2 overflow-hidden'>
-                <div
-                  className={cn(
-                    'h-full transition-all duration-500 rounded-full',
-                    participantInfo.percentage >= 90
-                      ? 'bg-red-500'
-                      : participantInfo.percentage >= 70
-                      ? 'bg-orange-500'
-                      : 'bg-gradient-to-r from-primary to-purple-500'
-                  )}
-                  style={{ width: `${participantInfo.percentage}%` }}
-                />
-              </div>
             </div>
           )}
         </div>

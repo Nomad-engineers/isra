@@ -88,7 +88,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
       // Add token to request headers for our API
       if (token && typeof url === 'string') {
         // Handle both relative URLs and Payload CMS URLs
-        const isOurApi = url.startsWith('/') || url.includes('isracms.vercel.app')
+        const isOurApi = url.startsWith('/') || url.includes('dev.isra-cms.nomad-engineers.space')
 
         if (isOurApi) {
           options.headers = {

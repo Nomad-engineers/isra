@@ -212,7 +212,7 @@ export default function WebinarRoomPage({
     const fetchWebinarAndValidate = async () => {
       try {
         const webinarResponse = await fetch(
-          `https://isracms.vercel.app/api/rooms/${roomId}`
+          `https://dev.isra-cms.nomad-engineers.space/api/rooms/${roomId}`
         );
 
         if (!webinarResponse.ok) {

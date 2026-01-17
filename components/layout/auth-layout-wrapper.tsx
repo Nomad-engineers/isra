@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AppLayout } from "@/components/layout/app-layout";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-fetch";
 
 interface UserData {
   id: string;
@@ -40,25 +41,21 @@ export function AuthLayoutWrapper({ children }: AuthLayoutWrapperProps) {
         }
 
         // Fetch user data using direct API call (same pattern as login and profile)
-        const response = await fetch(
-          "https://isracms.vercel.app/api/users/me",
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `JWT ${token}`,
-            },
-          }
-        );
+        const result = await apiFetch<{
+          user?: UserData
+          message?: string
+        }>('/users/me', {
+          headers: {
+            Authorization: `JWT ${token}`,
+          },
+        }).catch(() => {
+          // Return null on error to allow graceful handling
+          return null
+        })
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(
-            errorData.errors?.[0]?.message || "Failed to fetch user data"
-          );
+        if (!result) {
+          throw new Error('Failed to fetch user data')
         }
-
-        const result = await response.json();
 
         if (result && result.user) {
           setUserData(result.user as UserData);

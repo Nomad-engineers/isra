@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Room, RoomResponse } from "@/types/room";
 import { Webinar } from "@/types/webinar";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-fetch";
 
 interface UseRoomsOptions {
   userId?: string | number;
@@ -32,8 +33,6 @@ export function useRooms(options: UseRoomsOptions = {}) {
       setError(null);
 
       try {
-        const url = `https://isracms.vercel.app/api/rooms/my`;
-
         // Get JWT token from localStorage
         const token = localStorage.getItem("payload-token");
 
@@ -41,28 +40,13 @@ export function useRooms(options: UseRoomsOptions = {}) {
           throw new Error("No authentication token found");
         }
 
-        const headers = {
-          "Content-Type": "application/json",
-          Authorization: `JWT ${token}`,
-        };
+        console.log("Making request to:", "/rooms/my");
 
-        console.log("Making request to:", url, "with headers:", headers);
-
-        const response = await fetch(url, {
-          method: "GET",
-          headers,
+        const result: RoomResponse = await apiFetch<RoomResponse>('/rooms/my', {
+          headers: {
+            Authorization: `JWT ${token}`,
+          },
         });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(
-            errorData.message ||
-              errorData.error?.message ||
-              `API Error: ${response.status} ${response.statusText}`
-          );
-        }
-
-        const result: RoomResponse = await response.json();
 
         if (result.docs && Array.isArray(result.docs)) {
           setRooms(result.docs);
@@ -110,8 +94,6 @@ export function useRooms(options: UseRoomsOptions = {}) {
       setError(null);
 
       try {
-        const url = `https://isracms.vercel.app/api/rooms/create`;
-
         // Get JWT token from localStorage
         const token = localStorage.getItem("payload-token");
 
@@ -119,27 +101,13 @@ export function useRooms(options: UseRoomsOptions = {}) {
           throw new Error("No authentication token found");
         }
 
-        const headers = {
-          "Content-Type": "application/json",
-          Authorization: `JWT ${token}`,
-        };
-
-        const response = await fetch(url, {
+        const result: Webinar = await apiFetch<Webinar>('/rooms/create', {
           method: "POST",
-          headers,
+          headers: {
+            Authorization: `JWT ${token}`,
+          },
           body: JSON.stringify(data),
         });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(
-            errorData.message ||
-              errorData.error?.message ||
-              `API Error: ${response.status} ${response.statusText}`
-          );
-        }
-
-        const result: Webinar = await response.json();
 
         // Show success message
         toast.success("Вебинар успешно создан!");
@@ -171,27 +139,12 @@ export function useRooms(options: UseRoomsOptions = {}) {
         throw new Error("No authentication token found");
       }
 
-      const headers = {
-        "Content-Type": "application/json",
-        Authorization: `JWT ${token}`,
-      };
-
-      const response = await fetch(
-        `https://isracms.vercel.app/api/rooms/${roomId}`,
-        {
-          method: "DELETE",
-          headers,
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message ||
-            errorData.error?.message ||
-            `API Error: ${response.status} ${response.statusText}`
-        );
-      }
+      await apiFetch(`/rooms/${roomId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `JWT ${token}`,
+        },
+      });
 
       // Remove the deleted room from the local state
       setRooms((prevRooms) => prevRooms.filter((room) => room.id !== roomId));

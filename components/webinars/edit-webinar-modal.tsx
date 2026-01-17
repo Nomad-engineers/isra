@@ -26,6 +26,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
 import { Webinar } from "@/types/webinar";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
+import { apiFetch } from "@/lib/api-fetch";
 
 // Form schema with validation
 const webinarFormSchema = z.object({
@@ -116,27 +117,15 @@ export function EditWebinarModal({
 
       console.log("Updating webinar:", webinar.id, updatePayload);
 
-      const response = await fetch(
-        `https://isracms.vercel.app/api/rooms/${webinar.id}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `JWT ${token}`,
-          },
-          body: JSON.stringify(updatePayload),
-        }
-      );
+      await apiFetch(`/rooms/${webinar.id}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `JWT ${token}`,
+        },
+        body: JSON.stringify(updatePayload),
+      });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.errors?.[0]?.message || "Failed to update webinar"
-        );
-      }
-
-      const result = await response.json();
-      console.log("Update successful:", result);
+      console.log("Update successful");
 
       toast({
         title: "Успешно обновлено",

@@ -47,7 +47,7 @@ export default function SignUpPage() {
 
       // Send idToken to backend via query parameters
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_PAYLOAD_API_URL || 'https://isracms.vercel.app'}/api/users/google?idToken=${encodeURIComponent(idToken)}`,
+        `${process.env.NEXT_PUBLIC_PAYLOAD_API_URL || 'https://dev.isra-cms.nomad-engineers.space'}/api/users/google?idToken=${encodeURIComponent(idToken)}`,
         {
           method: 'GET',
         }

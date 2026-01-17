@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 import { sdk } from '@/lib/sdk'
 import { setToken, isValidToken } from '@/lib/auth-utils'
 import { googleOAuthV2 as googleOAuth } from '@/lib/google-oauth-v2'
+import { apiFetch } from '@/lib/api-fetch'
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -47,19 +48,12 @@ export default function LoginPage() {
       console.log('Processing Google login with idToken:', idToken.substring(0, 20) + '...')
 
       // Send idToken to backend via query parameters
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_PAYLOAD_API_URL || 'https://isracms.vercel.app'}/api/users/google?idToken=${encodeURIComponent(idToken)}`,
-        {
-          method: 'GET',
-        }
-      )
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || 'Google authentication failed')
-      }
-
-      const result = await response.json()
+      const result = await apiFetch<{
+        token: string
+        user: any
+      }>(`/users/google?idToken=${encodeURIComponent(idToken)}`, {
+        method: 'GET',
+      })
 
       // Save token and user data using our auth utilities
       if (result.token && isValidToken(result.token)) {
@@ -89,23 +83,17 @@ export default function LoginPage() {
 
     try {
       // Direct API call instead of using SDK to avoid configuration issues
-      const response = await fetch('https://isracms.vercel.app/api/users/login', {
+      const result = await apiFetch<{
+        token: string
+        user: any
+        errors?: Array<{ message: string }>
+      }>('/users/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           email: data.email,
           password: data.password,
         }),
       })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.errors?.[0]?.message || 'Login failed')
-      }
-
-      const result = await response.json()
 
       // Save token and user data using our auth utilities
       if (result.token && isValidToken(result.token)) {

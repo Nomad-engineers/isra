@@ -1,7 +1,5 @@
 import { ApiPlan, PlansApiResponse, Plan, UserPlanData } from '@/types/plan'
-
-// API configuration
-const PLANS_API_URL = 'https://isracms.vercel.app/api/plans'
+import { apiFetch } from './api-fetch'
 
 /**
  * Transform API plan data to match internal Plan interface
@@ -57,19 +55,7 @@ export function transformApiPlanToPlan(apiPlan: ApiPlan): Plan {
  */
 export async function fetchPlansFromApi(): Promise<Plan[]> {
   try {
-    const response = await fetch(`${PLANS_API_URL}?sort=sortOrder`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.message || errorData.error?.message || `API Error: ${response.status}`)
-    }
-
-    const result: PlansApiResponse = await response.json()
+    const result: PlansApiResponse = await apiFetch<PlansApiResponse>('/plans?sort=sortOrder')
 
     // Handle different response formats
     const apiPlans = result.docs || result.data || []
@@ -97,19 +83,15 @@ export async function fetchPlansFromApi(): Promise<Plan[]> {
  */
 export async function fetchUserPlanData(token: string): Promise<UserPlanData | null> {
   try {
-    const response = await fetch('https://isracms.vercel.app/api/users/me', {
-      method: 'GET',
+    const userData = await apiFetch<{ user?: any } & any>('/users/me', {
       headers: {
-        'Content-Type': 'application/json',
         'Authorization': `JWT ${token}`,
       },
-    })
+    }).catch(() => null)
 
-    if (!response.ok) {
+    if (!userData) {
       return null
     }
-
-    const userData = await response.json()
 
     // Handle different response formats
     const user = userData.user || userData

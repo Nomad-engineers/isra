@@ -1,3 +1,5 @@
+import { BASE_URL } from './constants'
+
 interface ApiClientOptions {
   baseUrl?: string
   headers?: Record<string, string>
@@ -13,7 +15,7 @@ export class ApiClient {
   private interceptors: ApiClientOptions['interceptors']
 
   constructor(options: ApiClientOptions = {}) {
-    this.baseUrl = options.baseUrl || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+    this.baseUrl = options.baseUrl || BASE_URL
     this.defaultHeaders = {
       'Content-Type': 'application/json',
       ...options.headers,

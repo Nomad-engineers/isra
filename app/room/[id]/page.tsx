@@ -25,6 +25,7 @@ import { WebinarSettingsModal } from "@/components/webinars/webinar-settings-mod
 import { WebinarBanner } from "@/components/webinars/webinar-banner";
 import { roomsApi } from "@/api/rooms";
 import { WebinarRoomStats } from "@/types/webinar";
+import { apiFetch } from "@/lib/api-fetch";
 
 interface WebinarUser {
   id: number;
@@ -211,31 +212,7 @@ export default function WebinarRoomPage({
   useEffect(() => {
     const fetchWebinarAndValidate = async () => {
       try {
-        const webinarResponse = await fetch(
-          `https://dev.isra-cms.nomad-engineers.space/api/rooms/${roomId}`
-        );
-
-        if (!webinarResponse.ok) {
-          console.warn("Failed to fetch webinar, using mock data");
-          const mockData: WebinarData = {
-            id: roomId,
-            name: "Тестовый вебинар",
-            description: "Это тестовый вебинар для демонстрации чата",
-            speaker: "Спикер",
-            type: "webinar",
-            videoUrl: "",
-            scheduledDate: new Date().toISOString(),
-            roomStarted: true,
-            showChat: true,
-            createdAt: new Date().toISOString(),
-          };
-          setWebinar(mockData);
-          setLoading(false);
-          setLoadingHistory(false);
-          return;
-        }
-
-        const webinarData = await webinarResponse.json();
+        const webinarData = await apiFetch<WebinarData>(`/rooms/${roomId}`);
         setWebinar(webinarData);
 
         await handleGuestAuth();

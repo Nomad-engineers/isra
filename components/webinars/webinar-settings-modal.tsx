@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
+import { apiFetch } from "@/lib/api-fetch";
 import {
   MessageSquare,
   MessageSquareOff,
@@ -87,28 +88,16 @@ export function WebinarSettingsModal({
         return;
       }
 
-      const apiUrl =
-        process.env.NEXT_PUBLIC_PAYLOAD_API_URL || "https://dev.isra-cms.nomad-engineers.space/api";
-
       // Update in database
-      const response = await fetch(`${apiUrl}/api/rooms/${webinar.id}`, {
+      await apiFetch(`/rooms/${webinar.id}`, {
         method: "PATCH",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `JWT ${token}`,
         },
         body: JSON.stringify(updates),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.errors?.[0]?.message || "Failed to update settings"
-        );
-      }
-
-      const result = await response.json();
-      console.log("Settings updated successfully:", result);
+      console.log("Settings updated successfully");
 
       // All settings will be handled via chat API events, no Centrifugo events needed
 

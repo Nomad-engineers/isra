@@ -78,7 +78,9 @@ export class RoomsApi {
     }
 
     // Use the Payload CMS API URL from environment configuration
+
     const apiUrl = process.env.NEXT_PUBLIC_PAYLOAD_API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://dev.isra-cms.nomad-engineers.space/api'
+
 
     // Make direct fetch call with Bearer token as specified in the curl command
     const response = await fetch(`${apiUrl}/api/rooms/start/${id}`, {

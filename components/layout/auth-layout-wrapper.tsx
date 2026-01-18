@@ -41,6 +41,7 @@ export function AuthLayoutWrapper({ children }: AuthLayoutWrapperProps) {
         }
 
         // Fetch user data using direct API call (same pattern as login and profile)
+
         const result = await apiFetch<{
           user?: UserData
           message?: string
@@ -52,6 +53,7 @@ export function AuthLayoutWrapper({ children }: AuthLayoutWrapperProps) {
           // Return null on error to allow graceful handling
           return null
         })
+
 
         if (!result) {
           throw new Error('Failed to fetch user data')

@@ -19,13 +19,16 @@ import {
   Wifi,
   WifiOff,
   Clock,
+  Info,
 } from "lucide-react";
 import { VidstackPlayer } from "@/components/video/vidstack-player";
 import { WebinarSettingsModal } from "@/components/webinars/webinar-settings-modal";
 import { WebinarBanner } from "@/components/webinars/webinar-banner";
 import { roomsApi } from "@/api/rooms";
+
 import { WebinarRoomStats } from "@/types/webinar";
 import { apiFetch } from "@/lib/api-fetch";
+
 
 interface WebinarUser {
   id: number;
@@ -52,8 +55,16 @@ interface WebinarData {
   btnUrl?: string;
   showBtn?: boolean;
   startedAt?: string;
+  welcomeMessage?: string;
   createdAt: string;
   user?: WebinarUser;
+}
+
+interface SystemMessage {
+  id: string;
+  type: 'system' | 'welcome' | 'info';
+  message: string;
+  timestamp: string;
 }
 
 export default function WebinarRoomPage({
@@ -69,19 +80,18 @@ export default function WebinarRoomPage({
   const [roomId, setRoomId] = useState<string>("");
   const [webinar, setWebinar] = useState<WebinarData | null>(null);
 
-  // Handle params for client component
   useEffect(() => {
     const resolveParams = async () => {
       try {
         const resolvedParams = await params;
         setRoomId(resolvedParams.id);
       } catch {
-        // Silent fail - roomId will remain empty
       }
     };
 
     resolveParams();
   }, [params]);
+
   const [loading, setLoading] = useState(true);
   const [messageText, setMessageText] = useState("");
   const [userName, setUserName] = useState("Гость");
@@ -106,6 +116,9 @@ export default function WebinarRoomPage({
     },
   });
 
+  const [systemMessages, setSystemMessages] = useState<SystemMessage[]>([]);
+  const [hasShownWelcome, setHasShownWelcome] = useState(false);
+
   const {
     messages,
     events,
@@ -121,11 +134,30 @@ export default function WebinarRoomPage({
   });
 
   useEffect(() => {
+    if (isConnected && !hasShownWelcome && userName && webinar) {
+      if (webinar.welcomeMessage && webinar.welcomeMessage.trim()) {
+        const welcomeMsg: SystemMessage = {
+          id: `welcome-${Date.now()}`,
+          type: 'welcome',
+          message: webinar.welcomeMessage,
+          timestamp: new Date().toISOString(),
+        };
+
+        setSystemMessages(prev => [...prev, welcomeMsg]);
+        setHasShownWelcome(true);
+
+        setTimeout(() => scrollToBottom(), 100);
+      } else {
+        setHasShownWelcome(true);
+      }
+    }
+  }, [isConnected, hasShownWelcome, userName, webinar]);
+
+  useEffect(() => {
     if (userPhone && userName) {
       setLoadingHistory(true);
       loadMessages()
         .catch(() => {
-          // Silent fail - chat history will be empty
         })
         .finally(() => {
           setLoadingHistory(false);
@@ -202,7 +234,6 @@ export default function WebinarRoomPage({
             break;
 
           default:
-            // Handle unknown event types silently
             break;
         }
       });
@@ -211,8 +242,15 @@ export default function WebinarRoomPage({
 
   useEffect(() => {
     const fetchWebinarAndValidate = async () => {
+      if (!roomId) {
+        console.log('Room ID not ready yet, skipping fetch');
+        return;
+      }
+
       try {
+
         const webinarData = await apiFetch<WebinarData>(`/rooms/${roomId}`);
+
         setWebinar(webinarData);
 
         await handleGuestAuth();
@@ -243,20 +281,18 @@ export default function WebinarRoomPage({
       setLoadingHistory(false);
     };
 
-    fetchWebinarAndValidate();
+    if (roomId) {
+      fetchWebinarAndValidate();
+    }
   }, [roomId, router, toast]);
 
-  // Timer for duration and sync video
   useEffect(() => {
     if (!webinar?.roomStarted || !webinar?.startedAt) return;
 
     const startTime = new Date(webinar.startedAt).getTime();
-
-    // Calculate initial elapsed time and set it for video
     const initialElapsed = Math.floor((Date.now() - startTime) / 1000);
     setVideoStartTime(initialElapsed);
 
-    // Calculate elapsed time and set video position
     const updateTimer = () => {
       const elapsed = Math.floor((Date.now() - startTime) / 1000);
       const hours = Math.floor(elapsed / 3600);
@@ -269,21 +305,17 @@ export default function WebinarRoomPage({
           .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
       );
 
-      // Sync video time if player exists and video is not at correct position
       if (videoPlayerRef.current && videoPlayerRef.current.getCurrentTime) {
         const currentTime = videoPlayerRef.current.getCurrentTime();
         const timeDiff = Math.abs(currentTime - elapsed);
 
-        // Only sync if difference is more than 3 seconds to avoid constant adjustments
         if (timeDiff > 3) {
           videoPlayerRef.current.setCurrentTime(elapsed);
         }
       }
     };
 
-    // Initial sync
     updateTimer();
-
     const timer = setInterval(updateTimer, 1000);
 
     return () => clearInterval(timer);
@@ -293,22 +325,20 @@ export default function WebinarRoomPage({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Function to fetch webinar stats
   const fetchWebinarStats = async () => {
-    if (!roomId) return; // Don't fetch if no roomId
+    if (!roomId) return;
     
     try {
       const stats = await roomsApi.getWebinarStats(roomId);
       setOnlineParticipants(stats.onlineParticipants);
       setViewerCount(stats.onlineParticipants);
     } catch {
-      // Silent fail - keep using current data
     }
   };
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, events]);
+  }, [messages, events, systemMessages]);
 
   useEffect(() => {
     if (!loadingHistory) {
@@ -341,18 +371,10 @@ export default function WebinarRoomPage({
   };
 
   useEffect(() => {
-    if (!roomId) return; // Don't start fetching until roomId is available
+    if (!roomId) return;
     
-    // Fetch stats immediately
     fetchWebinarStats();
-
-    // Set up interval to fetch stats every 10 seconds
     const interval = setInterval(fetchWebinarStats, 10000);
-
-    // Set initial viewer count as fallback
-    if (viewerCount === 0) {
-      setViewerCount(Math.floor(Math.random() * 50) + 10);
-    }
 
     return () => clearInterval(interval);
   }, [roomId, viewerCount]);
@@ -504,6 +526,7 @@ export default function WebinarRoomPage({
         </div>
       </div>
 
+      
       <WebinarBanner
         show={webinarSettings.bannerSettings.show}
         text={webinarSettings.bannerSettings.text}
@@ -513,62 +536,6 @@ export default function WebinarRoomPage({
 
       <div className="container mx-auto px-4 py-6">
         {!webinar.roomStarted ? (
-          <div className="min-h-[calc(100vh-160px)] flex items-center justify-center">
-            <Card className="max-w-md w-full">
-              <CardContent className="pt-8 pb-6 text-center space-y-6">
-                <div className="space-y-4">
-                  <div className="mx-auto w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center">
-                    <Clock className="h-8 w-8 text-yellow-500" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-foreground">
-                    Вебинар еще не начался
-                  </h2>
-                  <p className="text-muted-foreground leading-relaxed">
-                    Этот вебинар пока не запущен организатором. Пожалуйста,
-                    подождите немного или вернитесь позже.
-                  </p>
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      {webinar.scheduledDate ? (
-                        <>
-                          Запланировано на:{" "}
-                          {new Date(webinar.scheduledDate).toLocaleDateString(
-                            "ru-RU",
-                            {
-                              day: "numeric",
-                              month: "long",
-                              year: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }
-                          )}
-                        </>
-                      ) : (
-                        <>Время начала будет объявлено позже</>
-                      )}
-                    </p>
-                  </div>
-                </div>
-                <div className="space-y-3 pt-4">
-                  <Button
-                    onClick={() => router.push("/rooms")}
-                    className="w-full"
-                  >
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Вернуться к списку вебинаров
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => window.location.reload()}
-                    className="w-full"
-                  >
-                    Обновить страницу
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-160px)]">
             {webinarSettings.showChat && (
               <Card className="lg:col-span-1 lg:order-1 flex flex-col">
@@ -602,14 +569,37 @@ export default function WebinarRoomPage({
                       <Loader2 className="h-12 w-12 mx-auto mb-3 animate-spin opacity-50" />
                       <p>Загрузка истории сообщений...</p>
                     </div>
-                  ) : messages.length === 0 && events.length === 0 ? (
-                    <div className="text-center text-muted-foreground py-8">
-                      <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                      <p>Пока нет сообщений</p>
-                      <p className="text-sm">Будьте первым, кто напишет!</p>
-                    </div>
                   ) : (
                     <>
+                      {systemMessages.map((sysMsg) => (
+                        <div 
+                          key={sysMsg.id} 
+                          className="bg-primary/10 dark:bg-primary/20 border border-primary/30 dark:border-primary/40 rounded-lg p-3 space-y-2 backdrop-blur-sm"
+                        >
+                          <div className="flex items-center gap-2 text-primary dark:text-primary">
+                            <Info className="h-4 w-4" />
+                            <span className="text-xs font-semibold">Системное сообщение</span>
+                          </div>
+                          <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
+                            {sysMsg.message}
+                          </p>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(sysMsg.timestamp).toLocaleTimeString("ru-RU", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
+                      ))}
+
+                      {messages.length === 0 && systemMessages.length === 0 && (
+                        <div className="text-center text-muted-foreground py-8">
+                          <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                          <p>Пока нет сообщений</p>
+                          <p className="text-sm">Будьте первым, кто напишет!</p>
+                        </div>
+                      )}
+
                       {messages.map((msg) => (
                         <div key={msg.id} className="space-y-1">
                           <div className="flex items-baseline gap-2">
@@ -617,13 +607,10 @@ export default function WebinarRoomPage({
                               {msg.username}
                             </span>
                             <span className="text-xs text-muted-foreground">
-                              {new Date(msg.createdAt).toLocaleTimeString(
-                                "ru-RU",
-                                {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                }
-                              )}
+                              {new Date(msg.createdAt).toLocaleTimeString("ru-RU", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
                             </span>
                           </div>
                           <p className="text-foreground text-sm bg-muted/50 rounded-lg px-3 py-2">
@@ -662,23 +649,201 @@ export default function WebinarRoomPage({
               className={`flex flex-col lg:order-2 ${webinarSettings.showChat ? "lg:col-span-2" : "lg:col-span-3"}`}
             >
               <CardContent className="p-0 flex-1 relative">
-                <div className="w-full h-full bg-black rounded-lg overflow-hidden">
-                  <VidstackPlayer
-                    ref={videoPlayerRef}
-                    src={
-                      webinar.videoUrl ||
-                      "https://www.youtube.com/watch?v=6fty5yB7bFo"
-                    }
-                    autoPlay={webinar.roomStarted}
-                    muted={!webinarSettings.isVolumeOn}
-                    controls={true}
-                    aspectRatio="16/9"
-                    startTime={videoStartTime}
-                    onPlayStateChange={handleVideoStateChange}
-                  />
+                <div className="w-full h-full rounded-lg overflow-hidden relative">
+                 
+                  {webinar.bannerUrl ? (
+                    <img 
+                      src={webinar.bannerUrl} 
+                      alt="Баннер вебинара" 
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 w-full h-full bg-linear-to-br from-slate-900 via-slate-800 to-slate-900" />
+                  )}
+                  
+                 
+                  <div className="absolute inset-0 bg-black/30" />
+                  
+                 
+                  <div className="absolute inset-0 flex items-center justify-center p-8">
+                    <div className="text-center space-y-6 max-w-2xl">
+                      <div className="mx-auto w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center animate-pulse backdrop-blur-sm">
+                        <Clock className="h-10 w-10 text-primary" />
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <h2 className="text-4xl font-bold text-white drop-shadow-lg">
+                          Вебинар скоро начнется
+                        </h2>
+                        <p className="text-xl text-gray-200 drop-shadow-md">
+                          Ожидайте запуска трансляции
+                        </p>
+                      </div>
+
+                      {webinar.scheduledDate && (
+                        <div className="pt-4">
+                          <p className="text-sm text-gray-300 drop-shadow-md">
+                            Запланировано на:{" "}
+                            {new Date(webinar.scheduledDate).toLocaleDateString(
+                              "ru-RU",
+                              {
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )}
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-center gap-2 pt-4">
+                        <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
 
+              {webinar.description && (
+                <div className="p-4 border-t border-border">
+                  <h3 className="text-sm font-semibold text-foreground mb-2">
+                    О вебинаре
+                  </h3>
+                  <p className="text-sm text-muted-foreground">{webinar.description}</p>
+                </div>
+              )}
+            </Card>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-160px)]">
+            {webinarSettings.showChat && (
+              <Card className="lg:col-span-1 lg:order-1 flex flex-col">
+                <div className="p-4 border-b border-border">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                      <MessageSquare className="h-5 w-5 text-primary" />
+                      Чат
+                    </h2>
+                    <div className="flex items-center gap-2">
+                      {isConnected ? (
+                        <div className="text-green-500">
+                          <Wifi className="h-4 w-4" />
+                        </div>
+                      ) : (
+                        <div className="text-red-500">
+                          <WifiOff className="h-4 w-4" />
+                        </div>
+                      )}
+                      <Badge variant="outline">
+                        <Users className="h-3 w-3 mr-1" />
+                        {onlineParticipants} онлайн
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                  {loadingHistory ? (
+                    <div className="text-center text-muted-foreground py-8">
+                      <Loader2 className="h-12 w-12 mx-auto mb-3 animate-spin opacity-50" />
+                      <p>Загрузка истории сообщений...</p>
+                    </div>
+                  ) : (
+                    <>
+                      {systemMessages.map((sysMsg) => (
+                        <div 
+                          key={sysMsg.id} 
+                          className="bg-primary/10 dark:bg-primary/20 border border-primary/30 dark:border-primary/40 rounded-lg p-3 space-y-2 backdrop-blur-sm"
+                        >
+                          <div className="flex items-center gap-2 text-primary dark:text-primary">
+                            <Info className="h-4 w-4" />
+                            <span className="text-xs font-semibold">Системное сообщение</span>
+                          </div>
+                          <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
+                            {sysMsg.message}
+                          </p>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(sysMsg.timestamp).toLocaleTimeString("ru-RU", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
+                      ))}
+
+                      {messages.length === 0 && systemMessages.length === 0 && (
+                        <div className="text-center text-muted-foreground py-8">
+                          <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                          <p>Пока нет сообщений</p>
+                          <p className="text-sm">Будьте первым, кто напишет!</p>
+                        </div>
+                      )}
+
+                      {messages.map((msg) => (
+                        <div key={msg.id} className="space-y-1">
+                          <div className="flex items-baseline gap-2">
+                            <span className="font-semibold text-primary text-sm">
+                              {msg.username}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(msg.createdAt).toLocaleTimeString("ru-RU", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          </div>
+                          <p className="text-foreground text-sm bg-muted/50 rounded-lg px-3 py-2">
+                            {msg.message}
+                          </p>
+                        </div>
+                      ))}
+                    </>
+                  )}
+
+                  <div ref={messagesEndRef} />
+                </div>
+
+                <div className="p-4 border-t border-border">
+                  <div className="flex gap-2">
+                    <Input
+                      value={messageText}
+                      onChange={(e) => setMessageText(e.target.value)}
+                      onKeyDown={handleKeyPress}
+                      placeholder="Написать сообщение..."
+                      disabled={!isConnected}
+                      className="disabled:opacity-50"
+                    />
+                    <Button
+                      onClick={handleSendMessage}
+                      disabled={!messageText.trim() || !isConnected}
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            <Card
+              className={`flex flex-col lg:order-2 ${webinarSettings.showChat ? "lg:col-span-2" : "lg:col-span-3"}`}
+            >
+              <CardContent className="p-0 flex-1 relative">
+                
+                <div className="w-full h-full rounded-lg overflow-hidden">
+                  <VidstackPlayer
+                    ref={videoPlayerRef}
+                    src={webinar.videoUrl}
+                    muted={!webinarSettings.isVolumeOn}
+                    onPlayStateChange={handleVideoStateChange}
+                    autoPlay={webinar.roomStarted}
+                    startTime={videoStartTime}
+                  />
+                </div>
+              </CardContent>
               {webinar.description && (
                 <div className="p-4 border-t border-border">
                   <h3 className="text-sm font-semibold text-foreground mb-2">

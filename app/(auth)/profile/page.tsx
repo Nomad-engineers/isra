@@ -162,11 +162,13 @@ export default function ProfilePage() {
           return;
         }
 
+
         const result = await apiFetch<UsersMeResponse>('/users/me', {
           headers: {
             Authorization: `JWT ${token}`,
           },
         });
+
 
         if (result && result.user) {
           const userData = result.user;
@@ -259,7 +261,9 @@ export default function ProfilePage() {
         return;
       }
 
+
       const result = await apiFetch<RoomsResponse>('/rooms', {
+
         headers: {
           Authorization: `JWT ${token}`,
         },
@@ -340,6 +344,7 @@ export default function ProfilePage() {
           });
 
           // Upload avatar using special endpoint (as mentor suggested)
+
           const avatarResult = await apiFetch<AvatarUploadResponse>('/user-avatar', {
             method: "POST",
             headers: {
@@ -360,6 +365,7 @@ export default function ProfilePage() {
           }
 
           // Now link the avatar to the user profile
+
           await apiFetch(`/users/${currentUserId}`, {
             method: "PATCH",
             body: JSON.stringify({
@@ -384,6 +390,7 @@ export default function ProfilePage() {
               avatarUrl = avatarData.url;
             } else if (typeof avatarData === "string") {
               avatarUrl = avatarData;
+
             }
           }
 
@@ -432,10 +439,12 @@ export default function ProfilePage() {
         console.log("Update payload:", updateData);
 
         // Make PATCH request to update user profile data
+
         await apiFetch(`/users/${currentUserId}`, {
           method: "PATCH",
           body: JSON.stringify(updateData),
         });
+
 
         console.log("Profile update successful");
 

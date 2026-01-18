@@ -88,6 +88,7 @@ export function WebinarSettingsModal({
         return;
       }
 
+
       // Update in database
       await apiFetch(`/rooms/${webinar.id}`, {
         method: "PATCH",

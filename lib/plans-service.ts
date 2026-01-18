@@ -1,5 +1,7 @@
 import { ApiPlan, PlansApiResponse, Plan, UserPlanData } from '@/types/plan'
+
 import { apiFetch } from './api-fetch'
+
 
 /**
  * Transform API plan data to match internal Plan interface
@@ -83,7 +85,9 @@ export async function fetchPlansFromApi(): Promise<Plan[]> {
  */
 export async function fetchUserPlanData(token: string): Promise<UserPlanData | null> {
   try {
+
     const userData = await apiFetch<{ user?: any } & any>('/users/me', {
+
       headers: {
         'Authorization': `JWT ${token}`,
       },

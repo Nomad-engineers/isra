@@ -15,7 +15,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Call the external API to refresh the token
+
     const response = await fetch(`${BASE_URL}/users/refresh-token`, {
+
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -33,6 +33,7 @@ export function useRooms(options: UseRoomsOptions = {}) {
       setError(null);
 
       try {
+
         // Get JWT token from localStorage
         const token = localStorage.getItem("payload-token");
 
@@ -94,6 +95,7 @@ export function useRooms(options: UseRoomsOptions = {}) {
       setError(null);
 
       try {
+
         // Get JWT token from localStorage
         const token = localStorage.getItem("payload-token");
 
@@ -139,12 +141,14 @@ export function useRooms(options: UseRoomsOptions = {}) {
         throw new Error("No authentication token found");
       }
 
+
       await apiFetch(`/rooms/${roomId}`, {
         method: "DELETE",
         headers: {
           Authorization: `JWT ${token}`,
         },
       });
+
 
       // Remove the deleted room from the local state
       setRooms((prevRooms) => prevRooms.filter((room) => room.id !== roomId));

@@ -48,12 +48,14 @@ export default function LoginPage() {
       console.log('Processing Google login with idToken:', idToken.substring(0, 20) + '...')
 
       // Send idToken to backend via query parameters
+
       const result = await apiFetch<{
         token: string
         user: any
       }>(`/users/google?idToken=${encodeURIComponent(idToken)}`, {
         method: 'GET',
       })
+
 
       // Save token and user data using our auth utilities
       if (result.token && isValidToken(result.token)) {
@@ -83,11 +85,13 @@ export default function LoginPage() {
 
     try {
       // Direct API call instead of using SDK to avoid configuration issues
+
       const result = await apiFetch<{
         token: string
         user: any
         errors?: Array<{ message: string }>
       }>('/users/login', {
+
         method: 'POST',
         body: JSON.stringify({
           email: data.email,

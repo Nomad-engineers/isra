@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { FolderOpen, Loader2, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { toast } from 'sonner'
-import { Upload, X, Image as ImageIcon } from 'lucide-react'
+import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 
 interface GenericImagePickerProps {
@@ -11,10 +11,10 @@ interface GenericImagePickerProps {
   description?: string
   currentImage?: string
   onImageSelect: (file: File | null) => void
-  onUrlChange?: (url: string) => void
+  onUrlChange: (url: string) => void
+  aspectRatio?: 'square' | 'banner'
   className?: string
-  aspectRatio?: 'square' | 'video' | 'banner'
-  maxSize?: number // in MB
+  onUpload?: (file: File) => Promise<string>
 }
 
 export function GenericImagePicker({
@@ -23,235 +23,197 @@ export function GenericImagePicker({
   currentImage,
   onImageSelect,
   onUrlChange,
-  className,
   aspectRatio = 'square',
-  maxSize = 5
+  className = '',
+  onUpload,
 }: GenericImagePickerProps) {
-  const [preview, setPreview] = useState<string | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | undefined>(currentImage)
   const [isUploading, setIsUploading] = useState(false)
-  const [urlMode, setUrlMode] = useState(false)
-  const [imageUrl, setImageUrl] = useState(currentImage || '')
+  const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const dropZoneRef = useRef<HTMLDivElement>(null)
 
-  const getDimensions = () => {
-    switch (aspectRatio) {
-      case 'square':
-        return 'w-32 h-32'
-      case 'video':
-        return 'w-48 h-32'
-      case 'banner':
-        return 'w-full h-24 max-w-md'
-      default:
-        return 'w-32 h-32'
-    }
-  }
+  useEffect(() => {
+    setPreviewUrl(currentImage)
+  }, [currentImage, label])
 
-  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-
-    if (!file) return
-
-    // Validate file type
+  const processFile = async (file: File) => {
     if (!file.type.startsWith('image/')) {
-      toast.error('Пожалуйста, выберите файл изображения')
+      alert('Пожалуйста, выберите файл изображения')
       return
     }
 
-    // Validate file size
-    if (file.size > maxSize * 1024 * 1024) {
-      toast.error(`Размер файла не должен превышать ${maxSize} МБ`)
-      return
-    }
-
-    // Validate file types
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
-    if (!allowedTypes.includes(file.type)) {
-      toast.error('Поддерживаются только форматы: JPG, PNG, WEBP')
-      return
-    }
-
-    setIsUploading(true)
-
-    // Create preview
     const reader = new FileReader()
-    reader.onload = (e) => {
-      const result = e.target?.result as string
-      setPreview(result)
-      setIsUploading(false)
-      onImageSelect(file)
-      setUrlMode(false)
+    reader.onloadend = () => {
+      setPreviewUrl(reader.result as string)
     }
-
-    reader.onerror = () => {
-      toast.error('Ошибка при чтении файла')
-      setIsUploading(false)
-    }
-
     reader.readAsDataURL(file)
-  }, [onImageSelect, maxSize])
+    onImageSelect(file)
 
-  const handleUrlChange = useCallback((url: string) => {
-    setImageUrl(url)
-    if (onUrlChange) {
-      onUrlChange(url)
-    }
-  }, [onUrlChange])
-
-  const handleUrlSubmit = useCallback(() => {
-    if (imageUrl) {
-      setPreview(imageUrl)
-      onImageSelect(null) // Pass null to indicate file upload, but URL is used
-      setUrlMode(false)
-    }
-  }, [imageUrl, onImageSelect])
-
-  const handleClick = () => {
-    if (urlMode) {
-      handleUrlSubmit()
-    } else {
-      fileInputRef.current?.click()
+    if (onUpload) {
+      setIsUploading(true)
+      try {
+        const uploadedUrl = await onUpload(file)
+        onUrlChange(uploadedUrl)
+        setPreviewUrl(uploadedUrl)
+      } catch (error) {
+        console.error('Failed to upload:', error)
+      } finally {
+        setIsUploading(false)
+      }
     }
   }
 
-  const handleRemove = () => {
-    setPreview(null)
-    setImageUrl('')
-    onImageSelect(null)
-    if (onUrlChange) {
-      onUrlChange('')
-    }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    await processFile(file)
+  }
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    if (dropZoneRef.current && !dropZoneRef.current.contains(e.relatedTarget as Node)) {
+      setIsDragging(false)
     }
   }
 
-  const displayImage = preview || currentImage || imageUrl
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+
+    const files = e.dataTransfer.files
+    if (files && files.length > 0) {
+      const file = files[0]
+      await processFile(file)
+    }
+  }
 
   return (
     <div className={cn('space-y-3', className)}>
-      <div>
-        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-          {label}
-        </label>
-        {description && (
-          <p className="text-xs text-muted-foreground mt-1">{description}</p>
-        )}
-      </div>
+      <Label className="text-sm font-normal text-foreground">{label}</Label>
+      
+      {description && (
+        <p className="text-xs text-muted-foreground">{description}</p>
+      )}
+      
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileSelect}
+        className="hidden"
+        disabled={isUploading}
+      />
 
-      <div className="flex items-start space-x-4">
-        <div className="relative">
-          <div className={cn(
-            "border-2 border-dashed border-gray-300 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center",
-            getDimensions()
-          )}>
-            {displayImage ? (
-              <img
-                src={displayImage}
-                alt={label}
-                className="w-full h-full object-cover"
-              />
+      <Button
+        type="button"
+        variant="outline"
+        onClick={handleUploadClick}
+        disabled={isUploading}
+        className="w-full justify-start gap-2 h-11 bg-primary/10 hover:bg-primary/20 border-primary/30 text-primary font-normal"
+      >
+        {isUploading ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Загрузка...
+          </>
+        ) : (
+          <>
+            <FolderOpen className="h-4 w-4" />
+            Выбрать {label.toLowerCase()}
+          </>
+        )}
+      </Button>
+
+      <div
+        ref={dropZoneRef}
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        className={cn(
+          "relative bg-white rounded-lg overflow-hidden  transition-all duration-200",
+          aspectRatio === 'square' ? 'w-full h-[200px]' : 'w-full h-[200px]',
+          isDragging 
+             ? 'ring-1 ring-primary ring-offset-2 shadow-lg shadow-primary/20 scale-[1.01]' 
+            : 'shadow-md hover:shadow-lg hover:ring-1 hover:ring-primary/30'
+        )}
+      >
+        {previewUrl ? (
+          <>
+            <img
+              src={previewUrl}
+              alt={label}
+              className="w-full h-full object-contain bg-white"
+            />
+            {isDragging && (
+              <div className="absolute inset-0 bg-primary/10 backdrop-blur-sm flex items-center justify-center">
+                <div className="text-center text-primary">
+                  <Upload className="w-12 h-12 mx-auto mb-2 animate-bounce" />
+                  
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="flex items-center justify-center h-full bg-muted/30">
+            {isDragging ? (
+              <div className="text-center text-primary">
+                <Upload className="w-12 h-12 mx-auto mb-2 animate-bounce" />
+                
+              </div>
             ) : (
-              <div className="flex flex-col items-center justify-center p-4 text-center">
-                <ImageIcon className="h-8 w-8 text-gray-400 mb-2" />
-                <span className="text-xs text-gray-500">
-                  {aspectRatio === 'banner' ? 'Баннер' : aspectRatio === 'video' ? 'Видео' : 'Логотип'}
-                </span>
+              <div className="text-center text-muted-foreground">
+                <div className="w-12 h-12 mx-auto mb-2 rounded-lg bg-muted/50 flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                </div>
+                <p className="text-xs mb-1">{label}</p>
+                <p className="text-xs text-muted-foreground/70">
+                  
+                </p>
               </div>
             )}
           </div>
-
-          {displayImage && (
-            <Button
-              type="button"
-              variant="destructive"
-              size="sm"
-              className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
-              onClick={handleRemove}
-              disabled={isUploading}
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          )}
-        </div>
-
-        <div className="flex-1 space-y-2">
-          {!urlMode ? (
-            <>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleClick}
-                disabled={isUploading}
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                {isUploading ? 'Загрузка...' : displayImage ? 'Изменить' : 'Загрузить'}
-              </Button>
-
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setUrlMode(true)}
-              >
-                Ввести URL
-              </Button>
-            </>
-          ) : (
-            <div className="space-y-2">
-              <input
-                type="url"
-                placeholder="https://example.com/image.jpg"
-                value={imageUrl}
-                onChange={(e) => handleUrlChange(e.target.value)}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
-              />
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleUrlSubmit}
-                  disabled={!imageUrl}
-                >
-                  Применить
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setUrlMode(false)
-                    setImageUrl(currentImage || '')
-                  }}
-                >
-                  Отмена
-                </Button>
-              </div>
+        )}
+        
+        {isUploading && (
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center">
+            <div className="text-center text-white">
+              <Loader2 className="w-12 h-12 mx-auto mb-2 animate-spin" />
+            
             </div>
-          )}
-
-          {displayImage && !urlMode && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={handleRemove}
-              disabled={isUploading}
-            >
-              Удалить
-            </Button>
-          )}
-        </div>
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/jpeg,image/jpg,image/png,image/webp"
-          onChange={handleFileSelect}
-          className="hidden"
-          aria-label={`Загрузить ${label}`}
-        />
+          </div>
+        )}
       </div>
     </div>
   )

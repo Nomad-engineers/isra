@@ -19,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Switch } from '@/components/ui/switch'
 import { GenericImagePicker } from '@/components/ui/generic-image-picker'
 import { apiFetch } from '@/lib/api-fetch'
+import { RoomFilesButtonsTab, type RoomFileButtonItem } from './roomsbuttonstab'
 
 
 
@@ -177,6 +178,8 @@ interface RoomData {
   stoppedAt?: string | null
   logo?: string | null | number
   welcomeMessage?: string | null
+  filesButtonsEnabled?: boolean | null
+  filesButtons?: RoomFileButtonItem[] | null
   user: number | {
     id: number
     firstName?: string | null
@@ -214,6 +217,7 @@ export default function EditRoomPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [activeTab, setActiveTab] = useState('room')
+  const [roomEditTab, setRoomEditTab] = useState('main')
   const [isInitialLoad, setIsInitialLoad] = useState(true)
   const [webinarData, setWebinarData] = useState<WebinarData | null>(null)
   const [roomData, setRoomData] = useState<RoomData | null>(null)
@@ -224,6 +228,9 @@ export default function EditRoomPage() {
   const [bannerPreview, setBannerPreview] = useState<string>('')
   const [token, setToken] = useState<string | null>(null)
   const [isAuthenticating, setIsAuthenticating] = useState(false)
+  const [filesButtonsEnabled, setFilesButtonsEnabled] = useState(false)
+  const [filesButtons, setFilesButtons] = useState<RoomFileButtonItem[]>([])
+  const [filesButtonsLocalFiles, setFilesButtonsLocalFiles] = useState<Record<string, File | null>>({})
 
   const roomId = params.id as string
 
@@ -306,6 +313,61 @@ export default function EditRoomPage() {
     throw error
   }
 }
+
+  const uploadAnyFile = async (file: File, alt: string): Promise<{ url: string; id: string }> => {
+    try {
+      const maxSize = 20 * 1024 * 1024
+      if (file.size > maxSize) {
+        throw new Error('Размер файла не должен превышать 20MB')
+      }
+
+      const currentToken = getCurrentToken()
+      if (!currentToken) {
+        throw new Error('Требуется авторизация')
+      }
+
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('_payload', JSON.stringify({ alt }))
+
+      const result = await apiFetch<{ url: string; id: string }>(uploadEndpoint, {
+        method: 'POST',
+        headers: {
+          Authorization: `JWT ${currentToken}`,
+        },
+        body: formData,
+      })
+
+      return {
+        url: result.url,
+        id: result.id,
+      }
+    } catch (error) {
+      console.error('Failed to upload file:', error)
+      throw error
+    }
+  }
+
+  const createFilesButtonId = () => {
+    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+      return crypto.randomUUID()
+    }
+    return `file-btn-${Date.now()}-${Math.random().toString(16).slice(2)}`
+  }
+
+  const normalizeFilesButtons = (raw: unknown): RoomFileButtonItem[] => {
+    if (!Array.isArray(raw)) return []
+
+    return raw.map((entry) => {
+      const item = typeof entry === 'object' && entry !== null ? (entry as Record<string, unknown>) : {}
+      const id = typeof item.id === 'string' && item.id ? item.id : createFilesButtonId()
+      const title = typeof item.title === 'string' ? item.title : ''
+      const url = typeof item.url === 'string' ? item.url : item.url === null ? null : ''
+      const fileUrl = typeof item.fileUrl === 'string' ? item.fileUrl : item.fileUrl === null ? null : null
+
+      return { id, title, url, fileUrl }
+    })
+  }
 
 
   // Initialize webinar form
@@ -402,6 +464,16 @@ export default function EditRoomPage() {
   // Fetch room/webinar data
   useEffect(() => {
     if (!userData || !roomId) return
+    if (roomId.includes('{') || roomId.includes('}')) {
+      stableToast({
+        title: 'Некорректная ссылка',
+        description: 'Откройте комнату по корректному адресу',
+        variant: 'destructive',
+      })
+      router.push('/rooms')
+      setIsLoading(false)
+      return
+    }
 
     const fetchRoomData = async () => {
       try {
@@ -471,6 +543,9 @@ export default function EditRoomPage() {
 
         setLogoPreview(logoUrl)
         setBannerPreview(bannerUrl)
+        setFilesButtonsEnabled(Boolean(data.filesButtonsEnabled))
+        setFilesButtons(normalizeFilesButtons(data.filesButtons))
+        setFilesButtonsLocalFiles({})
         
 
         if (isInitialLoad) {
@@ -625,6 +700,27 @@ export default function EditRoomPage() {
     let logoUrl = data.logoUrl || logoPreview || ''
     let bannerUrl = data.bannerUrl || bannerPreview || ''
     let logoId: string | null = null
+    let nextFilesButtons = filesButtons.map((item) => ({
+      id: item.id,
+      title: item.title.trim(),
+      url: item.url ? item.url.trim() : null,
+      fileUrl: item.fileUrl ?? null,
+    }))
+
+    const itemsWithContent = nextFilesButtons.filter((item) => {
+      const hasLocalFile = Boolean(filesButtonsLocalFiles[item.id])
+      return Boolean(item.title || item.url || item.fileUrl || hasLocalFile)
+    })
+
+    const missingTitles = itemsWithContent.some((item) => !item.title)
+    if (missingTitles) {
+      stableToast({
+        title: 'Название обязательно',
+        description: 'Укажите название для каждой кнопки с файлом или ссылкой',
+        variant: 'destructive',
+      })
+      return
+    }
 
     try {
       if (logoFile) {
@@ -635,6 +731,19 @@ export default function EditRoomPage() {
       if (bannerFile) {
         const uploadResult = await uploadFile(bannerFile, 'banner')
         bannerUrl = uploadResult.url  
+      }
+      if (itemsWithContent.length > 0) {
+        nextFilesButtons = await Promise.all(
+          nextFilesButtons.map(async (item) => {
+            const localFile = filesButtonsLocalFiles[item.id]
+            if (!localFile) return item
+            const uploadResult = await uploadAnyFile(localFile, item.title || 'Room file')
+            return {
+              ...item,
+              fileUrl: uploadResult.url,
+            }
+          })
+        )
       }
     } catch (uploadError) {
       stableToast({
@@ -647,6 +756,10 @@ export default function EditRoomPage() {
       })
       return
     }
+
+    const normalizedFilesButtons = nextFilesButtons.filter((item) => {
+      return Boolean(item.title || item.url || item.fileUrl)
+    })
 
     // ДОБАВЬТЕ ЭТО ОБЪЯВЛЕНИЕ ЗДЕСЬ
     const updatePayload = {
@@ -665,6 +778,8 @@ export default function EditRoomPage() {
       showChat: data.showChat,
       isVolumeOn: data.isVolumeOn,
       type: data.type,
+      filesButtonsEnabled,
+      filesButtons: normalizedFilesButtons,
     }
 
     await apiFetch(`/rooms/${roomId}`, {
@@ -735,300 +850,343 @@ export default function EditRoomPage() {
             <TabsContent value='room' className='mt-6'>
               <Form {...roomForm}>
                 <form onSubmit={roomForm.handleSubmit(onRoomSubmit)} className='space-y-6'>
-                  <FormField
-                    control={roomForm.control}
-                    name='name'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Название комнаты *</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder='Введите название комнаты'
-                            disabled={isSubmitting}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <Tabs value={roomEditTab} onValueChange={setRoomEditTab} className='w-full'>
+                    <TabsList className='grid w-full grid-cols-2'>
+                      <TabsTrigger value='main'>Основное</TabsTrigger>
+                      <TabsTrigger value='files'>Файлы/Кнопки</TabsTrigger>
+                    </TabsList>
 
-                  <FormField
-                    control={roomForm.control}
-                    name='speaker'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Ведущий *</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder='Введите имя ведущего'
-                            disabled={isSubmitting}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <TabsContent value='main' className='mt-6 space-y-6'>
+                      <FormField
+                        control={roomForm.control}
+                        name='name'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Название комнаты *</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder='Введите название комнаты'
+                                disabled={isSubmitting}
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                  <FormField
-                    control={roomForm.control}
-                    name='scheduledDate'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Время проведения</FormLabel>
-                        <DateTimePicker
-                          value={field.value ? new Date(field.value) : null}
-                          onChange={(date) =>
-                            field.onChange(date?.toISOString() || '')
-                          }
+                      <FormField
+                        control={roomForm.control}
+                        name='speaker'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Ведущий *</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder='Введите имя ведущего'
+                                disabled={isSubmitting}
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={roomForm.control}
+                        name='scheduledDate'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Время проведения</FormLabel>
+                            <DateTimePicker
+                              value={field.value ? new Date(field.value) : null}
+                              onChange={(date) =>
+                                field.onChange(date?.toISOString() || '')
+                              }
+                            />
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={roomForm.control}
+                        name='type'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Тип комнаты</FormLabel>
+                            <FormControl>
+                              <select
+                                {...field}
+                                disabled={isSubmitting}
+                                className='flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
+                              >
+                                <option value='live'>Прямой эфир</option>
+                                <option value='auto'>Автоматический</option>
+                              </select>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={roomForm.control}
+                        name='videoUrl'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Ссылка на видео</FormLabel>
+                            <FormControl>
+                              <Input
+                                type='url'
+                                placeholder='https://example.com/video-link'
+                                disabled={isSubmitting}
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={roomForm.control}
+                        name='btnUrl'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Ссылка на кнопку</FormLabel>
+                            <FormControl>
+                              <Input
+                                type='url'
+                                placeholder='https://example.com/button-link'
+                                disabled={isSubmitting}
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                        <GenericImagePicker
+                          label='Лого '
+                          
+                          currentImage={logoPreview || (typeof roomData?.logo === 'string' ? roomData.logo : '') || roomData?.logoUrl || undefined}
+                          onImageSelect={(file) => {
+                            setLogoFile(file)
+                            if (file) {
+                              const reader = new FileReader()
+                              reader.onloadend = () => {
+                                setLogoPreview(reader.result as string)
+                              }
+                              reader.readAsDataURL(file)
+                            } else {
+                              setLogoPreview('')
+                              roomForm.setValue('logoUrl', '')
+                            }
+                          }}
+                          onUrlChange={(url) => {
+                            roomForm.setValue('logoUrl', url)
+                            setLogoPreview(url)
+                          }}
+                          aspectRatio='square'
+                          className='w-full'
                         />
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
 
-                  <FormField
-                    control={roomForm.control}
-                    name='type'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Тип комнаты</FormLabel>
-                        <FormControl>
-                          <select
-                            {...field}
-                            disabled={isSubmitting}
-                            className='flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
-                          >
-                            <option value='live'>Прямой эфир</option>
-                            <option value='auto'>Автоматический</option>
-                          </select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                        <GenericImagePicker
+                          label='Баннер '
+                         
+                          currentImage={bannerPreview || roomData?.bannerUrl || undefined}
+                          onImageSelect={(file) => {
+                            setBannerFile(file)
+                            if (file) {
+                              const reader = new FileReader()
+                              reader.onloadend = () => {
+                                setBannerPreview(reader.result as string)
+                              }
+                              reader.readAsDataURL(file)
+                            } else {
+                              setBannerPreview('')
+                              roomForm.setValue('bannerUrl', '')
+                            }
+                          }}
+                          onUrlChange={(url) => {
+                            roomForm.setValue('bannerUrl', url)
+                            setBannerPreview(url)
+                          }}
+                          aspectRatio='banner'
+                          className='w-full'
+                        />
+                      </div>
 
-                  <FormField
-                    control={roomForm.control}
-                    name='videoUrl'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Ссылка на видео</FormLabel>
-                        <FormControl>
-                          <Input
-                            type='url'
-                            placeholder='https://example.com/video-link'
-                            disabled={isSubmitting}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                      <FormField
+                        control={roomForm.control}
+                        name='description'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Описание</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder='Введите описание комнаты'
+                                rows={4}
+                                disabled={isSubmitting}
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                  <FormField
-                    control={roomForm.control}
-                    name='btnUrl'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Ссылка на кнопку</FormLabel>
-                        <FormControl>
-                          <Input
-                            type='url'
-                            placeholder='https://example.com/button-link'
-                            disabled={isSubmitting}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                      <FormField
+                        control={roomForm.control}
+                        name='welcomeMessage'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Сообщение для подключившихся к чату</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder='Сообщение для подключившихся к чату...'
+                                rows={6}
+                                disabled={isSubmitting}
+                                {...field}
+                              />
+                            </FormControl>
+                            
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                  <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-                    <GenericImagePicker
-                      label='Лого '
-                      
-                      currentImage={logoPreview || (typeof roomData?.logo === 'string' ? roomData.logo : '') || roomData?.logoUrl || undefined}
-                      onImageSelect={(file) => {
-                        setLogoFile(file)
-                        if (file) {
-                          const reader = new FileReader()
-                          reader.onloadend = () => {
-                            setLogoPreview(reader.result as string)
+                      <div className='space-y-4'>
+                        <h3 className='text-lg font-medium'>Настройки отображения</h3>
+
+                        <FormField
+                          control={roomForm.control}
+                          name='showBanner'
+                          render={({ field }) => (
+                            <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
+                              <div className='space-y-0.5'>
+                                <FormLabel className='text-base'>Показать баннер</FormLabel>
+                                <p className='text-sm text-muted-foreground'>
+                                  Отображать баннер в комнате
+                                </p>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                  disabled={isSubmitting}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={roomForm.control}
+                          name='showBtn'
+                          render={({ field }) => (
+                            <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
+                              <div className='space-y-0.5'>
+                                <FormLabel className='text-base'>Показать кнопку</FormLabel>
+                                <p className='text-sm text-muted-foreground'>
+                                  Отображать кнопку действия в комнате
+                                </p>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                  disabled={isSubmitting}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={roomForm.control}
+                          name='showChat'
+                          render={({ field }) => (
+                            <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
+                              <div className='space-y-0.5'>
+                                <FormLabel className='text-base'>Показать чат</FormLabel>
+                                <p className='text-sm text-muted-foreground'>
+                                  Включить чат для участников
+                                </p>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                  disabled={isSubmitting}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={roomForm.control}
+                          name='isVolumeOn'
+                          render={({ field }) => (
+                            <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
+                              <div className='space-y-0.5'>
+                                <FormLabel className='text-base'>Звук включен</FormLabel>
+                                <p className='text-sm text-muted-foreground'>
+                                  Включить звук по умолчанию
+                                </p>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                  disabled={isSubmitting}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value='files' className='mt-6'>
+                      <RoomFilesButtonsTab
+                        enabled={filesButtonsEnabled}
+                        items={filesButtons}
+                        localFiles={filesButtonsLocalFiles}
+                        onToggleEnabled={setFilesButtonsEnabled}
+                        onChangeItems={setFilesButtons}
+                        onPickFile={(id, file) => {
+                          setFilesButtonsLocalFiles((prev) => ({
+                            ...prev,
+                            [id]: file,
+                          }))
+                        }}
+                        onRemoveItem={(id) => {
+                          setFilesButtons((prev) => prev.filter((item) => item.id !== id))
+                          setFilesButtonsLocalFiles((prev) => {
+                            if (!(id in prev)) return prev
+                            const next = { ...prev }
+                            delete next[id]
+                            return next
+                          })
+                        }}
+                        onAddItem={() => {
+                          const newItem: RoomFileButtonItem = {
+                            id: createFilesButtonId(),
+                            title: '',
+                            url: '',
+                            fileUrl: null,
                           }
-                          reader.readAsDataURL(file)
-                        } else {
-                          setLogoPreview('')
-                          roomForm.setValue('logoUrl', '')
-                        }
-                      }}
-                      onUrlChange={(url) => {
-                        roomForm.setValue('logoUrl', url)
-                        setLogoPreview(url)
-                      }}
-                      aspectRatio='square'
-                      className='w-full'
-                    />
-
-                    <GenericImagePicker
-                      label='Баннер '
-                     
-                      currentImage={bannerPreview || roomData?.bannerUrl || undefined}
-                      onImageSelect={(file) => {
-                        setBannerFile(file)
-                        if (file) {
-                          const reader = new FileReader()
-                          reader.onloadend = () => {
-                            setBannerPreview(reader.result as string)
-                          }
-                          reader.readAsDataURL(file)
-                        } else {
-                          setBannerPreview('')
-                          roomForm.setValue('bannerUrl', '')
-                        }
-                      }}
-                      onUrlChange={(url) => {
-                        roomForm.setValue('bannerUrl', url)
-                        setBannerPreview(url)
-                      }}
-                      aspectRatio='banner'
-                      className='w-full'
-                    />
-                  </div>
-
-                  <FormField
-                    control={roomForm.control}
-                    name='description'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Описание</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder='Введите описание комнаты'
-                            rows={4}
-                            disabled={isSubmitting}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={roomForm.control}
-                    name='welcomeMessage'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Сообщение для подключившихся к чату</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder='Сообщение для подключившихся к чату...'
-                            rows={6}
-                            disabled={isSubmitting}
-                            {...field}
-                          />
-                        </FormControl>
-                        
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className='space-y-4'>
-                    <h3 className='text-lg font-medium'>Настройки отображения</h3>
-
-                    <FormField
-                      control={roomForm.control}
-                      name='showBanner'
-                      render={({ field }) => (
-                        <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
-                          <div className='space-y-0.5'>
-                            <FormLabel className='text-base'>Показать баннер</FormLabel>
-                            <p className='text-sm text-muted-foreground'>
-                              Отображать баннер в комнате
-                            </p>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                              disabled={isSubmitting}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={roomForm.control}
-                      name='showBtn'
-                      render={({ field }) => (
-                        <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
-                          <div className='space-y-0.5'>
-                            <FormLabel className='text-base'>Показать кнопку</FormLabel>
-                            <p className='text-sm text-muted-foreground'>
-                              Отображать кнопку действия в комнате
-                            </p>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                              disabled={isSubmitting}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={roomForm.control}
-                      name='showChat'
-                      render={({ field }) => (
-                        <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
-                          <div className='space-y-0.5'>
-                            <FormLabel className='text-base'>Показать чат</FormLabel>
-                            <p className='text-sm text-muted-foreground'>
-                              Включить чат для участников
-                            </p>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                              disabled={isSubmitting}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={roomForm.control}
-                      name='isVolumeOn'
-                      render={({ field }) => (
-                        <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
-                          <div className='space-y-0.5'>
-                            <FormLabel className='text-base'>Звук включен</FormLabel>
-                            <p className='text-sm text-muted-foreground'>
-                              Включить звук по умолчанию
-                            </p>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                              disabled={isSubmitting}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                          setFilesButtons((prev) => [...prev, newItem])
+                        }}
+                      />
+                    </TabsContent>
+                  </Tabs>
 
                   <div className='flex justify-end gap-3 pt-4'>
                     <Link href='/rooms'>

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { BASE_URL } from '@/lib/constants'
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,7 +15,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Call the external API to refresh the token
-    const response = await fetch('https://dev.isra-cms.nomad-engineers.space/api/users/refresh-token', {
+
+
+    const response = await fetch(`${BASE_URL}/users/refresh-token`, {
+
+
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

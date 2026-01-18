@@ -1,6 +1,8 @@
 import { PayloadSDK } from '@payloadcms/sdk'
 
-export const BASE_URL = process.env.NEXT_PUBLIC_PAYLOAD_API_URL || process.env.PAYLOAD_API_URL || 'https://dev.isra-cms.nomad-engineers.space'
+import { BASE_URL } from './constants'
+
+
 
 export const sdk = new PayloadSDK({
   baseURL: BASE_URL,

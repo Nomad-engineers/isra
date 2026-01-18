@@ -18,6 +18,9 @@ import { useTokenAuth } from '@/hooks/use-token-auth'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Switch } from '@/components/ui/switch'
 import { GenericImagePicker } from '@/components/ui/generic-image-picker'
+import { apiFetch } from '@/lib/api-fetch'
+
+
 
 const webinarFormSchema = z.object({
   title: z.string().min(1, 'Название вебинара обязательно'),
@@ -122,6 +125,7 @@ const roomFormSchema = z.object({
 })
 
 type RoomFormData = z.infer<typeof roomFormSchema>
+const uploadEndpoint = '/api/media'
 
 interface WebinarData {
   id: number
@@ -184,6 +188,24 @@ interface RoomData {
   updatedAt: string
 }
 
+interface TokenRefreshResponse {
+  token: string
+}
+
+interface FileUploadResponse {
+  url: string
+}
+
+interface UsersMeResponse {
+  user: {
+    id: number
+    firstName?: string | null
+    lastName?: string | null
+    email: string
+    role: string
+  }
+}
+
 export default function EditRoomPage() {
   const router = useRouter()
   const params = useParams()
@@ -220,23 +242,17 @@ export default function EditRoomPage() {
 
   const refreshToken = useCallback(async () => {
     try {
-      const refreshResponse = await fetch('http://localhost:3000/api/users/refresh-token', {
+      const refreshData = await apiFetch<TokenRefreshResponse>('/users/refresh-token', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           refreshToken: localStorage.getItem('refresh-token'),
         }),
       })
 
-      if (refreshResponse.ok) {
-        const refreshData = await refreshResponse.json()
-        if (refreshData.token) {
-          localStorage.setItem('payload-token', refreshData.token)
-          setToken(refreshData.token)
-          return refreshData.token
-        }
+      if (refreshData.token) {
+        localStorage.setItem('payload-token', refreshData.token)
+        setToken(refreshData.token)
+        return refreshData.token
       }
     } catch (error) {
       console.error('Token refresh failed:', error)
@@ -245,98 +261,52 @@ export default function EditRoomPage() {
   }, [])
 
   const uploadFile = async (file: File, type: 'logo' | 'banner'): Promise<{ url: string; id: string }> => {
-    try {
-      const maxSize = 5 * 1024 * 1024
-      if (file.size > maxSize) {
-        throw new Error('Размер файла не должен превышать 5MB')
-      }
 
-      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
-      if (!validTypes.includes(file.type)) {
-        throw new Error('Неподдерживаемый формат файла')
-      }
+  try {
+    const maxSize = 5 * 1024 * 1024
+    if (file.size > maxSize) {
+      throw new Error('Размер файла не должен превышать 5MB')
 
-      const currentToken = getCurrentToken()
-      if (!currentToken) {
-        throw new Error('Требуется авторизация')
-      }
-
-      const altText = type === 'logo' ? 'Room logo' : 'Room banner'
-      
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('_payload', JSON.stringify({
-        alt: altText
-      }))
-
-      
-
-      const response = await fetch('https://dev.isra-cms.nomad-engineers.space/api/media', {
-        method: 'POST',
-        headers: {
-          Authorization: `JWT ${currentToken}`,
-        },
-        body: formData,
-      })
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          const refreshedToken = await refreshToken()
-          if (refreshedToken) {
-            const retryFormData = new FormData()
-            retryFormData.append('file', file)
-            retryFormData.append('_payload', JSON.stringify({
-              alt: altText
-            }))
-            
-            const retryResponse = await fetch('https://dev.isra-cms.nomad-engineers.space/api/media', {
-              method: 'POST',
-              headers: {
-                Authorization: `JWT ${refreshedToken}`,
-              },
-              body: retryFormData,
-            })
-
-            if (retryResponse.ok) {
-              const result = await retryResponse.json()
-              
-              const mediaUrl = result.doc.url
-              const fullUrl = mediaUrl.startsWith('http') 
-                ? mediaUrl 
-                : `https://dev.isra-cms.nomad-engineers.space${mediaUrl}`
-              return {
-                url: fullUrl,
-                id: result.doc.id
-              }
-            }
-          }
-        }
-
-        const errorData = await response.json()
-        console.error('Upload error response:', errorData)
-        throw new Error(errorData.errors?.[0]?.message || 'Upload failed')
-      }
-
-      const result = await response.json()
-   
-
-      const mediaUrl = result.doc.url
-      const fullUrl = mediaUrl.startsWith('http') 
-        ? mediaUrl 
-        : `https://dev.isra-cms.nomad-engineers.space${mediaUrl}`
-      
-      
-      
-      return {
-        url: fullUrl,
-        id: result.doc.id
-      }
-    } catch (error) {
-      console.error(`Failed to upload ${type}:`, error)
-      throw error
     }
+
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+    if (!validTypes.includes(file.type)) {
+      throw new Error('Неподдерживаемый формат файла')
+    }
+
+    const currentToken = getCurrentToken()
+    if (!currentToken) {
+      throw new Error('Требуется авторизация')
+    }
+
+    const altText = type === 'logo' ? 'Room logo' : 'Room banner'
+    
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('_payload', JSON.stringify({
+      alt: altText
+    }))
+
+    const result = await apiFetch<{ url: string; id: string }>(uploadEndpoint, {
+      method: 'POST',
+      headers: {
+        Authorization: `JWT ${currentToken}`,
+      },
+      body: formData,
+    })
+
+   
+    return {
+      url: result.url,
+      id: result.id
+    }
+
+  } catch (error) {
+    console.error(`Failed to upload ${type}:`, error)
+    throw error
   }
-  
+}
+
 
   // Initialize webinar form
   const webinarForm = useForm<WebinarFormData>({
@@ -399,42 +369,18 @@ export default function EditRoomPage() {
           return
         }
 
-        const response = await fetch('https://dev.isra-cms.nomad-engineers.space/api/users/me', {
-          method: 'GET',
+
+
+        const result = await apiFetch<UsersMeResponse>('/users/me', {
+
+
           headers: {
-            'Content-Type': 'application/json',
             Authorization: `JWT ${currentToken}`,
           },
         })
 
-        if (!response.ok && response.status === 401) {
-          const refreshedToken = await refreshToken()
-          if (refreshedToken) {
-            const retryResponse = await fetch('https://dev.isra-cms.nomad-engineers.space/api/users/me', {
-              method: 'GET',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `JWT ${refreshedToken}`,
-              },
-            })
 
-            if (retryResponse.ok) {
-              const result = await retryResponse.json()
-              if (result && result.user) {
-                setUserData(result.user)
-                return
-              }
-            }
-          }
 
-          throw new Error(`Failed to fetch user data: ${response.status}`)
-        }
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch user data: ${response.status}`)
-        }
-
-        const result = await response.json()
         if (result && result.user) {
           setUserData(result.user)
         }
@@ -475,59 +421,17 @@ export default function EditRoomPage() {
           return
         }
 
-        const response = await fetch(`https://dev.isra-cms.nomad-engineers.space/api/rooms/${roomId}`, {
-          method: 'GET',
+
+        const result = await apiFetch(`/rooms/${roomId}`, {
+
+
           headers: {
-            'Content-Type': 'application/json',
             Authorization: `JWT ${currentToken}`,
           },
         })
 
-        if (!response.ok) {
-          if (response.status === 401) {
-            const refreshedToken = await refreshToken()
-            if (refreshedToken) {
-              const retryResponse = await fetch(`https://dev.isra-cms.nomad-engineers.space/api/rooms/${roomId}`, {
-                method: 'GET',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: `JWT ${refreshedToken}`,
-                },
-              })
 
-              if (retryResponse.ok) {
-                const result = await retryResponse.json()
-                processRoomData(result)
-                return
-              }
 
-              if (retryResponse.status === 404) {
-                stableToast({
-                  title: 'Комната не найдена',
-                  description: 'Запрошенная комната не существует',
-                  variant: 'destructive',
-                })
-                router.push('/rooms')
-                return
-              }
-            }
-            throw new Error(`Failed to fetch room: unauthorized`)
-          }
-
-          if (response.status === 404) {
-            stableToast({
-              title: 'Комната не найдена',
-              description: 'Запрошенная комната не существует',
-              variant: 'destructive',
-            })
-            router.push('/rooms')
-            return
-          }
-
-          throw new Error(`Failed to fetch room: ${response.status}`)
-        }
-
-        const result = await response.json()
         processRoomData(result)
       } catch (error) {
         console.error('Room fetch error:', error)
@@ -663,24 +567,16 @@ export default function EditRoomPage() {
 
       
 
-      const response = await fetch(`https://dev.isra-cms.nomad-engineers.space/api/rooms/${roomId}`, {
+
+
+      await apiFetch(`/rooms/${roomId}`, {
+
+
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `JWT ${currentToken}`,
-        },
         body: JSON.stringify(updatePayload),
       })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(
-          errorData.errors?.[0]?.message || 'Failed to update webinar'
-        )
-      }
-
-      const result = await response.json()
-      console.log('Update successful:', result)
+      console.log('Update successful')
 
       stableToast({
         title: 'Успешно обновлено',
@@ -704,150 +600,105 @@ export default function EditRoomPage() {
   }
 
   const onRoomSubmit = async (data: RoomFormData) => {
-    if (isSubmitting) return
 
-    setIsSubmitting(true)
+  if (isSubmitting) return
+
+
+  setIsSubmitting(true)
+
+
+  try {
+    const currentToken = getCurrentToken()
+
+
+    if (!currentToken) {
+      stableToast({
+
+        title: 'Требуется авторизация',
+        description: 'Авторизуйтесь, чтобы продолжить',
+        variant: 'destructive',
+      })
+      return
+
+    }
+
+    let logoUrl = data.logoUrl || logoPreview || ''
+    let bannerUrl = data.bannerUrl || bannerPreview || ''
+    let logoId: string | null = null
 
     try {
-      const currentToken = getCurrentToken()
-
-      if (!currentToken) {
-        stableToast({
-          title: 'Требуется авторизация',
-          description: 'Авторизуйтесь, чтобы продолжить',
-          variant: 'destructive',
-        })
-        return
+      if (logoFile) {
+        const uploadResult = await uploadFile(logoFile, 'logo')
+        logoId = uploadResult.id  
+        logoUrl = uploadResult.url  
       }
-
-      let logoUrl = data.logoUrl || logoPreview || ''
-let bannerUrl = data.bannerUrl || bannerPreview || ''
-let logoId: string | null = null
-
-
-
-try {
-  if (logoFile) {
-    
-    const uploadResult = await uploadFile(logoFile, 'logo')
-    logoId = uploadResult.id  
-    logoUrl = uploadResult.url  
-    
-  }
-  if (bannerFile) {
-    
-    const uploadResult = await uploadFile(bannerFile, 'banner')
-    bannerUrl = uploadResult.url  
-    
-  }
-} catch (uploadError) {
-  stableToast({
-    title: 'Ошибка загрузки файлов',
-    description:
-      uploadError instanceof Error
-        ? uploadError.message
-        : 'Не удалось загрузить изображения',
-    variant: 'destructive',
-  })
-  return
-}
-
-      const updatePayload: any = {
-  name: data.name,
-  speaker: data.speaker,
-  description: data.description || '',
-  scheduledDate: data.scheduledDate ? new Date(data.scheduledDate).toISOString() : null,
-  videoUrl: data.videoUrl || '',
-  btnUrl: data.btnUrl || '',
-  welcomeMessage: data.welcomeMessage || '',
-  showBanner: data.showBanner,
-  showBtn: data.showBtn,
-  showChat: data.showChat,
-  isVolumeOn: data.isVolumeOn,
-  type: data.type,
-}
-
-
-if (logoId) {
-  updatePayload.logo = logoId
- 
-}
-
-if (bannerUrl) {
-  updatePayload.bannerUrl = bannerUrl
-  
-}
-
-if (logoUrl) {
-  setLogoPreview(logoUrl)
-}
-if (bannerUrl) {
-  setBannerPreview(bannerUrl)
-}
-
-
-      const response = await fetch(`https://dev.isra-cms.nomad-engineers.space/api/rooms/${roomId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `JWT ${currentToken}`,
-        },
-        body: JSON.stringify(updatePayload),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(
-          errorData.errors?.[0]?.message || 'Failed to update room'
-        )
+      if (bannerFile) {
+        const uploadResult = await uploadFile(bannerFile, 'banner')
+        bannerUrl = uploadResult.url  
       }
-
-      const result = await response.json()
-      
-
-      const updatedData = result.doc || result
-      if (updatedData) {
-        
-        
-        setRoomData(updatedData)
-        
-        const savedLogoUrl = updatedData.logoUrl || (typeof updatedData.logo === 'string' ? updatedData.logo : '')
-        const savedBannerUrl = updatedData.bannerUrl || ''
-        
-       
-        
-        if (savedLogoUrl) {
-          setLogoPreview(savedLogoUrl)
-          roomForm.setValue('logoUrl', savedLogoUrl)
-        }
-        if (savedBannerUrl) {
-          setBannerPreview(savedBannerUrl)
-          roomForm.setValue('bannerUrl', savedBannerUrl)
-        }
-      }
-
+    } catch (uploadError) {
       stableToast({
-        title: 'Успешно обновлено',
-        description: 'Комната была успешно обновлена',
-      })
-
-      setTimeout(() => {
-        router.push('/rooms')
-      }, 500)
-    } catch (error) {
-      console.error('Update error:', error)
-      stableToast({
-        title: 'Ошибка обновления',
+        title: 'Ошибка загрузки файлов',
         description:
-          error instanceof Error
-            ? error.message
-            : 'Не удалось обновить комнату',
+          uploadError instanceof Error
+            ? uploadError.message
+            : 'Не удалось загрузить изображения',
         variant: 'destructive',
-        })
-    } finally {
-      setIsSubmitting(false)
+      })
+      return
     }
+
+    // ДОБАВЬТЕ ЭТО ОБЪЯВЛЕНИЕ ЗДЕСЬ
+    const updatePayload = {
+      name: data.name,
+      speaker: data.speaker,
+      description: data.description || '',
+      videoUrl: data.videoUrl || '',
+      scheduledDate: data.scheduledDate ? new Date(data.scheduledDate).toISOString() : null,
+      bannerUrl: bannerUrl,
+      btnUrl: data.btnUrl || '',
+      logoUrl: logoUrl,
+      logo: logoId, // используем ID загруженного лого
+      welcomeMessage: data.welcomeMessage || '',
+      showBanner: data.showBanner,
+      showBtn: data.showBtn,
+      showChat: data.showChat,
+      isVolumeOn: data.isVolumeOn,
+      type: data.type,
+    }
+
+    await apiFetch(`/rooms/${roomId}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `JWT ${currentToken}`,
+      },
+      body: JSON.stringify(updatePayload),
+    })
+
+    console.log('Update successful')
+
+    stableToast({
+      title: 'Успешно обновлено',
+      description: 'Комната была успешно обновлена',
+    })
+
+    setTimeout(() => {
+      router.push('/rooms')
+    }, 500)
+  } catch (error) {
+    console.error('Update error:', error)
+    stableToast({
+      title: 'Ошибка обновления',
+      description:
+        error instanceof Error
+          ? error.message
+          : 'Не удалось обновить комнату',
+      variant: 'destructive',
+    })
+  } finally {
+    setIsSubmitting(false)
   }
+}
 
   if (isLoading) {
     return (
@@ -858,6 +709,7 @@ if (bannerUrl) {
       </div>
     )
   }
+  
 
   return (
     <div className='container mx-auto py-8 max-w-4xl'>

@@ -88,6 +88,11 @@ export function WebinarSettingsModal({
         return;
       }
 
+
+      const apiUrl =
+        process.env.NEXT_PUBLIC_PAYLOAD_API_URL || "https://dev.isra-cms.nomad-engineers.space";
+
+
       // Update in database
       await apiFetch(`/rooms/${webinar.id}`, {
         method: "PATCH",

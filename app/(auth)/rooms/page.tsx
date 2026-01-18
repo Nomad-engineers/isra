@@ -147,7 +147,10 @@ export default function RoomsPage() {
         return
       }
 
+
+
       const result = await apiFetch<RoomsResponse>('/rooms/my', {
+
         headers: {
           Authorization: `JWT ${token}`,
         },
@@ -192,7 +195,11 @@ export default function RoomsPage() {
           return
         }
 
+
+
         const result = await apiFetch<UsersMeResponse>('/users/me', {
+
+
           headers: {
             Authorization: `JWT ${token}`,
           },
@@ -300,7 +307,10 @@ export default function RoomsPage() {
     try {
       const token = getToken()
 
+
       await apiFetch(`/rooms/${id}`, {
+
+
         method: 'DELETE',
         headers: {
           Authorization: `JWT ${token}`,

@@ -117,6 +117,8 @@ export function EditWebinarModal({
 
       console.log("Updating webinar:", webinar.id, updatePayload);
 
+
+
       await apiFetch(`/rooms/${webinar.id}`, {
         method: "PATCH",
         headers: {
@@ -124,6 +126,7 @@ export function EditWebinarModal({
         },
         body: JSON.stringify(updatePayload),
       });
+
 
       console.log("Update successful");
 
